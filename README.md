@@ -79,10 +79,10 @@ graph TD
     AC -. "Assembled into" .-> AI
     
     %% Styling
-    classDef process fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef dataModel fill:#bbf,stroke:#333,stroke-width:1px;
-    classDef input fill:#bfb,stroke:#333,stroke-width:1px;
-    classDef output fill:#fbb,stroke:#333,stroke-width:1px;
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px,color:#000;
+    classDef dataModel fill:#bbf,stroke:#333,stroke-width:1px,color:#000;
+    classDef input fill:#bfb,stroke:#333,stroke-width:1px,color:#000;
+    classDef output fill:#fbb,stroke:#333,stroke-width:1px,color:#000;
     
     class GenerateAgent,AnalyzeSpec,DesignTools,DesignOutputType,DesignGuardrails,GenToolCode,GenOutputTypeCode,GenGuardrailCode,GenAgentCode,GenRunnerCode,AssembleImpl,ValidateImpl process;
     class AS,TD,OTD,GD,AD,AC,AI dataModel;
