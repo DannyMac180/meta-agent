@@ -8,12 +8,16 @@ to verify its functionality and refine the implementation.
 import asyncio
 import os
 import sys
+from dotenv import load_dotenv
 from agent_generator import generate_agent
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Check for API key
 if not os.environ.get("OPENAI_API_KEY"):
     print("Error: OPENAI_API_KEY environment variable not set.")
-    print("Please set your OpenAI API key using:")
+    print("Please set your OpenAI API key in the .env file or as an environment variable:")
     print("export OPENAI_API_KEY='your-api-key'")
     print("Exiting tests.")
     sys.exit(1)

@@ -10,6 +10,7 @@ import json
 import os
 from typing import Any, List, Optional, Dict, Union, Literal
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 from agents import (
     Agent, 
@@ -20,12 +21,15 @@ from agents import (
 )
 
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Configure OpenAI API key
-# Try to get API key from environment variable
+# Get API key from environment variable
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     print("Warning: OPENAI_API_KEY environment variable not set.")
-    print("Please set your OpenAI API key using:")
+    print("Please set your OpenAI API key in the .env file or as an environment variable:")
     print("export OPENAI_API_KEY='your-api-key'")
 
 
@@ -548,7 +552,7 @@ agent_generator = Agent(
 
 # ===================== MAIN FUNCTION =====================
 
-async def generate_agent(specification: str) -> AgentImplementation:
+async def generate_agent(specification: str) -> AgentCode:
     """
     Generate an agent based on a natural language specification.
     
@@ -556,36 +560,253 @@ async def generate_agent(specification: str) -> AgentImplementation:
         specification: Natural language description of the agent to create
         
     Returns:
-        Complete agent implementation
+        Complete agent code
     """
+    # Run the agent generator
     result = await Runner.run(agent_generator, input=specification)
     
-    # Convert the result to AgentImplementation
-    if isinstance(result, dict):
-        # If the result is a dictionary, convert it to AgentImplementation
-        return AgentImplementation(
-            main_file=result.get("main_file", ""),
-            additional_files=result.get("additional_files", {}),
-            installation_instructions=result.get("installation_instructions", ""),
-            usage_examples=result.get("usage_examples", "")
-        )
-    elif hasattr(result, "final_output") and isinstance(result.final_output, dict):
-        # If the result has a final_output attribute and it's a dictionary
-        return AgentImplementation(
-            main_file=result.final_output.get("main_file", ""),
-            additional_files=result.final_output.get("additional_files", {}),
-            installation_instructions=result.final_output.get("installation_instructions", ""),
-            usage_examples=result.final_output.get("usage_examples", "")
-        )
-    else:
-        # If the result is something else, try to convert it to a string
-        return AgentImplementation(
-            main_file=str(result),
-            additional_files={},
-            installation_instructions="# No installation instructions available",
-            usage_examples="# No usage examples available"
-        )
+    # Process the result to extract actual Python code
+    # Instead of returning the raw result, we'll extract and generate proper code
+    
+    # Create a basic template for the agent
+    main_code = f"""
+\"\"\"
+Generated Agent - Created by Agent Generator
 
+This agent was automatically generated based on the following specification:
+{specification}
+\"\"\"
+
+import asyncio
+import os
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+from agents import (
+    Agent,
+    Runner,
+    function_tool,
+    output_guardrail,
+    GuardrailFunctionOutput
+)
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure OpenAI API key
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    print("Error: OPENAI_API_KEY environment variable not set.")
+    print("Please set your OpenAI API key in the .env file or as an environment variable.")
+    exit(1)
+
+"""
+    
+    # Placeholder for imports
+    imports = [
+        "import asyncio",
+        "import os",
+        "from typing import Dict, List, Optional, Any",
+        "from pydantic import BaseModel, Field",
+        "from dotenv import load_dotenv",
+        "from agents import Agent, Runner, function_tool, output_guardrail, GuardrailFunctionOutput"
+    ]
+    
+    # Extract agent specification from result
+    agent_spec = {}
+    tool_implementations = []
+    output_type_implementation = None
+    guardrail_implementations = []
+    
+    # Process the result to extract meaningful information
+    # This is a simplified approach - in a real implementation, you would parse the LLM's
+    # response more thoroughly to extract the actual code
+    
+    if isinstance(result, dict):
+        # Try to extract information from the dictionary
+        agent_spec = result.get("specification", {})
+        tools = result.get("tools", [])
+        output_type = result.get("output_type", {})
+        guardrails = result.get("guardrails", [])
+        
+        # Generate tool implementations
+        for tool in tools:
+            tool_name = tool.get("name", f"tool_{len(tool_implementations)}")
+            tool_desc = tool.get("description", "A tool for the agent")
+            tool_params = tool.get("parameters", [])
+            tool_return = tool.get("return_type", "Dict[str, Any]")
+            
+            # Create a basic tool implementation
+            tool_code = f"""
+@function_tool
+def {tool_name}({', '.join([f"{p.get('name', 'param')}: {p.get('type', 'str')}" for p in tool_params])}) -> {tool_return}:
+    \"\"\"
+    {tool_desc}
+    
+    Args:
+        {chr(10).join([f"{p.get('name', 'param')}: {p.get('description', 'A parameter')}" for p in tool_params])}
+        
+    Returns:
+        {tool_return}
+    \"\"\"
+    # TODO: Implement the tool functionality
+    pass
+"""
+            tool_implementations.append(tool_code)
+        
+        # Generate output type implementation if needed
+        if output_type:
+            output_type_name = output_type.get("name", "AgentOutput")
+            output_type_fields = output_type.get("fields", [])
+            
+            # Create a basic output type implementation
+            output_type_code = f"""
+class {output_type_name}(BaseModel):
+    \"\"\"Output type for the agent.\"\"\"
+    {chr(10).join([f"{f.get('name', f'field_{i}')}: {f.get('type', 'str')} = Field(description=\"{f.get('description', 'A field')}\")" for i, f in enumerate(output_type_fields)])}
+"""
+            output_type_implementation = output_type_code
+        
+        # Generate guardrail implementations
+        for guardrail in guardrails:
+            guardrail_name = guardrail.get("name", f"guardrail_{len(guardrail_implementations)}")
+            guardrail_type = guardrail.get("type", "output")
+            guardrail_logic = guardrail.get("validation_logic", "")
+            
+            # Create a basic guardrail implementation
+            guardrail_code = f"""
+@{'output' if guardrail_type == 'output' else 'input'}_guardrail
+def {guardrail_name}(output) -> GuardrailFunctionOutput:
+    \"\"\"
+    {guardrail_logic}
+    \"\"\"
+    # TODO: Implement the guardrail validation logic
+    return GuardrailFunctionOutput(
+        status="success",
+        message="Validation passed",
+        output=output
+    )
+"""
+            guardrail_implementations.append(guardrail_code)
+    
+    # Extract information from the specification text directly if we couldn't get it from the result
+    if not agent_spec:
+        # Parse the specification to extract basic information
+        import re
+        
+        # Extract agent name
+        name_match = re.search(r'Name:\s*(\w+)', specification)
+        agent_name = name_match.group(1) if name_match else "GeneratedAgent"
+        
+        # Extract description
+        desc_match = re.search(r'Description:\s*([^\n]+)', specification)
+        description = desc_match.group(1) if desc_match else "A generated agent"
+        
+        # Extract instructions
+        instructions_match = re.search(r'Instructions:\s*([^\n]+(?:\n(?!\n)[^\n]+)*)', specification)
+        instructions = instructions_match.group(1) if instructions_match else "Instructions for the generated agent"
+        
+        # Create a basic agent specification
+        agent_spec = {
+            "name": agent_name,
+            "description": description,
+            "instructions": instructions
+        }
+        
+        # Extract tool information
+        tools_section = re.search(r'Tools needed:(.*?)(?:Output type:|Guardrails:|$)', specification, re.DOTALL)
+        if tools_section:
+            tools_text = tools_section.group(1)
+            tool_matches = re.finditer(r'(\d+)\.\s*(\w+):\s*([^\n]+)(?:\n\s*-\s*Parameters:[^\n]*(?:\n\s*-[^\n]+)*)?(?:\n\s*-\s*Returns:[^\n]*)?', tools_text)
+            
+            for tool_match in tool_matches:
+                tool_name = tool_match.group(2)
+                tool_desc = tool_match.group(3)
+                
+                # Create a basic tool implementation
+                tool_code = f"""
+@function_tool
+def {tool_name}(query: str) -> Dict[str, Any]:
+    \"\"\"
+    {tool_desc}
+    
+    Args:
+        query: The query to process
+        
+    Returns:
+        Dictionary containing the results
+    \"\"\"
+    # TODO: Implement the tool functionality
+    pass
+"""
+                tool_implementations.append(tool_code)
+    
+    # Generate agent creation code
+    agent_name = agent_spec.get("name", "GeneratedAgent")
+    agent_instructions = agent_spec.get("instructions", "Instructions for the generated agent")
+    
+    # Create the agent creation code
+    agent_creation = f"""
+# Create the agent
+{agent_name.lower()} = Agent(
+    name="{agent_name}",
+    instructions=\"\"\"
+    {agent_instructions}
+    \"\"\",
+    tools=[{', '.join([t.split('def ')[1].split('(')[0] for t in tool_implementations])}],
+    {f'output_type={output_type_implementation.split("class ")[1].split("(")[0]}' if output_type_implementation else ''}
+    {f'output_guardrails=[{", ".join([g.split("def ")[1].split("(")[0] for g in guardrail_implementations if "@output_guardrail" in g])}]' if any("@output_guardrail" in g for g in guardrail_implementations) else ''}
+    {f'input_guardrails=[{", ".join([g.split("def ")[1].split("(")[0] for g in guardrail_implementations if "@input_guardrail" in g])}]' if any("@input_guardrail" in g for g in guardrail_implementations) else ''}
+)
+"""
+    
+    # Generate runner code
+    runner_code = f"""
+async def main():
+    \"\"\"Run the {agent_name} agent.\"\"\"
+    print("Welcome to the {agent_name}!")
+    print("Enter your query or 'exit' to quit.")
+    
+    while True:
+        user_input = input("> ")
+        if user_input.lower() == 'exit':
+            break
+        
+        print("Processing your request...")
+        result = await Runner.run({agent_name.lower()}, input=user_input)
+        
+        print("\\nResult:")
+        print(result)
+        print()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+"""
+    
+    # Combine all components into the main code
+    for tool in tool_implementations:
+        main_code += f"\n\n{tool}"
+    
+    if output_type_implementation:
+        main_code += f"\n\n{output_type_implementation}"
+    
+    for guardrail in guardrail_implementations:
+        main_code += f"\n\n{guardrail}"
+    
+    main_code += f"\n\n{agent_creation}"
+    main_code += f"\n\n{runner_code}"
+    
+    # Return the generated code
+    return AgentCode(
+        main_code=main_code,
+        imports=imports,
+        tool_implementations=tool_implementations,
+        output_type_implementation=output_type_implementation,
+        guardrail_implementations=guardrail_implementations,
+        agent_creation=agent_creation,
+        runner_code=runner_code
+    )
 
 async def main():
     """Main function to run the agent generator."""
@@ -596,29 +817,74 @@ async def main():
     
     print("\nGenerating agent based on your specification...")
     try:
-        implementation = await generate_agent(specification)
+        code = await generate_agent(specification)
         
-        # Print the implementation details
+        # Generate a base filename from the specification
+        # Extract key terms from the specification to create a filename
+        import re
+        import os
+        from datetime import datetime
+        
+        # Extract likely agent type from specification
+        agent_type_match = re.search(r'(\w+)\s+agent', specification.lower())
+        agent_type = agent_type_match.group(1) if agent_type_match else "custom"
+        
+        # Clean the specification to create a base name
+        base_name = re.sub(r'[^a-zA-Z0-9]', '_', specification.lower())
+        base_name = re.sub(r'_+', '_', base_name)  # Replace multiple underscores with single
+        base_name = base_name[:30]  # Limit length
+        
+        # Create a filename with agent type and timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Ensure agents directory exists
+        agents_dir = "agents"
+        os.makedirs(agents_dir, exist_ok=True)
+        
+        # Create main agent filename
+        main_filename = f"{agents_dir}/{agent_type}_agent_{timestamp}.py"
+        
+        # Print the code
         print("\nAgent generation complete!")
-        print("\nMain file:")
-        print(f"Length: {len(implementation.main_file)} characters")
+        print("\nMain code:")
+        print(code.main_code)
         
-        # Save the implementation files
-        with open("generated_agent.py", "w") as f:
-            f.write(implementation.main_file)
-        print("\nSaved main file to generated_agent.py")
+        # Save the code files
+        with open(main_filename, "w") as f:
+            f.write(code.main_code)
+        print(f"\nSaved main code to {main_filename}")
         
-        for filename, content in implementation.additional_files.items():
-            with open(filename, "w") as f:
-                f.write(content)
-            print(f"Saved additional file to {filename}")
+        # Create a directory for additional files
+        dir_name = f"{agents_dir}/{agent_type}_agent_files_{timestamp}"
+        os.makedirs(dir_name, exist_ok=True)
         
-        # Print installation and usage instructions
-        print("\nInstallation Instructions:")
-        print(implementation.installation_instructions)
+        for i, tool_implementation in enumerate(code.tool_implementations):
+            tool_filename = f"{dir_name}/tool_{i}.py"
+            with open(tool_filename, "w") as f:
+                f.write(tool_implementation)
+            print(f"Saved tool implementation to {tool_filename}")
         
-        print("\nUsage Examples:")
-        print(implementation.usage_examples)
+        if code.output_type_implementation:
+            output_type_filename = f"{dir_name}/output_type.py"
+            with open(output_type_filename, "w") as f:
+                f.write(code.output_type_implementation)
+            print(f"Saved output type implementation to {output_type_filename}")
+        
+        for i, guardrail_implementation in enumerate(code.guardrail_implementations):
+            guardrail_filename = f"{dir_name}/guardrail_{i}.py"
+            with open(guardrail_filename, "w") as f:
+                f.write(guardrail_implementation)
+            print(f"Saved guardrail implementation to {guardrail_filename}")
+        
+        agent_creation_filename = f"{dir_name}/agent_creation.py"
+        with open(agent_creation_filename, "w") as f:
+            f.write(code.agent_creation)
+        print(f"Saved agent creation code to {agent_creation_filename}")
+        
+        runner_filename = f"{dir_name}/runner.py"
+        with open(runner_filename, "w") as f:
+            f.write(code.runner_code)
+        print(f"Saved runner code to {runner_filename}")
         
     except Exception as e:
         print(f"Error generating agent: {e}")

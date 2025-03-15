@@ -51,34 +51,86 @@ from agent_generator import generate_agent
 
 async def main():
     specification = """
-    Create a weather agent that can provide weather information for cities.
+    Create a simple agent that responds to greetings.
     
-    Name: WeatherAgent
+    Name: GreetingAgent
     
-    Description: An agent that provides current weather information for cities worldwide.
+    Description: A friendly agent that responds to user greetings.
     
-    Instructions: You are a helpful weather assistant. When users ask about the weather
-    in a specific city, use the get_weather tool to fetch that information.
+    Instructions: You are a friendly assistant. When a user greets you, respond with a warm greeting.
     
     Tools needed:
-    1. get_weather: Fetches current weather for a city
-       - Parameters: city (string, required)
-       - Returns: Weather data including temperature, conditions, humidity
+    1. get_time: Gets the current time
+       - Parameters: None
+       - Returns: The current time as a string
+    
+    Output type: A greeting message
+    
+    Guardrails:
+    - Ensure the response is friendly and appropriate
     """
     
-    implementation = await generate_agent(specification)
+    agent_code = await generate_agent(specification)
     
-    # Save the implementation
-    with open("weather_agent.py", "w") as f:
-        f.write(implementation.main_file)
+    # Save the agent code to a file
+    with open("greeting_agent.py", "w") as f:
+        f.write(agent_code.main_code)
     
-    # Save any additional files
-    for filename, content in implementation.additional_files.items():
-        with open(filename, "w") as f:
-            f.write(content)
+    print("Agent created successfully!")
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+### Creating a Research Agent
+
+The repository includes a script to create a web research agent that can search the web and generate comprehensive research reports:
+
+```python
+python create_research_agent.py
+```
+
+This will generate a `research_agent.py` file with a fully functional research agent that:
+
+1. Searches the web for information based on research questions
+2. Extracts content from web pages
+3. Analyzes source credibility
+4. Summarizes content from multiple sources
+5. Generates well-structured research reports with citations
+
+To use the research agent:
+
+```python
+python research_agent.py
+```
+
+Then enter your research question at the prompt.
+
+### Example Research Agent Specification
+
+```
+Create a web research agent that searches the web based on research questions and generates well-researched reports.
+
+Name: ResearchAgent
+
+Description: An advanced research agent that searches the web for information on complex topics, 
+analyzes multiple sources, and generates comprehensive, well-structured research reports with citations.
+
+Instructions: You are an expert research assistant specialized in web-based research. When given a research 
+question or topic, use your tools to search for relevant information across multiple sources...
+
+Tools needed:
+1. search_web: Searches the web for information
+2. extract_content: Extracts the main content from a URL
+3. analyze_source: Analyzes the credibility of a source
+4. summarize_content: Summarizes content from multiple sources
+
+Output type: A structured research report with sections for summary, analysis, findings, and references
+
+Guardrails:
+- Ensure all claims are supported by cited sources
+- Check for balanced representation of different viewpoints on controversial topics
+- Verify that sources are credible and relevant to the research question
 ```
 
 ### Running the Test Script
