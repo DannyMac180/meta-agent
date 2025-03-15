@@ -26,6 +26,70 @@ The meta agent is built using a multi-agent architecture with specialized agents
 6. **Implementation Assembler**: Combines all components into a complete implementation
 7. **Implementation Validator**: Validates the generated code for correctness
 
+### System Flow Diagram
+
+```mermaid
+graph TD
+    %% Main Components
+    User[User Input - Natural Language Spec] --> GenerateAgent[generate_agent]
+    GenerateAgent --> Result[Agent Code]
+    
+    %% Data Models
+    subgraph Data Models
+        AS[AgentSpecification]
+        TD[ToolDefinition]
+        OTD[OutputTypeDefinition]
+        GD[GuardrailDefinition]
+        AD[AgentDesign]
+        AC[AgentCode]
+        AI[AgentImplementation]
+    end
+    
+    %% Process Flow
+    subgraph Process Flow
+        GenerateAgent --> AnalyzeSpec[analyze_agent_specification]
+        AnalyzeSpec --> DesignTools[design_agent_tools]
+        AnalyzeSpec --> DesignOutputType[design_output_type]
+        AnalyzeSpec --> DesignGuardrails[design_guardrails]
+        
+        DesignTools --> GenToolCode[generate_tool_code]
+        DesignOutputType --> GenOutputTypeCode[generate_output_type_code]
+        DesignGuardrails --> GenGuardrailCode[generate_guardrail_code]
+        
+        GenToolCode --> GenAgentCode[generate_agent_creation_code]
+        GenOutputTypeCode --> GenAgentCode
+        GenGuardrailCode --> GenAgentCode
+        
+        GenAgentCode --> GenRunnerCode[generate_runner_code]
+        GenRunnerCode --> AssembleImpl[assemble_agent_implementation]
+        
+        AssembleImpl --> ValidateImpl[validate_agent_implementation]
+        ValidateImpl --> Result
+    end
+    
+    %% Data Flow
+    User -. "Creates" .-> AS
+    AS -. "Used to create" .-> TD
+    AS -. "Used to create" .-> OTD
+    AS -. "Used to create" .-> GD
+    TD -. "Part of" .-> AD
+    OTD -. "Part of" .-> AD
+    GD -. "Part of" .-> AD
+    AD -. "Used to generate" .-> AC
+    AC -. "Assembled into" .-> AI
+    
+    %% Styling
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef dataModel fill:#bbf,stroke:#333,stroke-width:1px;
+    classDef input fill:#bfb,stroke:#333,stroke-width:1px;
+    classDef output fill:#fbb,stroke:#333,stroke-width:1px;
+    
+    class GenerateAgent,AnalyzeSpec,DesignTools,DesignOutputType,DesignGuardrails,GenToolCode,GenOutputTypeCode,GenGuardrailCode,GenAgentCode,GenRunnerCode,AssembleImpl,ValidateImpl process;
+    class AS,TD,OTD,GD,AD,AC,AI dataModel;
+    class User input;
+    class Result output;
+```
+
 ## Installation
 
 1. Ensure you have Python 3.8+ installed
