@@ -92,26 +92,39 @@ graph TD
 
 ## Installation
 
-1. Ensure you have Python 3.8+ installed
-2. Install the OpenAI Agents SDK:
+### From Source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/meta-agent.git
+   cd meta-agent
    ```
-   pip install openai-agents
+
+2. Install the package in development mode:
+   ```bash
+   pip install -e .
    ```
-3. Clone this repository or download the source files
-4. Set your OpenAI API key:
+
+3. Set your OpenAI API key:
+   ```bash
+   export OPENAI_API_KEY="your-api-key"
    ```
-   export OPENAI_API_KEY=your_api_key_here
+   Or create a `.env` file in the project root with:
    ```
+   OPENAI_API_KEY=your-api-key
+   ```
+
+### Using pip
+
+```bash
+pip install meta-agent
+```
 
 ## Usage
 
-### Basic Usage
-
-Run the agent generator with your agent specification:
-
 ```python
 import asyncio
-from agent_generator import generate_agent
+from meta_agent import generate_agent
 
 async def main():
     specification = """
@@ -119,96 +132,64 @@ async def main():
     
     Name: GreetingAgent
     
-    Description: A friendly agent that responds to user greetings.
+    Description: A simple agent that responds to greetings in different languages.
     
-    Instructions: You are a friendly assistant. When a user greets you, respond with a warm greeting.
+    Instructions: You are a friendly greeting agent. When users greet you in any language,
+    respond with an appropriate greeting in the same language. If you're not sure what
+    language is being used, respond in English. Be warm and welcoming in your responses.
     
     Tools needed:
-    1. get_time: Gets the current time
-       - Parameters: None
-       - Returns: The current time as a string
+    1. detect_language: Detects the language of the input text
+       - Parameters: text (string, required)
+       - Returns: Language code (e.g., "en", "es", "fr")
     
-    Output type: A greeting message
+    2. translate_greeting: Translates a greeting to the specified language
+       - Parameters: greeting (string, required), language_code (string, required)
+       - Returns: Translated greeting
+    
+    Output type: A simple text response
     
     Guardrails:
-    - Ensure the response is friendly and appropriate
+    - Ensure responses are appropriate and respectful
+    - Validate that language codes are valid ISO codes
     """
     
-    agent_code = await generate_agent(specification)
+    # Generate the agent
+    implementation = await generate_agent(specification)
     
-    # Save the agent code to a file
-    with open("greeting_agent.py", "w") as f:
-        f.write(agent_code.main_code)
-    
-    print("Agent created successfully!")
+    # Print the implementation
+    print("Agent implementation generated successfully!")
+    print("\nMain file:")
+    print(implementation.main_file[:500] + "..." if len(implementation.main_file) > 500 else implementation.main_file)
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-### Creating a Research Agent
-
-The repository includes a script to create a web research agent that can search the web and generate comprehensive research reports:
-
-```python
-python create_research_agent.py
-```
-
-This will generate a `research_agent.py` file with a fully functional research agent that:
-
-1. Searches the web for information based on research questions
-2. Extracts content from web pages
-3. Analyzes source credibility
-4. Summarizes content from multiple sources
-5. Generates well-structured research reports with citations
-
-To use the research agent:
-
-```python
-python research_agent.py
-```
-
-Then enter your research question at the prompt.
-
-### Example Research Agent Specification
+## Package Structure
 
 ```
-Create a web research agent that searches the web based on research questions and generates well-researched reports.
-
-Name: ResearchAgent
-
-Description: An advanced research agent that searches the web for information on complex topics, 
-analyzes multiple sources, and generates comprehensive, well-structured research reports with citations.
-
-Instructions: You are an expert research assistant specialized in web-based research. When given a research 
-question or topic, use your tools to search for relevant information across multiple sources...
-
-Tools needed:
-1. search_web: Searches the web for information
-2. extract_content: Extracts the main content from a URL
-3. analyze_source: Analyzes the credibility of a source
-4. summarize_content: Summarizes content from multiple sources
-
-Output type: A structured research report with sections for summary, analysis, findings, and references
-
-Guardrails:
-- Ensure all claims are supported by cited sources
-- Check for balanced representation of different viewpoints on controversial topics
-- Verify that sources are credible and relevant to the research question
+meta-agent/
+├── meta_agent/             # Main package
+│   ├── __init__.py         # Package initialization
+│   ├── agent_generator.py  # Core agent generator
+│   └── cli.py              # Command-line interface
+├── tests/                  # Test directory
+│   ├── __init__.py
+│   └── test_agent_generator.py
+├── agents/                 # Example agents (not included in package)
+├── pyproject.toml          # Package configuration
+├── setup.py                # Setup script for backward compatibility
+├── MANIFEST.in             # Package manifest
+├── requirements.txt        # Dependencies
+└── README.md               # This file
 ```
 
-### Running the Test Script
-
-You can also use the included test script to generate example agents:
+## Running Tests
 
 ```bash
-python test_agent_generator.py
+python -m tests.test_agent_generator
 ```
-
-This will generate three example agents:
-- A weather agent
-- A research agent
-- A customer service agent
 
 ## Agent Specification Format
 

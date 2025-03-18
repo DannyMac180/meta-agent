@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meta-agent"
+version = "0.1.0"
+description = "A meta agent that creates OpenAI Agents SDK agents"
+readme = "README.md"
+authors = [
+    {name = "Meta Agent Developer"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "openai-agents",
+    "pydantic",
+    "asyncio",
+    "typing",
+    "python-dotenv",
+    "requests",
+    "beautifulsoup4",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/yourusername/meta-agent"
+"Bug Tracker" = "https://github.com/yourusername/meta-agent/issues"
+
+[project.scripts]
+meta-agent = "meta_agent.cli:main"
+
+[tool.setuptools]
+packages = ["meta_agent"]

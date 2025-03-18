@@ -125,6 +125,19 @@ dmypy.json
 .env.production.local
 
 # Generated agent files
-weather_agent.py
-research_agent.py
-customer_service_agent.py
+greeting_agent/
+weather_agent/
+research_agent/
+customer_service_agent/
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
