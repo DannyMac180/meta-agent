@@ -92,11 +92,19 @@ graph TD
 
 ## Installation
 
+### From PyPI (Recommended)
+
+Install the package directly from PyPI:
+
+```bash
+pip install danmac-meta-agent
+```
+
 ### From Source
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/meta-agent.git
+   git clone https://github.com/DannyMac180/meta-agent.git
    cd meta-agent
    ```
 
@@ -114,13 +122,29 @@ graph TD
    OPENAI_API_KEY=your-api-key
    ```
 
-### Using pip
+## Usage
+
+### Using the Command Line Interface (CLI)
+
+After installation, you can use the meta-agent from the command line:
 
 ```bash
-pip install meta-agent
+# Display help
+danmac-meta-agent --help
+
+# Generate an agent from a specification in a file
+danmac-meta-agent --file path/to/specification.txt --output ./my_agent
+
+# Generate an agent from a specification provided directly
+danmac-meta-agent --spec "Create a weather agent that can fetch and report weather data..."
 ```
 
-## Usage
+CLI Options:
+- `--spec`, `-s`: Natural language specification for the agent to generate
+- `--file`, `-f`: Path to a file containing the agent specification
+- `--output`, `-o`: Output directory for the generated agent code (default: current directory)
+
+### Using as a Python Library
 
 ```python
 import asyncio
@@ -199,9 +223,43 @@ When describing your agent, include the following information:
 - **Description**: A brief description of what the agent does
 - **Instructions**: Detailed instructions for the agent
 - **Tools needed**: Description of the tools the agent should use
-- **Output type** (optional): If the agent should use structured output
-- **Guardrails** (optional): Validation rules for input/output
-- **Handoffs** (optional): Other agents this agent can hand off to
+- **Output type**: The format of the agent's response (text or structured)
+- **Guardrails**: Any validation or safety measures to implement
+
+### Example Specification
+
+Here's a complete example of a specification for a research agent:
+
+```
+Create a research agent that can search for information and summarize findings.
+
+Name: ResearchAgent
+
+Description: An agent that can search for information on various topics and provide summarized findings with citations.
+
+Instructions: You are a research assistant. When given a topic or question, search for relevant information, analyze the results, and provide a concise summary with proper citations. Focus on providing accurate, up-to-date information from reliable sources. If you don't have enough information, acknowledge the limitations of your findings.
+
+Tools needed:
+1. search_web: Searches the web for information
+   - Parameters: query (string, required), max_results (integer, optional, default=5)
+   - Returns: List of search results with title, URL, and snippet
+
+2. fetch_content: Fetches the full content of a webpage
+   - Parameters: url (string, required)
+   - Returns: Full text content of the webpage
+
+3. summarize_text: Summarizes a long text
+   - Parameters: text (string, required), max_length (integer, optional, default=200)
+   - Returns: Summarized text
+
+Output type: A structured response with research findings and citations
+
+Guardrails:
+- Validate URLs before fetching content
+- Ensure citations are properly formatted
+- Check that summaries accurately represent the source material
+- Limit the length of responses to a reasonable size
+```
 
 ## Example Specifications
 
@@ -293,6 +351,31 @@ The meta agent is implemented using the OpenAI Agents SDK and follows these key 
 - More sophisticated validation of generated agents
 - UI for easier agent creation and testing
 
+## Updating the Package
+
+If you've made changes to the package and want to release a new version:
+
+1. Update the version number in `pyproject.toml`
+2. Rebuild the distribution packages:
+   ```bash
+   rm -rf dist/ build/ *.egg-info/
+   python -m build
+   ```
+3. Upload to PyPI:
+   ```bash
+   python -m twine upload dist/*
+   ```
+
+## Contributing
+
+Contributions are welcome! Here's how you can contribute:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin feature/your-feature-name`
+5. Submit a pull request
+
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.
