@@ -38,7 +38,6 @@ if not OPENAI_API_KEY:
 class AgentSpecification(BaseModel):
     """Input specification for an agent to be created."""
     name: str = Field(description="Name of the agent")
-    description: str = Field(description="Brief description of the agent's purpose")
     instructions: str = Field(description="Detailed instructions for the agent")
     tools: List[Dict[str, Any]] = Field(description="List of tools the agent needs")
     output_type: Optional[str] = None
@@ -62,7 +61,6 @@ class AgentSpecification(BaseModel):
 class ToolDefinition(BaseModel):
     """Definition of a tool for an agent."""
     name: str = Field(description="Name of the tool")
-    description: str = Field(description="Description of what the tool does")
     parameters: List[Dict[str, Any]] = Field(description="Parameters for the tool")
     return_type: str = Field(description="Return type of the tool")
     implementation: str = Field(description="Python code implementation of the tool")
@@ -699,10 +697,6 @@ def {guardrail_name}(output) -> GuardrailFunctionOutput:
         name_match = re.search(r'Name:\s*(\w+)', specification)
         agent_name = name_match.group(1) if name_match else "GeneratedAgent"
         
-        # Extract description
-        desc_match = re.search(r'Description:\s*([^\n]+)', specification)
-        description = desc_match.group(1) if desc_match else "A generated agent"
-        
         # Extract instructions
         instructions_match = re.search(r'Instructions:\s*([^\n]+(?:\n(?!\n)[^\n]+)*)', specification)
         instructions = instructions_match.group(1) if instructions_match else "Instructions for the generated agent"
@@ -710,7 +704,6 @@ def {guardrail_name}(output) -> GuardrailFunctionOutput:
         # Create a basic agent specification
         agent_spec = {
             "name": agent_name,
-            "description": description,
             "instructions": instructions
         }
         
