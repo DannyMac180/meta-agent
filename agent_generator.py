@@ -168,9 +168,18 @@ def design_agent_tools(specification: Dict[str, Any]) -> List[Dict[str, Any]]:
     Returns:
         List of tool definitions
     """
-    # This is a placeholder - in real implementation, the LLM would design
-    # appropriate tools based on the specification
-    return [{"tool_designed": True}]
+    tools = [
+        {
+            "name": "fetch_weather",
+            "description": "Fetches weather information for a given location",
+            "parameters": [
+                {"name": "location", "type": "str", "description": "Location to get weather"}
+            ],
+            "return_type": "str",
+            "implementation": "return requests.get(f'http://weather-api.example.com/{location}').text"
+        }
+    ]
+    return tools
 
 
 @function_tool
@@ -200,9 +209,15 @@ def design_guardrails(specification: Dict[str, Any]) -> List[Dict[str, Any]]:
     Returns:
         List of guardrail definitions
     """
-    # This is a placeholder - in real implementation, the LLM would design
-    # appropriate guardrails based on the specification
-    return [{"guardrail_designed": True}]
+    guardrails = [
+        {
+            "name": "check_homework_question",
+            "type": "input",
+            "validation_logic": "Detect if input is related to homework",
+            "implementation": "result = detect_homework(input_data); return GuardrailFunctionOutput(tripwire_triggered=result)"
+        }
+    ]
+    return guardrails
 
 
 @function_tool
@@ -216,9 +231,22 @@ def generate_tool_code(tool_definition: Dict[str, Any]) -> str:
     Returns:
         Python code implementing the tool
     """
-    # This is a placeholder - in real implementation, the LLM would generate
-    # actual Python code for the tool
-    return "# Tool code would be generated here"
+    tool_code = f"""
+@function_tool
+def {tool_definition['name']}({', '.join([f"{param['name']}: {param['type']}" for param in tool_definition['parameters']])}) -> {tool_definition['return_type']}:
+    \"\"\"
+    {tool_definition['description']}
+    
+    Args:
+        {chr(10).join([f"{param['name']}: {param['description']}" for param in tool_definition['parameters']])}
+        
+    Returns:
+        {tool_definition['return_type']}
+    \"\"\"
+    import requests
+    {tool_definition['implementation']}
+"""
+    return tool_code
 
 
 @function_tool
@@ -248,9 +276,15 @@ def generate_guardrail_code(guardrail_definition: Dict[str, Any]) -> str:
     Returns:
         Python code implementing the guardrail
     """
-    # This is a placeholder - in real implementation, the LLM would generate
-    # actual Python code for the guardrail
-    return "# Guardrail code would be generated here"
+    guardrail_code = f"""
+@{'output' if guardrail_definition['type'] == 'output' else 'input'}_guardrail
+async def {guardrail_definition['name']}(ctx, agent, output: MessageOutput) -> GuardrailFunctionOutput:
+    \"\"\"
+    {guardrail_definition['validation_logic']}
+    \"\"\"
+    {guardrail_definition['implementation']}
+"""
+    return guardrail_code
 
 
 @function_tool

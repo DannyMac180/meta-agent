@@ -156,15 +156,29 @@ async def analyze_agent_specification() -> Dict[str, Any]:
 
 
 @function_tool
-async def design_agent_tools() -> List[Dict[str, Any]]:
+async def design_agent_tools(specification: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Design tools for an agent.
+    Design tools for an agent based on its specification.
     
+    Args:
+        specification: Structured agent specification
+        
     Returns:
         List of tool definitions
     """
-    # Implementation will be provided by the OpenAI model
-    pass
+    # Example implementation
+    tools = [
+        {
+            "name": "fetch_weather",
+            "description": "Fetches weather information for a given location",
+            "parameters": [
+                {"name": "location", "type": "str", "description": "Location to get weather"}
+            ],
+            "return_type": "str",
+            "implementation": "return requests.get(f'http://weather-api.example.com/{location}').text"
+        }
+    ]
+    return tools
 
 
 @function_tool
@@ -180,27 +194,56 @@ async def design_output_type() -> Optional[Dict[str, Any]]:
 
 
 @function_tool
-async def design_guardrails() -> List[Dict[str, Any]]:
+async def design_guardrails(specification: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Design guardrails for an agent.
+    Design guardrails for an agent based on its specification.
     
+    Args:
+        specification: Structured agent specification
+        
     Returns:
         List of guardrail definitions
     """
-    # Implementation will be provided by the OpenAI model
-    pass
+    # Example implementation
+    guardrails = [
+        {
+            "name": "check_homework_question",
+            "type": "input",
+            "validation_logic": "Detect if input is related to homework",
+            "implementation": "result = detect_homework(input_data); return GuardrailFunctionOutput(tripwire_triggered=result)"
+        }
+    ]
+    return guardrails
 
 
 @function_tool
-async def generate_tool_code() -> str:
+async def generate_tool_code(tool_definition: Dict[str, Any]) -> str:
     """
     Generate code for a tool based on its definition.
     
+    Args:
+        tool_definition: Tool definition
+        
     Returns:
         Python code implementing the tool
     """
-    # Implementation will be provided by the OpenAI model
-    pass
+    # Example implementation
+    tool_code = f"""
+@function_tool
+def {tool_definition['name']}({', '.join([f"{param['name']}: {param['type']}" for param in tool_definition['parameters']])}) -> {tool_definition['return_type']}:
+    \"\"\"
+    {tool_definition['description']}
+    
+    Args:
+        {chr(10).join([f"{param['name']}: {param['description']}" for param in tool_definition['parameters']])}
+        
+    Returns:
+        {tool_definition['return_type']}
+    \"\"\"
+    import requests
+    {tool_definition['implementation']}
+"""
+    return tool_code
 
 
 @function_tool
@@ -216,15 +259,26 @@ async def generate_output_type_code() -> str:
 
 
 @function_tool
-async def generate_guardrail_code() -> str:
+async def generate_guardrail_code(guardrail_definition: Dict[str, Any]) -> str:
     """
     Generate code for a guardrail based on its definition.
     
+    Args:
+        guardrail_definition: Guardrail definition
+        
     Returns:
         Python code implementing the guardrail
     """
-    # Implementation will be provided by the OpenAI model
-    pass
+    # Example implementation
+    guardrail_code = f"""
+@{'output' if guardrail_definition['type'] == 'output' else 'input'}_guardrail
+async def {guardrail_definition['name']}(ctx, agent, output: MessageOutput) -> GuardrailFunctionOutput:
+    \"\"\"
+    {guardrail_definition['validation_logic']}
+    \"\"\"
+    {guardrail_definition['implementation']}
+"""
+    return guardrail_code
 
 
 @function_tool
