@@ -12,7 +12,7 @@ from typing import Any, List, Optional, Dict, Union, Literal
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-from openai_agents_sdk.agents import (
+from agents import (
     Agent, 
     Runner,
     function_tool,
@@ -615,7 +615,7 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-from openai_agents_sdk.agents import (
+from agents import (
     Agent,
     Runner,
     function_tool,
@@ -642,7 +642,7 @@ if not OPENAI_API_KEY:
         "from typing import Dict, List, Optional, Any",
         "from pydantic import BaseModel, Field",
         "from dotenv import load_dotenv",
-        "from openai_agents_sdk.agents import Agent, Runner, function_tool, output_guardrail, GuardrailFunctionOutput"
+        "from agents import Agent, Runner, function_tool, output_guardrail, GuardrailFunctionOutput"
     ]
     
     # Extract agent specification from result
