@@ -82,6 +82,20 @@ def main():
                 f.write(content)
             print(f"Generated additional file: {file_path}")
         
+        # Save installation instructions
+        if agent_implementation.installation_instructions:
+            install_file_path = os.path.join(args.output, "INSTALL.md")
+            with open(install_file_path, "w") as f:
+                f.write(agent_implementation.installation_instructions)
+            print(f"Generated installation instructions file: {install_file_path}")
+        
+        # Save usage examples
+        if agent_implementation.usage_examples:
+            usage_file_path = os.path.join(args.output, "USAGE.md")
+            with open(usage_file_path, "w") as f:
+                f.write(agent_implementation.usage_examples)
+            print(f"Generated usage examples file: {usage_file_path}")
+        
         # Print installation and usage instructions
         print("\nInstallation Instructions:")
         print(agent_implementation.installation_instructions)
