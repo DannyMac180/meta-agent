@@ -1,4 +1,4 @@
-openai-agents
+openai-agents @ git+https://github.com/openai/openai-agents-python.git@v0.0.5
 pydantic
 asyncio
 typing

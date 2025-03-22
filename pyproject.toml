@@ -25,7 +25,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "openai-agents==0.0.5",
+    "openai-agents @ git+https://github.com/openai/openai-agents-python.git@v0.0.5",
     "pydantic",
     "asyncio",
     "typing",
