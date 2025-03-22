@@ -194,19 +194,51 @@ if __name__ == "__main__":
 
 ```
 meta-agent/
-├── meta_agent/             # Main package
-│   ├── __init__.py         # Package initialization
-│   ├── agent_generator.py  # Core agent generator
-│   └── cli.py              # Command-line interface
-├── tests/                  # Test directory
+├── meta_agent/                  # Main package
+│   ├── __init__.py              # Package initialization
+│   ├── core.py                  # Core agent generator functionality
+│   ├── agent_generator.py       # Legacy module (deprecated)
+│   ├── cli.py                   # Command-line interface
+│   ├── models/                  # Data models
+│   │   ├── __init__.py
+│   │   ├── agent.py             # Agent specification model
+│   │   ├── tool.py              # Tool definition model
+│   │   ├── output.py            # Output type definition model
+│   │   ├── guardrail.py         # Guardrail definition model
+│   │   ├── design.py            # Agent design model
+│   │   ├── code.py              # Agent code model
+│   │   └── implementation.py    # Agent implementation model
+│   ├── design/                  # Design-related functions
+│   │   ├── __init__.py
+│   │   ├── analyzer.py          # Agent specification analyzer
+│   │   ├── tool_designer.py     # Tool designer
+│   │   ├── output_designer.py   # Output type designer
+│   │   └── guardrail_designer.py # Guardrail designer
+│   ├── generation/              # Code generation functions
+│   │   ├── __init__.py
+│   │   ├── tool_generator.py    # Tool code generator
+│   │   ├── output_generator.py  # Output type code generator
+│   │   ├── guardrail_generator.py # Guardrail code generator
+│   │   ├── agent_generator.py   # Agent creation code generator
+│   │   ├── runner_generator.py  # Runner code generator
+│   │   └── assembler.py         # Implementation assembler
+│   ├── validation/              # Validation functions
+│   │   ├── __init__.py
+│   │   └── validator.py         # Implementation validator
+│   └── utils/                   # Utility functions
+│       ├── __init__.py
+│       ├── config.py            # Configuration utilities
+│       ├── file_utils.py        # File operation utilities
+│       └── string_utils.py      # String manipulation utilities
+├── tests/                       # Test directory
 │   ├── __init__.py
 │   └── test_agent_generator.py
-├── agents/                 # Example agents (not included in package)
-├── pyproject.toml          # Package configuration
-├── setup.py                # Setup script for backward compatibility
-├── MANIFEST.in             # Package manifest
-├── requirements.txt        # Dependencies
-└── README.md               # This file
+├── agents/                      # Example agents (not included in package)
+├── pyproject.toml               # Package configuration
+├── setup.py                     # Setup script for backward compatibility
+├── MANIFEST.in                  # Package manifest
+├── requirements.txt             # Dependencies
+└── README.md                    # This file
 ```
 
 ## Running Tests

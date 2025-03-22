@@ -7,22 +7,20 @@ This module provides a command-line interface for the Meta Agent.
 import asyncio
 import argparse
 import sys
-from dotenv import load_dotenv
 import os
 
-from meta_agent.agent_generator import generate_agent
+from meta_agent.core import generate_agent
+from meta_agent.utils import load_config, check_api_key, print_api_key_warning, write_file
 
 
 def main():
     """Main entry point for the CLI."""
     # Load environment variables from .env file
-    load_dotenv()
+    load_config()
 
     # Check for API key
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("Error: OPENAI_API_KEY environment variable not set.")
-        print("Please set your OpenAI API key in the .env file or as an environment variable:")
-        print("export OPENAI_API_KEY='your-api-key'")
+    if not check_api_key():
+        print_api_key_warning()
         sys.exit(1)
 
     parser = argparse.ArgumentParser(
@@ -71,29 +69,25 @@ def main():
         
         # Write main file
         main_file_path = os.path.join(args.output, "agent.py")
-        with open(main_file_path, "w") as f:
-            f.write(agent_implementation.main_file)
+        write_file(main_file_path, agent_implementation.main_file)
         print(f"Generated main agent file: {main_file_path}")
         
         # Write additional files
         for filename, content in agent_implementation.additional_files.items():
             file_path = os.path.join(args.output, filename)
-            with open(file_path, "w") as f:
-                f.write(content)
+            write_file(file_path, content)
             print(f"Generated additional file: {file_path}")
         
         # Save installation instructions
         if agent_implementation.installation_instructions:
             install_file_path = os.path.join(args.output, "INSTALL.md")
-            with open(install_file_path, "w") as f:
-                f.write(agent_implementation.installation_instructions)
+            write_file(install_file_path, agent_implementation.installation_instructions)
             print(f"Generated installation instructions file: {install_file_path}")
         
         # Save usage examples
         if agent_implementation.usage_examples:
             usage_file_path = os.path.join(args.output, "USAGE.md")
-            with open(usage_file_path, "w") as f:
-                f.write(agent_implementation.usage_examples)
+            write_file(usage_file_path, agent_implementation.usage_examples)
             print(f"Generated usage examples file: {usage_file_path}")
         
         # Print installation and usage instructions
