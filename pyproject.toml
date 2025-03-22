@@ -45,3 +45,17 @@ danmac-meta-agent = "meta_agent.cli:main"
 
 [tool.setuptools]
 packages = ["meta_agent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--strict-markers -v"
+markers = [
+    "unit: mark a test as a unit test",
+    "integration: mark a test as an integration test",
+    "slow: mark test as slow (longer than 1s)",
+    "api: tests that require API access",
+    "asyncio: mark test as an asyncio test"
+]

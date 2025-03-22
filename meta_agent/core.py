@@ -44,6 +44,10 @@ async def generate_agent(specification: str) -> AgentImplementation:
     Returns:
         Complete agent implementation
     """
+    # Check for empty specification
+    if not specification or not specification.strip():
+        raise ValueError("Agent specification cannot be empty")
+        
     # Load configuration
     load_config()
     
@@ -197,11 +201,12 @@ async def generate_agent(specification: str) -> AgentImplementation:
         f"Validate this agent implementation: {agent_implementation.model_dump_json()}"
     )
     
-    # Print validation results
+    # Print validation results and validate
     if isinstance(validation_result, dict) and validation_result.get("valid", False):
         print("Validation successful!")
     else:
-        print("Validation failed:")
-        print(validation_result)
+        error_message = validation_result.get("message", "Unknown validation error") if isinstance(validation_result, dict) else str(validation_result)
+        print(f"Validation failed: {error_message}")
+        raise ValueError(f"Validation failed: {error_message}")
     
     return agent_implementation
