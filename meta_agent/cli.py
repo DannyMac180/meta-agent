@@ -10,7 +10,8 @@ import sys
 import os
 
 from meta_agent.core import generate_agent
-from meta_agent.utils import load_config, check_api_key, print_api_key_warning, write_file
+from meta_agent.config import config, load_config, check_api_key, print_api_key_warning
+from meta_agent.utils import write_file
 
 
 def main():
