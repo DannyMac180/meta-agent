@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [
     {name = "Meta Agent Developer"}
 ]
-license = "MIT"
+license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
