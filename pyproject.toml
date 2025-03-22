@@ -32,6 +32,7 @@ dependencies = [
     "python-dotenv",
     "requests",
     "beautifulsoup4",
+    "griffe>=1.5.6,<2.0.0",
 ]
 
 [project.urls]
