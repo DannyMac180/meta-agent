@@ -31,7 +31,7 @@ from meta_agent.generation import (
     assemble_agent_implementation
 )
 from meta_agent.validation import validate_agent_implementation
-from meta_agent.utils import load_config, check_api_key, print_api_key_warning
+from meta_agent.config import config, load_config, check_api_key, print_api_key_warning
 
 
 async def generate_agent(specification: str) -> AgentImplementation:
