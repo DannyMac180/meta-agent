@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "danmac-meta-agent"
-version = "0.1.0"
+version = "1.0.0"
 description = "A meta agent that creates OpenAI Agents SDK agents"
 readme = "README.md"
 authors = [
