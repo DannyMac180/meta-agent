@@ -27,7 +27,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        poetry install --no-dev
+        poetry install --without dev
         
     - name: Build package
       run: |
