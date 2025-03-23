@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
@@ -54,8 +56,6 @@ jobs:
       
     - name: Test with pytest (integration tests)
       if: github.event_name == 'push'
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         pytest tests/integration -v
         
