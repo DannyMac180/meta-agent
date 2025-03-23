@@ -1,16 +1,14 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "danmac-meta-agent"
 version = "1.0.0"
 description = "A meta agent that creates OpenAI Agents SDK agents"
 readme = "README.md"
-authors = [
-    {name = "Meta Agent Developer"}
-]
-license = {text = "MIT"}
+authors = ["Meta Agent Developer"]
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -23,29 +21,33 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-requires-python = ">=3.8,<3.12"
-dependencies = [
-    "openai-agents>=0.0.6,<0.1.0",
-    "pydantic>=2.0.0,<3.0.0",
-    "asyncio>=3.4.3,<4.0.0",
-    "typing>=3.7.4.3,<4.0.0",
-    "python-dotenv>=1.0.0,<2.0.0",
-    "requests>=2.28.0,<3.0.0",
-    "beautifulsoup4>=4.11.0,<5.0.0",
-    "griffe>=1.5.6,<2.0.0",
-]
+packages = [{include = "meta_agent"}]
+repository = "https://github.com/DannyMac180/meta-agent"
+homepage = "https://github.com/DannyMac180/meta-agent"
+documentation = "https://github.com/DannyMac180/meta-agent#readme"
+keywords = ["agent", "openai", "ai"]
 
-[project.urls]
-"Homepage" = "https://github.com/DannyMac180/meta-agent"
-"Bug Tracker" = "https://github.com/DannyMac180/meta-agent/issues"
-"Documentation" = "https://github.com/DannyMac180/meta-agent#readme"
-"Source Code" = "https://github.com/DannyMac180/meta-agent"
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+openai-agents = ">=0.0.6,<0.1.0"
+pydantic = ">=2.0.0,<3.0.0"
+asyncio = ">=3.4.3,<4.0.0"
+typing = ">=3.7.4.3,<4.0.0"
+python-dotenv = ">=1.0.0,<2.0.0"
+requests = ">=2.28.0,<3.0.0"
+beautifulsoup4 = ">=4.11.0,<5.0.0"
+griffe = ">=1.5.6,<2.0.0"
 
-[project.scripts]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0.0,<8.0.0"
+pytest-asyncio = ">=0.20.0,<0.21.0"
+pytest-cov = ">=4.0.0,<5.0.0"
+flake8 = ">=6.0.0,<7.0.0"
+black = ">=23.0.0,<24.0.0"
+mypy = ">=1.0.0,<2.0.0"
+
+[tool.poetry.scripts]
 danmac-meta-agent = "meta_agent.cli:main"
-
-[tool.setuptools]
-packages = ["meta_agent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
