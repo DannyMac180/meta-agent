@@ -25,7 +25,20 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio pytest-cov
-        pip install -e .
+        
+        # Use lock file if available, otherwise install normally
+        PYTHON_VERSION=${{ matrix.python-version }}
+        LOCK_FILE=lock_files/requirements-py${PYTHON_VERSION/./}-lock.txt
+        
+        if [ -f "$LOCK_FILE" ]; then
+          echo "Using lock file: $LOCK_FILE"
+          pip install -e . --no-deps
+          pip install -r $LOCK_FILE
+        else
+          echo "Lock file not found, installing from requirements.txt"
+          pip install -e . --no-deps
+          pip install -r requirements.txt
+        fi
         
     - name: Lint with flake8
       run: |

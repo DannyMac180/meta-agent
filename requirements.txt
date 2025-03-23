@@ -1,8 +1,8 @@
-openai-agents @ git+https://github.com/openai/openai-agents-python.git@v0.0.5
-pydantic
-asyncio
-typing
-python-dotenv
-requests
-beautifulsoup4
+openai-agents>=0.0.5,<0.1.0
+pydantic>=2.0.0,<3.0.0
+asyncio>=3.4.3,<4.0.0
+typing>=3.7.4.3,<4.0.0
+python-dotenv>=1.0.0,<2.0.0
+requests>=2.28.0,<3.0.0
+beautifulsoup4>=4.11.0,<5.0.0
 griffe>=1.5.6,<2.0.0

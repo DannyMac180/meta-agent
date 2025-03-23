@@ -370,6 +370,31 @@ The meta agent is implemented using the OpenAI Agents SDK and follows these key 
 3. **Agents as Tools**: Specialized agents handle different parts of the process
 4. **Guardrails**: Ensures the generated agents meet quality standards
 
+## Development
+
+### Dependency Management
+
+This project uses precise version constraints to ensure consistent behavior across different environments. We maintain lock files for each supported Python version to guarantee reproducible builds.
+
+#### Generating Lock Files
+
+To generate lock files for all supported Python versions:
+
+```bash
+# Make the script executable if needed
+chmod +x scripts/generate_lock_files.sh
+
+# Run the script
+./scripts/generate_lock_files.sh
+```
+
+This creates version-specific lock files in the `lock_files` directory:
+- `requirements-py39-lock.txt` for Python 3.9
+- `requirements-py310-lock.txt` for Python 3.10
+- `requirements-py311-lock.txt` for Python 3.11
+
+These lock files are used by the CI/CD pipeline to ensure consistent testing across all supported Python versions.
+
 ## Limitations
 
 - The meta agent requires a well-structured specification to generate effective agents
