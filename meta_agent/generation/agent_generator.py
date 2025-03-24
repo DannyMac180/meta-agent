@@ -54,14 +54,13 @@ def generate_agent_creation_code() -> str:
     code_parts.append("agent = Agent(")
     code_parts.append("    name=\"example_agent\",")
     code_parts.append("    instructions=\"\"\"Example agent instructions\"\"\",")
-    code_parts.append("    model=\"gpt-4o\",")
     code_parts.append(")")
     
     return "\n".join(code_parts)
 
 
 # The main meta agent that orchestrates the whole process
-# In v0.0.6, handoffs are not directly passed to the Agent constructor
+# In v0.0.6, neither handoffs nor model are passed to the Agent constructor
 agent_generator = Agent(
     name="agent_generator",
     instructions="""
@@ -78,7 +77,6 @@ agent_generator = Agent(
     
     You will use specialized agents for each step of the process.
     """,
-    model="gpt-4o",
     tools=[
         analyze_agent_specification,
         design_agent_tools,
