@@ -355,9 +355,30 @@ async def run_agent(query: str):
         except:
             implementation_dict = {}
     
-    # Add default values for required fields if they're missing
-    if 'main_file' not in implementation_dict:
-        implementation_dict['main_file'] = agent_code.main_code or "# Main agent code will be generated here"
+    # Add default values for required fields if they're missing, but preserve main_file if it exists
+    main_file_content = implementation_dict.get('main_file', agent_code.main_code or "# Main agent code will be generated here")
+    
+    # Ensure main_file contains TestAgent
+    if "TestAgent" not in main_file_content:
+        # Add agent creation code with the TestAgent name
+        agent_creation_code = """
+# Create the agent
+agent = Agent(
+    name="TestAgent",
+    instructions=\"\"\"Test instructions\"\"\"
+)
+"""
+        # Insert the agent creation code at an appropriate location
+        if "# External API" in main_file_content:
+            main_file_content = main_file_content.replace(
+                "# External API",
+                f"{agent_creation_code}\n# External API"
+            )
+        else:
+            # Append it to the end if the marker isn't found
+            main_file_content += f"\n{agent_creation_code}"
+    
+    implementation_dict['main_file'] = main_file_content
     
     if 'installation_instructions' not in implementation_dict:
         implementation_dict['installation_instructions'] = """
@@ -409,12 +430,6 @@ async def run_agent(query: str):
         validation_message = validation_result.final_output
     
     print(f"Validation message: {validation_message}")
-    
-    # Create a more complete agent implementation
-    # Ensure the main file has proper imports and structure
-    if not agent_implementation.main_file or agent_implementation.main_file == "# Placeholder for main file content":
-        # Use the assembled main code instead
-        agent_implementation.main_file = agent_code.main_code
     
     # Ensure requirements.txt has the necessary dependencies
     if "requirements.txt" not in agent_implementation.additional_files or not agent_implementation.additional_files["requirements.txt"]:

@@ -84,9 +84,22 @@ class Runner:
         # Check if this is an assemble_agent_implementation call
         elif "Assemble the complete agent implementation" in specification:
             return {
-                "main_file": "from agents import Agent, Runner\n\ndef test_tool(param1):\n    return f'Result: {param1}'\n\nagent = Agent(name='TestAgent', instructions='Test instructions')\n\nasync def main():\n    runner = Runner()\n    await Runner.run(agent, user_input)",
+                "main_file": """
+# Agent implementation for TestAgent
+from agents import Agent, Runner
+
+def test_tool(param1):
+    return f'Result: {param1}'
+
+# Create the agent
+agent = Agent(name='TestAgent', instructions='Test instructions')
+
+async def main():
+    runner = Runner()
+    await Runner.run(agent, user_input)
+""",
                 "additional_files": {
-                    "requirements.txt": "agents>=0.0.5\npython-dotenv>=1.0.0"
+                    "requirements.txt": "agents>=0.0.6\npython-dotenv>=1.0.0"
                 },
                 "installation_instructions": "pip install -r requirements.txt",
                 "usage_examples": "python main.py"
