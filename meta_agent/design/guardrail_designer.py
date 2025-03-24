@@ -11,13 +11,10 @@ from meta_agent.models.guardrail import GuardrailDefinition
 
 
 @function_tool()
-def design_guardrails(specification: Dict[str, Any]) -> List[GuardrailDefinition]:
+def design_guardrails() -> List[GuardrailDefinition]:
     """
     Design guardrails for an agent based on its specification.
     
-    Args:
-        specification: Structured agent specification
-        
     Returns:
         List of guardrail definitions
     """

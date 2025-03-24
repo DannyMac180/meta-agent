@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "danmac-meta-agent"
-version = "1.0.0"
+version = "1.0.1"
 description = "A meta agent that creates OpenAI Agents SDK agents"
 readme = "README.md"
 authors = ["Meta Agent Developer"]

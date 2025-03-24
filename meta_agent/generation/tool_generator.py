@@ -9,19 +9,16 @@ from agents import function_tool
 
 
 @function_tool()
-def generate_tool_code(tool_definition: Dict[str, Any]) -> str:
+def generate_tool_code() -> str:
     """
     Generate code for a tool based on its definition.
     
-    Args:
-        tool_definition: Tool definition
-        
     Returns:
         Python code implementing the tool
     """
     # This is a dummy implementation that will be replaced by the actual LLM call
     # The real implementation will be called through the OpenAI Agents SDK
-    tool_name = tool_definition.get("name", "unknown_tool")
+    tool_name = "unknown_tool"
     return f"""
 @function_tool()
 def {tool_name}():

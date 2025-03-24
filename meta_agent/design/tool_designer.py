@@ -11,13 +11,10 @@ from meta_agent.models.tool import ToolDefinition
 
 
 @function_tool()
-def design_agent_tools(specification: Dict[str, Any]) -> List[ToolDefinition]:
+def design_agent_tools() -> List[ToolDefinition]:
     """
     Design tools for an agent based on its specification.
     
-    Args:
-        specification: Structured agent specification
-        
     Returns:
         List of tool definitions
     """

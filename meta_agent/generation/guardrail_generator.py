@@ -9,20 +9,17 @@ from agents import function_tool
 
 
 @function_tool()
-def generate_guardrail_code(guardrail_definition: Dict[str, Any]) -> str:
+def generate_guardrail_code() -> str:
     """
     Generate code for a guardrail based on its definition.
     
-    Args:
-        guardrail_definition: Guardrail definition
-        
     Returns:
         Python code implementing the guardrail
     """
     # This is a dummy implementation that will be replaced by the actual LLM call
     # The real implementation will be called through the OpenAI Agents SDK
-    guardrail_name = guardrail_definition.get("name", "unknown_guardrail")
-    guardrail_type = guardrail_definition.get("type", "output")
+    guardrail_name = "unknown_guardrail"
+    guardrail_type = "output"
     
     if guardrail_type == "output":
         return f"""
