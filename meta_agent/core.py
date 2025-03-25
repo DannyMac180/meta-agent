@@ -8,7 +8,7 @@ the agent generation process.
 import asyncio
 from typing import Dict, Any
 
-from agents import Agent, Runner
+from agents import Runner
 
 from meta_agent.models import (
     AgentSpecification,
@@ -16,22 +16,8 @@ from meta_agent.models import (
     AgentCode,
     AgentImplementation
 )
-from meta_agent.design import (
-    analyze_agent_specification,
-    design_agent_tools,
-    design_output_type,
-    design_guardrails
-)
-from meta_agent.generation import (
-    generate_tool_code,
-    generate_output_type_code,
-    generate_guardrail_code,
-    generate_agent_creation_code,
-    generate_runner_code,
-    assemble_agent_implementation
-)
-from meta_agent.validation import validate_agent_implementation
-from meta_agent.config import config, load_config, check_api_key, print_api_key_warning
+from meta_agent.generation.agent_generator import agent_generator
+from meta_agent.config import load_config, check_api_key, print_api_key_warning
 from meta_agent.models.output import OutputTypeDefinition
 
 
@@ -56,36 +42,13 @@ async def generate_agent(specification: str) -> AgentImplementation:
     if not check_api_key():
         print_api_key_warning()
     
-    # Create the meta agent
-    meta_agent = Agent(
-        name="MetaAgent",
-        instructions="""
-        You are a meta agent that creates other agents using the OpenAI Agents SDK.
-        Your task is to analyze a natural language specification and generate a complete
-        agent implementation based on it.
-        """,
-        tools=[
-            analyze_agent_specification,
-            design_agent_tools,
-            design_output_type,
-            design_guardrails,
-            generate_tool_code,
-            generate_output_type_code,
-            generate_guardrail_code,
-            generate_agent_creation_code,
-            generate_runner_code,
-            assemble_agent_implementation,
-            validate_agent_implementation,
-        ]
-    )
-    
     # Initialize the runner
     runner = Runner()
     
     # Step 1: Analyze the specification
     print("Step 1: Analyzing agent specification...")
     agent_spec_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Analyze this agent specification and extract structured information: {specification}"
     )
     print(f"Agent spec result type: {type(agent_spec_result)}")
@@ -119,7 +82,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     # Step 2: Design the tools
     print("Step 2: Designing agent tools...")
     tools_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Design tools for this agent: {agent_specification.model_dump_json()}"
     )
     print(f"Tools result type: {type(tools_result)}")
@@ -141,7 +104,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     # Step 3: Design the output type (if needed)
     print("Step 3: Designing output type (if needed)...")
     output_type_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Design an output type for this agent if needed: {agent_specification.model_dump_json()}"
     )
     print(f"Output type result type: {type(output_type_result)}")
@@ -163,7 +126,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     # Step 4: Design the guardrails
     print("Step 4: Designing guardrails...")
     guardrails_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Design guardrails for this agent: {agent_specification.model_dump_json()}"
     )
     print(f"Guardrails result type: {type(guardrails_result)}")
@@ -195,7 +158,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     tool_code_list = []
     for tool in agent_design.tools:
         tool_code = await Runner.run(
-            meta_agent,
+            agent_generator,
             f"Generate code for this tool: {tool}"
         )
         print(f"Tool code result type: {type(tool_code)}")
@@ -211,7 +174,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     output_type_code = None
     if agent_design.output_type:
         output_type_code_result = await Runner.run(
-            meta_agent,
+            agent_generator,
             f"Generate code for this output type: {agent_design.output_type.model_dump_json()}"
         )
         print(f"Output type code result type: {type(output_type_code_result)}")
@@ -227,7 +190,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     guardrail_code_list = []
     for guardrail in agent_design.guardrails:
         guardrail_code = await Runner.run(
-            meta_agent,
+            agent_generator,
             f"Generate code for this guardrail: {guardrail}"
         )
         print(f"Guardrail code result type: {type(guardrail_code)}")
@@ -241,7 +204,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     # Step 8: Generate agent creation code
     print("Step 8: Generating agent creation code...")
     agent_creation_code_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Generate code that creates an agent instance based on this design: {agent_design.model_dump_json()}"
     )
     print(f"Agent creation code result type: {type(agent_creation_code_result)}")
@@ -256,7 +219,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
     # Step 9: Generate runner code
     print("Step 9: Generating runner code...")
     runner_code_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Generate code that runs the agent: {agent_design.model_dump_json()}"
     )
     print(f"Runner code result type: {type(runner_code_result)}")
@@ -275,7 +238,7 @@ async def generate_agent(specification: str) -> AgentImplementation:
             "import os",
             "import asyncio",
             "from dotenv import load_dotenv",
-            "from agents import Agent, Runner, function_tool, output_guardrail, GuardrailFunctionOutput",
+            "from agents import Runner, function_tool, output_guardrail, GuardrailFunctionOutput",
             "from typing import Dict, List, Any, Optional",
             "from pydantic import BaseModel, Field"
         ],
@@ -338,7 +301,7 @@ async def run_agent(query: str):
     # Step 10: Assemble the implementation
     print("Step 10: Assembling agent implementation...")
     implementation_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Assemble the complete agent implementation: {agent_code.model_dump_json()}"
     )
     print(f"Implementation result type: {type(implementation_result)}")
@@ -418,7 +381,7 @@ agent = Agent(
     # Step 11: Validate the implementation
     print("Step 11: Validating agent implementation...")
     validation_result = await Runner.run(
-        meta_agent,
+        agent_generator,
         f"Validate this agent implementation: {agent_implementation.model_dump_json()}"
     )
     print(f"Validation result type: {type(validation_result)}")
