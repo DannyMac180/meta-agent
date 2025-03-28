@@ -1,429 +1,502 @@
 """
-Core functionality for the meta-agent package.
+Proposed fixes for core.py to generate proper OpenAI Agents SDK implementations.
 
-This module implements the main generate_agent function that orchestrates
-the agent generation process.
+This implementation focuses on generating code that directly uses the OpenAI Agents SDK
+classes and decorators, following the pattern shown in the simple_agent.py example.
 """
 
 import asyncio
-from typing import Dict, Any
-
+from typing import Dict, List, Any, Optional
+import json
 from agents import Runner
+from pydantic import ValidationError
 
 from meta_agent.models import (
     AgentSpecification,
+    ToolDefinition,
+    OutputTypeDefinition,
     AgentDesign,
     AgentCode,
     AgentImplementation
 )
-from meta_agent.generation.agent_generator import agent_generator
 from meta_agent.config import load_config, check_api_key, print_api_key_warning
-from meta_agent.models.output import OutputTypeDefinition
 
+# Import the configured agent generator
+from meta_agent.generation.agent_generator import agent_generator
 
-async def generate_agent(specification: str) -> AgentImplementation:
+async def generate_agent(specification: str, model_override: Optional[str] = None) -> AgentImplementation:
     """
     Generate an agent based on a natural language specification.
-    
+
     Args:
-        specification: Natural language description of the agent to create
-        
+        specification: A natural language description of the agent to create
+        model_override: Optional model override for the generator
+
     Returns:
         Complete agent implementation
+
+    Raises:
+        ValueError: If the specification is empty.
+        Exception: If any step of the generation process fails.
     """
     # Check for empty specification
     if not specification or not specification.strip():
         raise ValueError("Agent specification cannot be empty")
-        
-    # Load configuration
+
+    # Load configuration and check API key
     load_config()
-    
-    # Check for API key
     if not check_api_key():
         print_api_key_warning()
-    
+        # Decide if execution should stop or continue with potential errors
+        # For now, we'll let it continue, but it will likely fail.
+
     # Initialize the runner
     runner = Runner()
-    
+
+    print("Starting agent generation process...")
+
     # Step 1: Analyze the specification
-    print("Step 1: Analyzing agent specification...")
-    agent_spec_result = await Runner.run(
-        agent_generator,
-        f"Analyze this agent specification and extract structured information: {specification}"
-    )
-    print(f"Agent spec result type: {type(agent_spec_result)}")
-    print(f"Agent spec result: {agent_spec_result}")
-    
-    # Extract agent_spec from RunResult
-    agent_spec_dict = {}
-    if hasattr(agent_spec_result, 'final_output') and agent_spec_result.final_output:
-        try:
-            # First try to parse as JSON
-            import json
-            agent_spec_dict = json.loads(agent_spec_result.final_output)
-        except:
-            # If parsing fails, create a basic spec from the specification text
-            agent_spec_dict = {
-                "name": "DefaultAgent",
-                "description": "Agent created from specification",
-                "instructions": specification
-            }
-    
-    # Ensure required fields are present
-    if "name" not in agent_spec_dict:
-        agent_spec_dict["name"] = "DefaultAgent"
-    if "description" not in agent_spec_dict:
-        agent_spec_dict["description"] = "Agent created from specification"
-    if "instructions" not in agent_spec_dict:
-        agent_spec_dict["instructions"] = specification
-    
-    agent_specification = AgentSpecification(**agent_spec_dict)
-    
+    try:
+        print("Step 1: Analyzing agent specification...")
+        analysis_prompt = f"Analyze the following agent specification and return the structured result using the 'analyze_agent_specification' tool:\n\n```\n{specification}\n```"
+        analysis_result = await runner.run(agent_generator, analysis_prompt)
+
+        # Extract the structured result (JSON string) returned *by* the tool execution
+        tool_output_json = None
+        if hasattr(analysis_result, 'tool_outputs') and analysis_result.tool_outputs:
+            # Assume the last tool output corresponds to the analysis tool's execution result
+            tool_output = analysis_result.tool_outputs[-1]
+            if isinstance(tool_output, str):
+                tool_output_json = tool_output
+            # Add handling if tool_output is already a dict (less likely based on error)
+            elif isinstance(tool_output, dict):
+                print("DEBUG: tool_output is already a dict, attempting to dump back to JSON.")
+                tool_output_json = json.dumps(tool_output)
+
+        if not tool_output_json:
+            print(f"DEBUG: Failed to find tool output JSON in tool_outputs. Analysis Result: {analysis_result}")
+            # As a fallback, check if final_output contains the JSON (less ideal)
+            if hasattr(analysis_result, 'final_output') and isinstance(analysis_result.final_output, str) and analysis_result.final_output.strip().startswith('{'):
+                print("DEBUG: Attempting to parse final_output as JSON fallback.")
+                tool_output_json = analysis_result.final_output
+            else:
+                raise Exception("Could not find the JSON output from the 'analyze_agent_specification' tool in tool_outputs or final_output.")
+
+        # Now, parse the confirmed JSON string
+        agent_spec_dict = json.loads(tool_output_json)
+        agent_specification = AgentSpecification.model_validate(agent_spec_dict)
+        print(f"  -> Analyzed Specification: {agent_specification.name}")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 1 (Analysis): {e}")
+        print(f"Analysis Result: {analysis_result if 'analysis_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to analyze agent specification: {e}") from e
+
     # Step 2: Design the tools
-    print("Step 2: Designing agent tools...")
-    tools_result = await Runner.run(
-        agent_generator,
-        f"Design tools for this agent: {agent_specification.model_dump_json()}"
-    )
-    print(f"Tools result type: {type(tools_result)}")
-    print(f"Tools result: {tools_result}")
-    
-    # Extract tools from RunResult
-    tools = []
-    if hasattr(tools_result, 'final_output') and tools_result.final_output:
-        try:
-            # Try to parse the final_output as JSON
-            import json
-            tools_json = json.loads(tools_result.final_output)
-            if isinstance(tools_json, list):
-                tools = tools_json
-        except:
-            # If parsing fails, use an empty list
-            tools = []
-    
-    # Step 3: Design the output type (if needed)
-    print("Step 3: Designing output type (if needed)...")
-    output_type_result = await Runner.run(
-        agent_generator,
-        f"Design an output type for this agent if needed: {agent_specification.model_dump_json()}"
-    )
-    print(f"Output type result type: {type(output_type_result)}")
-    print(f"Output type result: {output_type_result}")
-    
-    # Extract output_type from RunResult
-    output_type = None
-    if hasattr(output_type_result, 'final_output') and output_type_result.final_output:
-        try:
-            # Try to parse the final_output as JSON
-            import json
-            output_type_json = json.loads(output_type_result.final_output)
-            if isinstance(output_type_json, dict):
-                output_type = OutputTypeDefinition(**output_type_json)
-        except:
-            # If parsing fails, use None
-            output_type = None
-    
-    # Step 4: Design the guardrails
-    print("Step 4: Designing guardrails...")
-    guardrails_result = await Runner.run(
-        agent_generator,
-        f"Design guardrails for this agent: {agent_specification.model_dump_json()}"
-    )
-    print(f"Guardrails result type: {type(guardrails_result)}")
-    print(f"Guardrails result: {guardrails_result}")
-    
-    # Extract guardrails from RunResult
-    guardrails = []
-    if hasattr(guardrails_result, 'final_output') and guardrails_result.final_output:
-        try:
-            # Try to parse the final_output as JSON
-            import json
-            guardrails_json = json.loads(guardrails_result.final_output)
-            if isinstance(guardrails_json, list):
-                guardrails = guardrails_json
-        except:
-            # If parsing fails, use an empty list
-            guardrails = []
-    
-    # Create the agent design
-    agent_design = AgentDesign(
-        specification=agent_specification,
-        tools=tools,
-        output_type=output_type,
-        guardrails=guardrails
-    )
-    
-    # Step 5: Generate tool code
-    print("Step 5: Generating tool code...")
-    tool_code_list = []
-    for tool in agent_design.tools:
-        tool_code = await Runner.run(
-            agent_generator,
-            f"Generate code for this tool: {tool}"
-        )
-        print(f"Tool code result type: {type(tool_code)}")
-        print(f"Tool code result: {tool_code}")
-        if hasattr(tool_code, 'final_output') and tool_code.final_output:
-            try:
-                tool_code_list.append(tool_code.final_output)
-            except:
-                tool_code_list.append("")
-    
-    # Step 6: Generate output type code (if needed)
-    print("Step 6: Generating output type code (if needed)...")
-    output_type_code = None
-    if agent_design.output_type:
-        output_type_code_result = await Runner.run(
-            agent_generator,
-            f"Generate code for this output type: {agent_design.output_type.model_dump_json()}"
-        )
-        print(f"Output type code result type: {type(output_type_code_result)}")
-        print(f"Output type code result: {output_type_code_result}")
-        if hasattr(output_type_code_result, 'final_output') and output_type_code_result.final_output:
-            try:
-                output_type_code = output_type_code_result.final_output
-            except:
-                output_type_code = ""
-    
-    # Step 7: Generate guardrail code
-    print("Step 7: Generating guardrail code...")
-    guardrail_code_list = []
-    for guardrail in agent_design.guardrails:
-        guardrail_code = await Runner.run(
-            agent_generator,
-            f"Generate code for this guardrail: {guardrail}"
-        )
-        print(f"Guardrail code result type: {type(guardrail_code)}")
-        print(f"Guardrail code result: {guardrail_code}")
-        if hasattr(guardrail_code, 'final_output') and guardrail_code.final_output:
-            try:
-                guardrail_code_list.append(guardrail_code.final_output)
-            except:
-                guardrail_code_list.append("")
-    
-    # Step 8: Generate agent creation code
-    print("Step 8: Generating agent creation code...")
-    agent_creation_code_result = await Runner.run(
-        agent_generator,
-        f"Generate code that creates an agent instance based on this design: {agent_design.model_dump_json()}"
-    )
-    print(f"Agent creation code result type: {type(agent_creation_code_result)}")
-    print(f"Agent creation code result: {agent_creation_code_result}")
-    agent_creation_code = ""
-    if hasattr(agent_creation_code_result, 'final_output') and agent_creation_code_result.final_output:
-        try:
-            agent_creation_code = agent_creation_code_result.final_output
-        except:
-            agent_creation_code = ""
-    
-    # Step 9: Generate runner code
-    print("Step 9: Generating runner code...")
-    runner_code_result = await Runner.run(
-        agent_generator,
-        f"Generate code that runs the agent: {agent_design.model_dump_json()}"
-    )
-    print(f"Runner code result type: {type(runner_code_result)}")
-    print(f"Runner code result: {runner_code_result}")
-    runner_code = ""
-    if hasattr(runner_code_result, 'final_output') and runner_code_result.final_output:
-        try:
-            runner_code = runner_code_result.final_output
-        except:
-            runner_code = ""
-    
-    # Create the agent code
-    agent_code = AgentCode(
-        main_code="",  # Will be assembled later
-        imports=[
-            "import os",
-            "import asyncio",
-            "from dotenv import load_dotenv",
-            "from agents import Runner, function_tool, output_guardrail, GuardrailFunctionOutput",
-            "from typing import Dict, List, Any, Optional",
-            "from pydantic import BaseModel, Field"
-        ],
-        tool_implementations=tool_code_list,
-        output_type_implementation=output_type_code,
-        guardrail_implementations=guardrail_code_list,
-        agent_creation=agent_creation_code,
-        runner_code=runner_code
-    )
-    
-    # Assemble the main code from all the components
-    main_code_parts = []
-    
-    # Add imports
-    main_code_parts.append("\n".join(agent_code.imports))
-    main_code_parts.append("\n\n# Tool implementations")
-    
-    # Add tool implementations
-    if agent_code.tool_implementations:
-        main_code_parts.append("\n\n".join(agent_code.tool_implementations))
-    
-    # Add output type implementation
-    if agent_code.output_type_implementation:
-        main_code_parts.append("\n\n# Output type implementation")
-        main_code_parts.append(agent_code.output_type_implementation)
-    
-    # Add guardrail implementations
-    if agent_code.guardrail_implementations:
-        main_code_parts.append("\n\n# Guardrail implementations")
-        main_code_parts.append("\n\n".join(agent_code.guardrail_implementations))
-    
-    # Add agent creation
-    if agent_code.agent_creation:
-        main_code_parts.append("\n\n# Agent creation")
-        main_code_parts.append(agent_code.agent_creation)
-    
-    # Add runner code
-    if agent_code.runner_code:
-        main_code_parts.append("\n\n# Runner code")
-        main_code_parts.append(agent_code.runner_code)
-    
-    # Add a run_agent function for external use
-    run_agent_function = """
-# Function to run the agent from external code
-async def run_agent(query: str):
-    # Initialize the runner
-    runner = Runner()
-    
-    # Run the agent
-    result = await Runner.run(agent, query)
-    
-    return result
-"""
-    main_code_parts.append("\n\n# External API")
-    main_code_parts.append(run_agent_function)
-    
-    # Set the main code
-    agent_code.main_code = "\n".join(main_code_parts)
-    
-    # Step 10: Assemble the implementation
-    print("Step 10: Assembling agent implementation...")
-    implementation_result = await Runner.run(
-        agent_generator,
-        f"Assemble the complete agent implementation: {agent_code.model_dump_json()}"
-    )
-    print(f"Implementation result type: {type(implementation_result)}")
-    print(f"Implementation result: {implementation_result}")
-    
-    # Ensure implementation_result is a dictionary and has all required fields
-    implementation_dict = {}
-    if hasattr(implementation_result, 'final_output') and implementation_result.final_output:
-        try:
-            import json
-            implementation_json = json.loads(implementation_result.final_output)
-            if isinstance(implementation_json, dict):
-                implementation_dict = implementation_json
-        except:
-            implementation_dict = {}
-    
-    # Add default values for required fields if they're missing, but preserve main_file if it exists
-    main_file_content = implementation_dict.get('main_file', agent_code.main_code or "# Main agent code will be generated here")
-    
-    # Ensure main_file contains TestAgent
-    if "TestAgent" not in main_file_content:
-        # Add agent creation code with the TestAgent name
-        agent_creation_code = """
-# Create the agent
-agent = Agent(
-    name="TestAgent",
-    instructions=\"\"\"Test instructions\"\"\"
-)
-"""
-        # Insert the agent creation code at an appropriate location
-        if "# External API" in main_file_content:
-            main_file_content = main_file_content.replace(
-                "# External API",
-                f"{agent_creation_code}\n# External API"
-            )
+    try:
+        print("Step 2: Designing agent tools...")
+        design_tools_prompt = f"Based on this AgentSpecification JSON, design the necessary tools using the 'design_agent_tools' tool:\n\n```json\n{agent_specification.model_dump_json(indent=2)}\n```"
+        tools_result = await runner.run(agent_generator, design_tools_prompt)
+
+        # Extract the structured result (JSON string) returned *by* the tool execution
+        tools_output_json = None
+        if hasattr(tools_result, 'tool_outputs') and tools_result.tool_outputs:
+            tool_output = tools_result.tool_outputs[-1]
+            if isinstance(tool_output, str):
+                tools_output_json = tool_output
+        if not tools_output_json and hasattr(tools_result, 'final_output') and isinstance(tools_result.final_output, str) and tools_result.final_output.strip().startswith('{'):
+            print("DEBUG: Using final_output for tools JSON fallback.")
+            tools_output_json = tools_result.final_output
+        if not tools_output_json:
+             raise Exception("Could not find the JSON output from the 'design_agent_tools' tool.")
+
+        tools_dict = json.loads(tools_output_json)
+        tools_list = tools_dict.get('tools', [])  # Assuming tool returns {"tools": [...]}
+        designed_tools = [ToolDefinition.model_validate(t) for t in tools_list]
+        print(f"  -> Designed {len(designed_tools)} tools: {[t.name for t in designed_tools]}")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 2 (Tool Design): {e}")
+        print(f"Tools Result: {tools_result if 'tools_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to design agent tools: {e}") from e
+
+    # Step 3: Design the output type (if specified)
+    designed_output_type: Optional[OutputTypeDefinition] = None
+    output_type_code: Optional[str] = None
+    try:
+        print("Step 3: Designing output type (if specified)...")
+        if agent_specification.output_type:  # Check if output type was mentioned
+            design_output_prompt = f"The specification mentions an output type: '{agent_specification.output_type}'. Design a Pydantic model for this using the 'design_output_type' tool. Based on this AgentSpecification:\n\n```json\n{agent_specification.model_dump_json(indent=2)}\n```"
+            output_type_result = await runner.run(agent_generator, design_output_prompt)
+
+            # Extract the structured result (JSON string) returned *by* the tool execution
+            output_type_json = None
+            if hasattr(output_type_result, 'tool_outputs') and output_type_result.tool_outputs:
+                tool_output = output_type_result.tool_outputs[-1]
+                if isinstance(tool_output, str):
+                    output_type_json = tool_output
+            if not output_type_json and hasattr(output_type_result, 'final_output') and isinstance(output_type_result.final_output, str) and output_type_result.final_output.strip().startswith('{'):
+                 print("DEBUG: Using final_output for output type JSON fallback.")
+                 output_type_json = output_type_result.final_output
+
+            if output_type_json: # Check if LLM returned a design JSON
+                output_type_dict = json.loads(output_type_json)
+                designed_output_type = OutputTypeDefinition.model_validate(output_type_dict)
+                print(f"  -> Designed Output Type: {designed_output_type.name}")
+
+                # Step 3b: Generate Output Type Code
+                print("Step 3b: Generating output type code...")
+                gen_output_code_prompt = f"Generate the Python code for this Pydantic OutputTypeDefinition using the 'generate_output_type_code' tool:\n\n```json\n{designed_output_type.model_dump_json(indent=2)}\n```"
+                output_code_result = await runner.run(agent_generator, gen_output_code_prompt)
+
+                # Extract the code string from the tool output
+                output_code_json = None
+                if hasattr(output_code_result, 'tool_outputs') and output_code_result.tool_outputs:
+                    tool_output = output_code_result.tool_outputs[-1]
+                    if isinstance(tool_output, str):
+                        output_code_json = tool_output
+                if not output_code_json and hasattr(output_code_result, 'final_output') and isinstance(output_code_result.final_output, str) and output_code_result.final_output.strip().startswith('{'):
+                    print("DEBUG: Using final_output for output code JSON fallback.")
+                    output_code_json = output_code_result.final_output
+                else:
+                    raise Exception("Could not find the JSON output from the 'generate_output_type_code' tool.")
+
+                output_code_dict = json.loads(output_code_json)
+                output_type_code = output_code_dict.get('code')
+                if not output_type_code:
+                    raise Exception("LLM failed to generate output type code.")
+                print(f"  -> Generated code for {designed_output_type.name}")
+            else:
+                print("  -> No specific output type designed by LLM.")
         else:
-            # Append it to the end if the marker isn't found
-            main_file_content += f"\n{agent_creation_code}"
-    
-    implementation_dict['main_file'] = main_file_content
-    
-    if 'installation_instructions' not in implementation_dict:
-        implementation_dict['installation_instructions'] = """
-        # Installation Instructions
-        
-        1. Create a virtual environment: `python -m venv venv`
-        2. Activate the virtual environment: 
-           - Windows: `venv\\Scripts\\activate`
-           - macOS/Linux: `source venv/bin/activate`
-        3. Install dependencies: `pip install -r requirements.txt`
-        """
-    
-    if 'usage_examples' not in implementation_dict:
-        implementation_dict['usage_examples'] = """
-        # Usage Examples
-        
-        ```python
-        import asyncio
-        from agent import run_agent
-        
-        async def main():
-            result = await run_agent("Your query here")
-            print(result)
-        
-        if __name__ == "__main__":
-            asyncio.run(main())
-        ```
-        """
-    
-    if 'additional_files' not in implementation_dict:
-        implementation_dict['additional_files'] = {
-            "requirements.txt": "openai-agents>=0.0.6\npython-dotenv>=1.0.0"
-        }
-    
-    agent_implementation = AgentImplementation(**implementation_dict)
-    
-    # Step 11: Validate the implementation
-    print("Step 11: Validating agent implementation...")
-    validation_result = await Runner.run(
-        agent_generator,
-        f"Validate this agent implementation: {agent_implementation.model_dump_json()}"
-    )
-    print(f"Validation result type: {type(validation_result)}")
-    print(f"Validation result: {validation_result}")
-    
-    # Extract validation result
-    validation_message = "Validation completed successfully."
-    if hasattr(validation_result, 'final_output') and validation_result.final_output:
-        validation_message = validation_result.final_output
-    
-    print(f"Validation message: {validation_message}")
-    
-    # Ensure requirements.txt has the necessary dependencies
-    if "requirements.txt" not in agent_implementation.additional_files or not agent_implementation.additional_files["requirements.txt"]:
-        agent_implementation.additional_files["requirements.txt"] = "openai-agents>=0.0.6\npydantic>=2.0.0\npython-dotenv>=1.0.0\n"
-    
-    # Ensure installation instructions are provided
-    if not agent_implementation.installation_instructions:
-        agent_implementation.installation_instructions = """# Installation Instructions
+            print("  -> No output type specified in the initial request.")
 
-1. Create a virtual environment: `python -m venv venv`
-2. Activate the virtual environment: 
-   - Windows: `venv\\Scripts\\activate`
-   - macOS/Linux: `source venv/bin/activate`
-3. Install dependencies: `pip install -r requirements.txt`
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 3 (Output Type): {e}")
+        print(f"Output Type Result: {output_type_result if 'output_type_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to design output type: {e}") from e
+
+    # Step 4: Generate Tool Code
+    try:
+        print("Step 4: Generating tool code...")
+        generated_tool_codes = []
+        for tool in designed_tools:
+            gen_tool_code_prompt = f"Generate the Python code for this ToolDefinition using the 'generate_tool_code' tool:\n\n```json\n{tool.model_dump_json(indent=2)}\n```"
+            tool_code_result = await runner.run(agent_generator, gen_tool_code_prompt)
+
+            # Extract the code string from the tool output
+            tool_code_json = None
+            if hasattr(tool_code_result, 'tool_outputs') and tool_code_result.tool_outputs:
+                tool_output = tool_code_result.tool_outputs[-1]
+                if isinstance(tool_output, str):
+                    tool_code_json = tool_output
+            if not tool_code_json and hasattr(tool_code_result, 'final_output') and isinstance(tool_code_result.final_output, str) and tool_code_result.final_output.strip().startswith('{'):
+                print(f"DEBUG: Using final_output for {tool.name} code JSON fallback.")
+                tool_code_json = tool_code_result.final_output
+            else:
+                raise Exception(f"Could not find the JSON output from the 'generate_tool_code' tool for {tool.name}.")
+
+            tool_code_dict = json.loads(tool_code_json)
+            tool_code = tool_code_dict.get('code')
+            if not tool_code:
+                raise Exception(f"LLM failed to generate code for tool {tool.name}")
+            generated_tool_codes.append(tool_code)
+            print(f"  -> Generated code for tool: {tool.name}")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 4 (Tool Code Generation): {e}")
+        print(f"Tool Code Result: {tool_code_result if 'tool_code_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to generate tool code: {e}") from e
+
+    # Step 5: Generate Agent Definition Code
+    try:
+        print("Step 5: Generating agent definition code...")
+        agent_def_context = {
+            "specification": agent_specification.model_dump(),
+            "tool_names": [t.name for t in designed_tools],
+            "output_type_name": designed_output_type.name if designed_output_type else None
+        }
+        gen_agent_code_prompt = f"Generate the Python code to define the Agent instance using the 'generate_agent_creation_code' tool, based on this context:\n\n```json\n{json.dumps(agent_def_context, indent=2)}\n```\nInclude the 'tools' list with the function names and 'output_type' if specified."
+        agent_code_result = await runner.run(agent_generator, gen_agent_code_prompt)
+
+        # Extract the code string from the tool output
+        agent_code_json = None
+        if hasattr(agent_code_result, 'tool_outputs') and agent_code_result.tool_outputs:
+            tool_output = agent_code_result.tool_outputs[-1]
+            if isinstance(tool_output, str):
+                agent_code_json = tool_output
+        if not agent_code_json and hasattr(agent_code_result, 'final_output') and isinstance(agent_code_result.final_output, str) and agent_code_result.final_output.strip().startswith('{'):
+            print("DEBUG: Using final_output for agent code JSON fallback.")
+            agent_code_json = agent_code_result.final_output
+        else:
+            raise Exception("Could not find the JSON output from the 'generate_agent_creation_code' tool.")
+
+        agent_code_dict = json.loads(agent_code_json)
+        agent_definition_code = agent_code_dict.get('code')
+        if not agent_definition_code:
+            raise Exception("LLM failed to generate agent definition code.")
+        print(f"  -> Generated agent definition code for {agent_specification.name}")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 5 (Agent Definition Code): {e}")
+        print(f"Agent Code Result: {agent_code_result if 'agent_code_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to generate agent definition code: {e}") from e
+
+    # Step 6: Generate Runner Code
+    try:
+        print("Step 6: Generating runner code...")
+        gen_runner_code_prompt = f"Generate a standard Python `async def main(): ...` runner block using the 'generate_runner_code' tool for the agent named '{agent_specification.name}'. It should initialize a Runner and run the agent in an interactive loop or with a sample query."
+        runner_code_result = await runner.run(agent_generator, gen_runner_code_prompt)
+
+        # Extract the code string from the tool output
+        runner_code_json = None
+        if hasattr(runner_code_result, 'tool_outputs') and runner_code_result.tool_outputs:
+            tool_output = runner_code_result.tool_outputs[-1]
+            if isinstance(tool_output, str):
+                runner_code_json = tool_output
+        if not runner_code_json and hasattr(runner_code_result, 'final_output') and isinstance(runner_code_result.final_output, str) and runner_code_result.final_output.strip().startswith('{'):
+            print("DEBUG: Using final_output for runner code JSON fallback.")
+            runner_code_json = runner_code_result.final_output
+        else:
+            raise Exception("Could not find the JSON output from the 'generate_runner_code' tool.")
+
+        runner_code_dict = json.loads(runner_code_json)
+        runner_code = runner_code_dict.get('code')
+        if not runner_code:
+            raise Exception("LLM failed to generate runner code.")
+        print("  -> Generated runner code")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 6 (Runner Code Generation): {e}")
+        print(f"Runner Code Result: {runner_code_result if 'runner_code_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to generate runner code: {e}") from e
+
+    # Step 7: Assemble Implementation
+    try:
+        print("Step 7: Assembling final implementation...")
+        assembly_input = {
+            "agent_name": agent_specification.name,
+            "tool_implementations": generated_tool_codes,
+            "output_type_implementation": output_type_code,
+            "agent_creation_code": agent_definition_code,
+            "runner_code": runner_code,
+        }
+        assemble_prompt = f"Assemble the complete agent implementation using the 'assemble_agent_implementation' tool with the following generated code parts:\n\n```json\n{json.dumps(assembly_input, indent=2)}\n```"
+        assembly_result = await runner.run(agent_generator, assemble_prompt)
+
+        # Extract the AgentImplementation dict from the tool output
+        implementation_json = None
+        if hasattr(assembly_result, 'tool_outputs') and assembly_result.tool_outputs:
+            tool_output = assembly_result.tool_outputs[-1]
+            if isinstance(tool_output, str):
+                implementation_json = tool_output
+        if not implementation_json and hasattr(assembly_result, 'final_output') and isinstance(assembly_result.final_output, str) and assembly_result.final_output.strip().startswith('{'):
+             print("DEBUG: Using final_output for assembly JSON fallback.")
+             implementation_json = assembly_result.final_output
+        else:
+             raise Exception("Could not find the JSON output from the 'assemble_agent_implementation' tool.")
+
+        agent_implementation = AgentImplementation.model_validate(json.loads(implementation_json))
+        print("  -> Assembled final AgentImplementation")
+
+    except (json.JSONDecodeError, ValidationError, Exception) as e:
+        print(f"Error during Step 7 (Assembly): {e}")
+        print(f"Assembly Result: {assembly_result if 'assembly_result' in locals() else 'N/A'}")
+        raise Exception(f"Failed to assemble agent implementation: {e}") from e
+
+    print("Agent generation completed successfully.")
+    return agent_implementation
+
+def generate_sdk_implementation(agent_design: AgentDesign) -> str:
+    """
+    Generate a complete agent implementation following the OpenAI Agents SDK pattern.
+    
+    Args:
+        agent_design: The agent design to implement
+        
+    Returns:
+        Complete implementation code
+    """
+    # Generate imports
+    imports = [
+        "import asyncio",
+        "import json",
+        "import requests",
+        "from typing import Optional, Dict, List, Any",
+        "from agents import Agent, Runner, function_tool"
+    ]
+    
+    # Generate tool implementations
+    tool_implementations = []
+    tool_names = []
+    
+    for tool in agent_design.tools:
+        tool_name = tool.get("name", "unknown_tool")
+        tool_names.append(tool_name)
+        tool_description = tool.get("description", "")
+        parameters = tool.get("parameters", [])
+        returns = tool.get("returns", "Any")
+        
+        # Generate parameter string for function definition
+        param_strings = []
+        for param in parameters:
+            param_name = param.get("name", "param")
+            param_type = param.get("type", "str")
+            param_required = param.get("required", True)
+            
+            if param_required:
+                param_strings.append(f"{param_name}: {param_type}")
+            else:
+                default_value = param.get("default", "None")
+                param_strings.append(f"{param_name}: Optional[{param_type}] = {default_value}")
+        
+        param_string = ", ".join(param_strings)
+        
+        # Generate docstring
+        docstring = f'"""\n    {tool_description}\n    \n    Args:'
+        for param in parameters:
+            param_name = param.get("name", "param")
+            param_description = param.get("description", "")
+            docstring += f'\n        {param_name}: {param_description}'
+        
+        docstring += f'\n    \n    Returns:\n        {returns}\n    """'
+        
+        # Generate function body with more realistic placeholder implementation
+        function_body = ""
+        if tool_name == "search_web":
+            function_body = """
+    # This is a placeholder implementation - replace with actual functionality
+    result = {
+        "results": [
+            {
+                "title": f"Search result 1 for {query}",
+                "snippet": "This is a snippet of the search result.",
+                "url": "https://example.com/result1"
+            },
+            {
+                "title": f"Search result 2 for {query}",
+                "snippet": "This is another snippet of the search result.",
+                "url": "https://example.com/result2"
+            }
+        ],
+        "total_results": 2
+    }
+    return json.dumps(result)
+"""
+        elif tool_name == "extract_content":
+            function_body = """
+    # This is a placeholder implementation - replace with actual functionality
+    content = f"Extracted content from {url}"
+    return content
+"""
+        elif tool_name == "analyze_source":
+            function_body = """
+    # This is a placeholder implementation - replace with actual functionality
+    analysis = {
+        "credibility_score": 0.8,
+        "analysis": f"Analysis of content from {url}"
+    }
+    return json.dumps(analysis)
+"""
+        elif tool_name == "summarize_content":
+            function_body = """
+    # This is a placeholder implementation - replace with actual functionality
+    summary = "Summary of the provided texts."
+    return summary
+"""
+        else:
+            function_body = f"""
+    # This is a placeholder implementation - replace with actual functionality
+    result = {{"status": "success", "message": f"Executed {tool_name}"}}
+    return json.dumps(result)
+"""
+        
+        # Assemble the complete tool implementation
+        tool_impl = f"""
+@function_tool
+def {tool_name}({param_string}) -> str:
+    {docstring}{function_body}
+"""
+        tool_implementations.append(tool_impl)
+    
+    # Generate agent creation code
+    agent_name = agent_design.specification.name
+    agent_instructions = agent_design.specification.instructions
+    
+    # Ensure agent_name is a string
+    if not isinstance(agent_name, str):
+        agent_name = str(agent_name)
+    
+    # Create the agent creation code with proper tool references
+    agent_creation = f"""
+# Create the {agent_name} agent
+{agent_name.lower()}_agent = Agent(
+    name="{agent_name}",
+    instructions=\"\"\"
+    {agent_instructions}
+    \"\"\",
+    tools=[{', '.join(tool_names)}]
+)
+
+# Create a runner for the agent
+runner = Runner()
 """
     
-    # Ensure usage examples are provided
-    if not agent_implementation.usage_examples:
-        agent_implementation.usage_examples = """# Usage Examples
-
-```python
-import asyncio
-from agent import run_agent
-
+    # Generate main function
+    main_function = f"""
 async def main():
-    result = await run_agent("Your query here")
-    print(result)
+    \"\"\"Run the agent.\"\"\"
+    print(f"Welcome to the {agent_name}!")
+    print("Enter your query or 'exit' to quit.")
+    
+    while True:
+        user_input = input("> ")
+        if user_input.lower() == 'exit':
+            break
+        
+        print("Processing your request...")
+        result = await runner.run({agent_name.lower()}_agent, user_input)
+        
+        print("\\nResult:")
+        print(result)
+        print()
 
 if __name__ == "__main__":
     asyncio.run(main())
-```
 """
     
-    return agent_implementation
+    # Assemble the complete implementation
+    implementation_parts = [
+        "\n".join(imports),
+        "\n\n".join(tool_implementations),
+        agent_creation,
+        main_function
+    ]
+    
+    return "\n\n".join(implementation_parts)
+
+# Example usage (optional, for testing)
+# async def main_test():
+#     spec = """
+#     Create a simple agent that responds to greetings.
+#     Name: GreetingAgent
+#     Description: A simple agent that responds to greetings in different languages.
+#     Instructions: You are a friendly greeting agent...
+#     Tools needed:
+#     1. detect_language: Detects the language...
+#     2. translate_greeting: Translates a greeting...
+#     Output type: A simple text response
+#     """
+#     try:
+#         impl = await generate_agent(spec)
+#         print("\n--- Generated Main File ---")
+#         print(impl.main_file)
+#         print("\n--- Installation ---")
+#         print(impl.installation_instructions)
+#         print("\n--- Usage ---")
+#         print(impl.usage_examples)
+#     except Exception as e:
+#         print(f"\nError generating agent: {e}")
+
+# if __name__ == "__main__":
+#     asyncio.run(main_test())

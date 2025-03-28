@@ -1,10 +1,13 @@
 """
-Agent implementation validator for the meta-agent package.
+Validator for the meta-agent package.
 
 This module contains functions for validating agent implementations.
 """
 
-from agents import function_tool
+from typing import List, Dict, Any
+import json
+from meta_agent.decorators import function_tool
+from meta_agent.models.agent import AgentSpecification
 
 
 @function_tool()

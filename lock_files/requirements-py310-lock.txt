@@ -21,7 +21,7 @@ mccabe==0.7.0
 mypy==1.15.0
 mypy-extensions==1.0.0
 openai==1.68.2
-openai-agents==0.0.6
+openai-agents==0.0.7
 packaging==24.2
 pathspec==0.12.1
 platformdirs==4.3.7

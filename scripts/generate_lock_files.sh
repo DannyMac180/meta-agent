@@ -27,7 +27,7 @@ source .venv-lock/bin/activate
 pip install --upgrade pip
 
 # Install the package dependencies without the package itself
-pip install "openai-agents>=0.0.5,<0.1.0" "pydantic>=2.0.0,<3.0.0" "asyncio>=3.4.3,<4.0.0" "typing>=3.7.4.3,<4.0.0" "python-dotenv>=1.0.0,<2.0.0" "requests>=2.28.0,<3.0.0" "beautifulsoup4>=4.11.0,<5.0.0" "griffe>=1.5.6,<2.0.0"
+pip install "openai-agents>=0.0.7,<0.1.0" "pydantic>=2.0.0,<3.0.0" "asyncio>=3.4.3,<4.0.0" "typing>=3.7.4.3,<4.0.0" "python-dotenv>=1.0.0,<2.0.0" "requests>=2.28.0,<3.0.0" "beautifulsoup4>=4.11.0,<5.0.0" "griffe>=1.5.6,<2.0.0"
 
 # Install dev dependencies
 pip install -r requirements-dev.txt

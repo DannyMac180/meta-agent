@@ -1,11 +1,13 @@
 """
-Tool code generator for the meta-agent package.
+Tool generator for the meta-agent package.
 
 This module contains functions for generating code for tools based on their definitions.
 """
 
-from typing import Any, Dict
-from agents import function_tool
+from typing import List, Dict, Any
+import json
+from meta_agent.decorators import function_tool
+from meta_agent.models.agent import AgentSpecification
 
 
 @function_tool()
