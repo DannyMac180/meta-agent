@@ -9,6 +9,8 @@ import json
 from unittest.mock import MagicMock, patch
 from dotenv import load_dotenv
 
+from meta_agent.models import AgentSpecification, ToolDefinition, OutputTypeDefinition, AgentImplementation
+
 # Load environment variables for tests
 load_dotenv()
 
@@ -134,3 +136,115 @@ def environment_setup():
     yield
     os.environ.clear()
     os.environ.update(original_env)
+
+
+# --- New Fixture for Mock Runner Results ---
+
+@pytest.fixture
+def mock_runner_results():
+    """Provides a sequence of mock RunResult objects for the generator steps."""
+    # Import here to avoid issues if mocks aren't available
+    from tests.mocks.agents import RunResult
+
+    # 1. Analyze Specification Result (JSON String)
+    spec_output = AgentSpecification(
+        name="TestAgent",
+        description="A test agent",
+        instructions="Test instructions",
+        tools=[{"name": "test_tool", "description": "A test tool", "parameters": [{"name":"arg1", "type":"str"}], "returns": "str"}],
+        output_type="TestOutput",
+        guardrails=[],
+        handoffs=[]
+    ).model_dump_json()
+
+    # 2. Design Tools Result (JSON String containing {"tools": [...]})
+    tools_output = json.dumps({
+        "tools": [
+            ToolDefinition(
+                name="test_tool",
+                description="A test tool",
+                parameters=[{"name": "arg1", "type": "str", "required": True}],
+                return_type="str",
+                implementation="# Placeholder"
+            ).model_dump()
+        ]
+    })
+
+    # 3. Design Output Type Result (JSON String of OutputTypeDefinition)
+    output_design_output = OutputTypeDefinition(
+        name="TestOutput",
+        fields=[{"name": "result", "type": "str", "description": "The final result"}],
+        code="# Placeholder"
+    ).model_dump_json()
+
+    # 4. Generate Output Type Code Result (JSON String {"code": "..."})
+    output_code_output = json.dumps({
+        "code": """from pydantic import BaseModel, Field
+
+class TestOutput(BaseModel):
+    result: str = Field(description="The final result")"""
+    })
+
+    # 5. Generate Tool Code Result (JSON String {"code": "..."})
+    tool_code_output = json.dumps({
+        "code": """from agents import function_tool
+
+@function_tool
+def test_tool(arg1: str) -> str:
+    \"\"\"A test tool.\"\"\"
+    # TODO: Implement
+    return 'Not implemented'"""
+    })
+
+    # 6. Generate Agent Definition Code Result (JSON String {"code": "..."})
+    agent_def_code_output = json.dumps({
+        "code": """from agents import Agent
+from .tools import test_tool
+from .output_types import TestOutput
+
+agent = Agent(
+    name="TestAgent",
+    description="A test agent",
+    instructions=\"\"\"Test instructions\"\"\",
+    tools=[test_tool],
+    output_type=TestOutput
+)"""
+    })
+
+    # 7. Generate Runner Code Result (JSON String {"code": "..."})
+    runner_code_output = json.dumps({
+        "code": """import asyncio
+from agents import Runner
+from .agent import agent
+
+async def main():
+    runner = Runner()
+    result = await runner.run(agent, "Your input here")
+    print(f"Result: {result}")
+
+if __name__ == "__main__":
+    asyncio.run(main())"""
+    })
+
+    # 8. Assembly Result (JSON String with complete implementation)
+    assembly_output = json.dumps({
+        "main_file": "main.py",
+        "additional_files": {
+            "requirements.txt": "agents>=0.0.5",
+            "README.md": "# TestAgent\n\nA test agent implementation."
+        },
+        "installation_instructions": "pip install -r requirements.txt",
+        "usage_examples": "python main.py"
+    })
+
+    # Create RunResult objects with both final_output and tool_outputs
+    return [
+        RunResult(final_output=spec_output, tool_outputs=[spec_output]),  # Analysis
+        RunResult(final_output=tools_output, tool_outputs=[tools_output]),  # Tools
+        RunResult(final_output=output_design_output, tool_outputs=[output_design_output]),  # Output Type Design
+        RunResult(final_output=output_code_output, tool_outputs=[output_code_output]),  # Output Type Code
+        RunResult(final_output=tool_code_output, tool_outputs=[tool_code_output]),  # Tool Code
+        RunResult(final_output=agent_def_code_output, tool_outputs=[agent_def_code_output]),  # Agent Definition
+        RunResult(final_output=runner_code_output, tool_outputs=[runner_code_output]),  # Runner Code
+        RunResult(final_output=assembly_output, tool_outputs=[assembly_output])  # Assembly
+    ]

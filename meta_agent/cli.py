@@ -11,6 +11,7 @@ import os
 import importlib.util
 import pathlib
 import re
+import json
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
@@ -18,6 +19,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from meta_agent.core import generate_agent
 from meta_agent.config import config, load_config, check_api_key, print_api_key_warning
 from meta_agent.utils import write_file
+from meta_agent.models import AgentSpecification  # Import for parsing spec name early
 
 
 def main():
@@ -67,28 +69,32 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    # --- Try to parse Agent Name early for filename ---
+    agent_name = "generated_agent"  # Default filename base
+    try:
+        # Use the same analyzer logic (rudimentary regex here, could use analyzer tool if robust needed)
+        name_match = re.search(r'Name:\s*(\w+)', specification, re.IGNORECASE)
+        if name_match:
+            agent_name = name_match.group(1)
+        else:
+            # Try parsing as JSON spec if Name: not found (less likely for user input)
+            try:
+                spec_dict = json.loads(specification)
+                agent_name = spec_dict.get('name', agent_name)
+            except json.JSONDecodeError:
+                pass  # Stick with default if not easily parsable
+    except Exception:
+        pass  # Ignore errors here, just trying to get a better name
+    agent_filename = agent_name.lower().replace(' ', '_') + '.py'
+    # --- End name parsing ---
+
     # Generate the agent
     try:
         agent_implementation = asyncio.run(generate_agent(specification))
-        
+
         # Create output directory if it doesn't exist
         os.makedirs(args.output, exist_ok=True)
-        
-        # Extract the agent name from the main file code
-        agent_name_match = re.search(r'class\s+(\w+)\(Agent\)', agent_implementation.main_file)
-        if agent_name_match:
-            agent_name = agent_name_match.group(1)
-        else:
-            # Fallback to extracting from name attribute if class definition not found
-            name_match = re.search(r'name="([^"]+)"', agent_implementation.main_file)
-            if name_match:
-                agent_name = name_match.group(1)
-            else:
-                agent_name = "DefaultAgent"
-        
-        # Create snake_case filename from agent name
-        agent_filename = agent_name.lower().replace(' ', '_') + '.py'
-        
+
         # Write main file
         main_file_path = os.path.join(args.output, agent_filename)
         write_file(main_file_path, agent_implementation.main_file)

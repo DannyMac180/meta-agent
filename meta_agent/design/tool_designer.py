@@ -12,7 +12,7 @@ from meta_agent.models.tool import ToolDefinition
 from meta_agent.models.agent import AgentSpecification
 
 
-@function_tool
+@function_tool()
 def design_agent_tools() -> List[ToolDefinition]:
     """
     Design tools for an agent based on its specification.

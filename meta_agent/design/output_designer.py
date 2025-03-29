@@ -12,7 +12,7 @@ from meta_agent.models.output import OutputTypeDefinition
 from meta_agent.models.agent import AgentSpecification
 
 
-@function_tool
+@function_tool()
 def design_output_type() -> Optional[OutputTypeDefinition]:
     """
     Design a structured output type for an agent if needed.

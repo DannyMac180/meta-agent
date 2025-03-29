@@ -12,7 +12,7 @@ from agents import function_tool
 from meta_agent.models.agent import AgentSpecification
 
 
-@function_tool
+@function_tool()
 def analyze_agent_specification(specification: str) -> str:
     """
     Analyze a natural language description to extract agent specifications.

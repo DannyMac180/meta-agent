@@ -3,8 +3,10 @@ Unit tests for handling validation failures in the generate_agent function.
 """
 
 import pytest
+import json
 from unittest.mock import patch
 from meta_agent.core import generate_agent
+from tests.mocks.agents import RunResult
 
 
 @pytest.mark.asyncio
@@ -15,44 +17,74 @@ async def test_generate_agent_validation_failure():
         # We need to patch the validation step specifically
         def side_effect(agent, spec):
             if "Validate this agent implementation" in spec:
-                return {"valid": False, "message": "Validation failed"}
+                result = {"valid": False, "message": "Validation failed"}
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
             elif "Assemble the complete agent implementation" in spec:
-                return {
+                result = {
                     "main_file": "test main file",
                     "additional_files": {"requirements.txt": "agents>=0.0.5"},
                     "installation_instructions": "pip install -r requirements.txt",
                     "usage_examples": "python main.py"
                 }
-            elif "Analyze this agent specification" in spec:
-                return {
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "analyze_agent_specification" in spec:
+                result = {
                     "name": "TestAgent",
                     "description": "Test description",
-                    "instructions": "Test instructions"
+                    "instructions": "Test instructions",
+                    "tools": [],
+                    "output_type": None,
+                    "guardrails": [],
+                    "handoffs": []
                 }
-            elif "Design tools for this agent" in spec:
-                return [{
-                    "name": "test_tool", 
-                    "description": "A test tool",
-                    "parameters": [{"name": "param1", "type": "string", "required": True}],
-                    "return_type": "string",
-                    "implementation": "def test_tool(param1):\n    return f'Result: {param1}'"
-                }]
-            elif "Design an output type" in spec:
-                return {
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "design_agent_tools" in spec:
+                result = {
+                    "tools": [{
+                        "name": "test_tool", 
+                        "description": "A test tool",
+                        "parameters": [{"name": "param1", "type": "string", "required": True}],
+                        "return_type": "string",
+                        "implementation": "def test_tool(param1):\n    return f'Result: {param1}'"
+                    }]
+                }
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "design_output_type" in spec:
+                result = {
                     "name": "TestOutput",
                     "fields": [{"name": "result", "type": "string", "description": "Result of the tool execution"}],
                     "code": "class TestOutput(BaseModel):\n    result: str = Field(description='Result of the tool execution')"
                 }
-            elif "Design guardrails" in spec:
-                return [{
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "generate_output_type_code" in spec:
+                result = {
+                    "code": """from pydantic import BaseModel, Field
+
+class TestOutput(BaseModel):
+    result: str = Field(description="Result of the tool execution")"""
+                }
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "generate_tool_code" in spec:
+                result = {
+                    "code": """from agents import function_tool
+
+@function_tool
+def test_tool(param1: str) -> str:
+    \"\"\"A test tool.\"\"\"
+    return f'Result: {param1}'"""
+                }
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
+            elif "design_guardrails" in spec:
+                result = [{
                     "name": "test_guardrail", 
                     "description": "A test guardrail",
                     "type": "input",
                     "validation_logic": "Check if input contains sensitive information",
                     "implementation": "def validate_input(input_text):\n    return 'password' not in input_text.lower()"
                 }]
+                return RunResult(final_output=json.dumps(result), tool_outputs=[json.dumps(result)])
             else:
-                return "Mock response"
+                return RunResult(final_output="Mock response", tool_outputs=["Mock response"])
         
         mock_run.side_effect = side_effect
             

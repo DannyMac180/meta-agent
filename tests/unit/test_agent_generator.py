@@ -6,6 +6,7 @@ from unittest.mock import patch, AsyncMock
 import asyncio
 import sys
 import os
+import json
 
 # Add the mocks directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mocks')))
@@ -22,21 +23,22 @@ with patch.dict('sys.modules', {'agents': __import__('tests.mocks.agents', froml
 @pytest.fixture
 def mock_agent_specification():
     """Fixture for a mock agent specification."""
-    return """
-    Name: TestAgent
-    Description: A test agent
-    Instructions: You are a test agent
-    """
+    return "Name: TestAgent\nDescription: A test agent\nInstructions: You are a test agent\nTools needed:\n1. test_tool: Does something"
 
 
 @pytest.mark.asyncio
-async def test_generate_agent_basic():
+@patch('meta_agent.core.Runner.run', new_callable=AsyncMock)  # Patch the actual Runner used in core.py
+async def test_generate_agent_basic(mock_run, mock_runner_results, mock_agent_specification):
     """Test that the generate_agent function works with basic input."""
+    # Configure the mock side effect using the fixture
+    mock_run.side_effect = mock_runner_results
+
     # Call the function with a simple specification
-    result = await generate_agent("Name: TestAgent\nInstructions: Test instructions")
-    
+    result = await generate_agent(mock_agent_specification)
+
     # Verify the result
     assert result is not None
+    assert isinstance(result, AgentImplementation)
     assert result.main_file is not None
     assert "TestAgent" in result.main_file
     assert result.installation_instructions is not None

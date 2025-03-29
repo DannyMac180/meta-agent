@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
 from agents import Agent
 from meta_agent.decorators import function_tool as meta_function_tool
-from meta_agent.models.agent import AgentSpecification, Agent
+from meta_agent.models.agent import AgentSpecification
 
 # Import all specialized agents
 from meta_agent.design.analyzer import analyze_agent_specification

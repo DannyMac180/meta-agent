@@ -9,7 +9,7 @@ import json
 from agents import function_tool
 from meta_agent.models.agent import AgentSpecification
 
-@function_tool
+@function_tool()
 def generate_agent_creation_code(agent_spec: AgentSpecification, tool_names: List[str], output_type_name: Optional[str]) -> str:
     """
     Generate code that creates an agent instance based on the provided specification.
