@@ -1,30 +1,12 @@
 """
-Meta Agent - A package for generating OpenAI Agents SDK agents.
+Meta Agent - A tool for generating agents using the OpenAI Agents SDK.
 
-This package provides tools for creating agents based on natural language specifications
-using the OpenAI Agents SDK.
+This package provides functionality to generate agent implementations
+based on natural language specifications.
 """
 
-from meta_agent.core import generate_agent
-from meta_agent.models import (
-    AgentSpecification,
-    ToolDefinition,
-    OutputTypeDefinition,
-    GuardrailDefinition,
-    AgentDesign,
-    AgentCode,
-    AgentImplementation
-)
+from meta_agent.core import generate_agent, generate_agent_sync
 
 __version__ = "0.1.0"
 
-__all__ = [
-    'generate_agent',
-    'AgentSpecification',
-    'ToolDefinition',
-    'OutputTypeDefinition',
-    'GuardrailDefinition',
-    'AgentDesign',
-    'AgentCode',
-    'AgentImplementation',
-]
+__all__ = ["generate_agent", "generate_agent_sync"]

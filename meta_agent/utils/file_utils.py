@@ -1,56 +1,68 @@
 """
-File utilities for the meta-agent package.
-
-This module provides functions for file operations.
+Utility functions for file operations.
 """
 
 import os
-from typing import Dict, Optional
+import json
+from typing import Dict, Any
 
 
-def write_file(path: str, content: str) -> None:
+def ensure_directory(directory: str) -> None:
     """
-    Write content to a file, creating directories if needed.
+    Ensure a directory exists, creating it if necessary.
     
     Args:
-        path: Path to the file
+        directory: Directory path to ensure exists
+    """
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def write_file(file_path: str, content: str) -> None:
+    """
+    Write content to a file, creating directories if necessary.
+    
+    Args:
+        file_path: Path to the file
         content: Content to write
     """
-    # Create directory if it doesn't exist
-    directory = os.path.dirname(path)
-    if directory and not os.path.exists(directory):
-        os.makedirs(directory)
+    directory = os.path.dirname(file_path)
+    if directory:
+        ensure_directory(directory)
     
-    # Write the file
-    with open(path, "w") as f:
+    with open(file_path, 'w') as f:
         f.write(content)
 
 
-def write_files(base_path: str, files: Dict[str, str]) -> None:
+def read_json_file(file_path: str) -> Dict[str, Any]:
     """
-    Write multiple files, creating directories if needed.
+    Read and parse a JSON file.
     
     Args:
-        base_path: Base directory path
-        files: Dictionary mapping relative file paths to content
-    """
-    for relative_path, content in files.items():
-        full_path = os.path.join(base_path, relative_path)
-        write_file(full_path, content)
-
-
-def read_file(path: str) -> Optional[str]:
-    """
-    Read content from a file.
-    
-    Args:
-        path: Path to the file
+        file_path: Path to the JSON file
         
     Returns:
-        File content or None if the file doesn't exist
+        Parsed JSON content as a dictionary
+        
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        json.JSONDecodeError: If the file contains invalid JSON
     """
-    try:
-        with open(path, "r") as f:
-            return f.read()
-    except FileNotFoundError:
-        return None
+    with open(file_path, 'r') as f:
+        return json.load(f)
+
+
+def parse_json_string(json_string: str) -> Dict[str, Any]:
+    """
+    Parse a JSON string.
+    
+    Args:
+        json_string: JSON string to parse
+        
+    Returns:
+        Parsed JSON content as a dictionary
+        
+    Raises:
+        json.JSONDecodeError: If the string contains invalid JSON
+    """
+    return json.loads(json_string)
