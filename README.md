@@ -1,6 +1,6 @@
 # Meta Agent for OpenAI Agents SDK  
 
-This document provides instructions on how to use the Agent Generator tool to create self-contained agents using the OpenAI Agents SDK.
+This document provides instructions on how to use the Agent Generator tool to create self-contained agents using the OpenAI Agents SDK. Meta Agent simplifies the process of creating AI agents with custom capabilities.
 
 ![alt text](image.png)
 
