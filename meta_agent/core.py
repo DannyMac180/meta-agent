@@ -5,15 +5,14 @@ This module contains the main entry point for generating agents from specificati
 """
 
 import json
-import asyncio
 from typing import Dict, Any, Optional, Union
 
 from meta_agent.models import AgentSpecification, AgentImplementation
-from meta_agent.generators import generate_agent_implementation
+from meta_agent.generators.agent_generator import generate_agent as generate_agent_file_content
 from meta_agent.utils import parse_json_string
 
 
-async def generate_agent(specification: str, output_dir: Optional[str] = None) -> AgentImplementation:
+def generate_agent(specification: str, output_dir: Optional[str] = None) -> AgentImplementation:
     """
     Generate an agent based on a natural language or JSON specification.
     
@@ -34,11 +33,23 @@ async def generate_agent(specification: str, output_dir: Optional[str] = None) -
     if not specification or not specification.strip():
         raise ValueError("Agent specification cannot be empty")
     
-    # Parse the specification
+    # Parse the specification (needed for README)
     agent_spec = _parse_specification(specification)
     
-    # Generate the agent implementation
-    implementation = generate_agent_implementation(agent_spec)
+    # Generate the agent implementation code string
+    main_file_content = generate_agent_file_content(specification)
+
+    # Construct the implementation object (assuming no extra files for now)
+    # TODO: Potentially parse generated code for dependencies to improve instructions
+    installation_instructions = f"pip install openai agents\n# Add other dependencies from agent_implementation.py if needed"
+    usage_examples = f"# Save the generated code as agent_implementation.py\n\n# Run the agent:\npython agent_implementation.py --spec '...' # Replace ... with your spec or path to spec file"
+
+    implementation = AgentImplementation(
+        main_file=main_file_content,
+        additional_files={},
+        installation_instructions=installation_instructions,
+        usage_examples=usage_examples,
+    )
     
     # Write files if output directory is provided
     if output_dir:
@@ -96,7 +107,7 @@ def _parse_specification(specification: str) -> AgentSpecification:
     # Try to parse as JSON first
     try:
         spec_dict = parse_json_string(specification)
-        return AgentSpecification.from_json(spec_dict)
+        return AgentSpecification(**spec_dict)
     except json.JSONDecodeError:
         # Not valid JSON, treat as natural language
         # For now, use a simplified approach
@@ -121,14 +132,16 @@ def _parse_natural_language(specification: str) -> AgentSpecification:
     # Extract name (first line or default)
     name = "DefaultAgent"
     for line in lines:
-        if line.lower().startswith("name:"):
+        stripped_line = line.strip()
+        if stripped_line.lower().startswith("name:"):
             name = line.split(":", 1)[1].strip()
             break
     
     # Extract description
     description = ""
     for line in lines:
-        if line.lower().startswith("description:"):
+        stripped_line = line.strip()
+        if stripped_line.lower().startswith("description:"):
             description = line.split(":", 1)[1].strip()
             break
     
@@ -200,19 +213,13 @@ def _parse_natural_language(specification: str) -> AgentSpecification:
     if current_tool:
         tools.append(current_tool)
     
-    # Extract output type
-    output_type = None
-    for line in lines:
-        if line.lower().startswith("output type:"):
-            output_type = line.split(":", 1)[1].strip()
-            break
-    
     # Extract guardrails
     guardrails = []
     guardrail_section = False
     
     for line in lines:
-        if line.lower().startswith("guardrails:"):
+        stripped_line = line.strip()
+        if stripped_line.lower().startswith("guardrails:"):
             guardrail_section = True
             continue
         
@@ -230,21 +237,6 @@ def _parse_natural_language(specification: str) -> AgentSpecification:
         description=description,
         instructions=instructions,
         tools=tools,
-        output_type=output_type,
+        output_type=None,
         guardrails=guardrails
     )
-
-
-# Synchronous version for convenience
-def generate_agent_sync(specification: str, output_dir: Optional[str] = None) -> AgentImplementation:
-    """
-    Synchronous version of generate_agent.
-    
-    Args:
-        specification: A specification string describing the agent to create
-        output_dir: Optional directory to write the generated agent files to
-        
-    Returns:
-        Complete agent implementation
-    """
-    return asyncio.run(generate_agent(specification, output_dir))

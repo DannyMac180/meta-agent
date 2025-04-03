@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "meta-agent"
+version = "1.0.1"
+description = "An agent that generates other agents based on specifications."
+authors = ["Daniel McAteer <daniel.mcateer@example.com>"] # Placeholder email
+license = "MIT"
+readme = "README.md"
+packages = [{include = "meta_agent"}]
+homepage = "https://github.com/DannyMac180/meta-agent" # Assuming based on workspace name
+repository = "https://github.com/DannyMac180/meta-agent" # Assuming based on workspace name
+
+[tool.poetry.dependencies]
+python = "^3.9"
+openai-agents = "^0.0.5" # OpenAI Agents SDK
+openai = "^1.10.0"  # Or a version compatible with agents SDK
+typer = {extras = ["all"], version = "^0.9.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+
+[tool.poetry.scripts]
+meta-agent = "meta_agent.main:app"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
