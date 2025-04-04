@@ -259,7 +259,6 @@ def generate_tool_code(tool: ToolDefinition) -> str:
     Returns:
         Python code implementing the tool
     """
-    # Generate function signature
     params = []
     for param in tool.parameters:
         param_type = _convert_type(param.type)
@@ -271,7 +270,6 @@ def generate_tool_code(tool: ToolDefinition) -> str:
     params_str = ", ".join(params)
     return_type = _convert_type(tool.return_type)
     
-    # Generate docstring
     docstring = f'"""\n{tool.description}\n\n'
     if tool.parameters:
         docstring += "Args:\n"
@@ -279,7 +277,6 @@ def generate_tool_code(tool: ToolDefinition) -> str:
             docstring += f"    {param.name}: {param.description}\n"
     docstring += f'\nReturns:\n    {return_type}: {tool.description} result\n"""'
     
-    # Generate function implementation
     code = [
         f"@function_tool",
         f"def {tool.name}({params_str}) -> {return_type}:",
@@ -606,7 +603,8 @@ def generate_agent(specification: str, output_file: Optional[str] = None) -> str
         spec = parse_specification(specification)
         
         # Generate code for tools
-        tool_code = [generate_tool_code(tool) for tool in spec.tools]
+        from meta_agent.generators.tool_generator import generate_tools_code_sync
+        tool_code = generate_tools_code_sync(spec.tools).split("\n\n")[1:]  # Skip imports
         
         # Generate code for output type if specified
         output_type_code = None
