@@ -249,44 +249,7 @@ def parse_natural_language_specification(text: str) -> AgentSpecification:
 
 # ===================== CODE GENERATION =====================
 
-def generate_tool_code(tool: ToolDefinition) -> str:
-    """
-    Generate Python code for a tool based on its definition.
-    
-    Args:
-        tool: Tool definition
-        
-    Returns:
-        Python code implementing the tool
-    """
-    params = []
-    for param in tool.parameters:
-        param_type = _convert_type(param.type)
-        if param.required:
-            params.append(f"{param.name}: {param_type}")
-        else:
-            params.append(f"{param.name}: {param_type} = None")
-    
-    params_str = ", ".join(params)
-    return_type = _convert_type(tool.return_type)
-    
-    docstring = f'"""\n{tool.description}\n\n'
-    if tool.parameters:
-        docstring += "Args:\n"
-        for param in tool.parameters:
-            docstring += f"    {param.name}: {param.description}\n"
-    docstring += f'\nReturns:\n    {return_type}: {tool.description} result\n"""'
-    
-    code = [
-        f"@function_tool",
-        f"def {tool.name}({params_str}) -> {return_type}:",
-        f"    {docstring}",
-        f"    # TODO: Implement the tool functionality",
-        f"    # This is a placeholder implementation",
-        f"    return f\"Result for {tool.name} with parameters: {{{', '.join([p.name + '=' + p.name for p in tool.parameters])}}}\""
-    ]
-    
-    return "\n".join(code)
+# Tool code generation is now handled by meta_agent.generators.tool_generator.generate_tools_code_sync
 
 
 def generate_output_type_code(output_type: OutputTypeDefinition) -> str:
@@ -604,7 +567,11 @@ def generate_agent(specification: str, output_file: Optional[str] = None) -> str
         
         # Generate code for tools
         from meta_agent.generators.tool_generator import generate_tools_code_sync
-        tool_code = generate_tools_code_sync(spec.tools).split("\n\n")[1:]  # Skip imports
+        tool_code = []
+        if spec.tools:
+            # Use the new tool generator module
+            tools_code_str = generate_tools_code_sync(spec.tools)
+            tool_code = [tools_code_str] if tools_code_str else []
         
         # Generate code for output type if specified
         output_type_code = None

@@ -17,8 +17,20 @@ if not os.environ.get("OPENAI_API_KEY"):
     print("Please set it with: export OPENAI_API_KEY=your_api_key")
 
 # Tool Definitions
+from agents import function_tool
+
+# The following imports might be needed depending on the tools
+
+import os
+
+import json
+
+from typing import Dict, List, Any, Optional
+
+
+
 @function_tool
-def get_weather(location: str, units: str = "metric") -> str:
+def get_weather() -> str:
     """
 Fetches current weather information for a location
    - location (string, required): The name of the location (city, country, etc.)
@@ -27,14 +39,14 @@ Fetches current weather information for a location
 
 
 Returns:
-    str: Fetches current weather information for a location
-   - location (string, required): The name of the location (city, country, etc.)
-   - units (string, optional): The unit system to use (metric or imperial)
-   - Returns: Weather information including temperature, conditions, and forecast result
+    str: string result
 """
-    # TODO: Implement the tool functionality
-    # This is a placeholder implementation
-    return f"Result for get_weather with parameters: location={location}, units={units}"
+    import json
+    try:
+        params = {}
+        return json.dumps(params)
+    except Exception as e:
+        return f"Error in generated tool: {str(e)}"
 
 # Guardrail Definitions
 @output_guardrail

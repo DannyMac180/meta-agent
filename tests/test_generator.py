@@ -6,12 +6,12 @@ import os
 import pytest
 import shutil
 from meta_agent.generators.agent_generator import (
-    generate_tool_code,
     generate_guardrail_code,
     generate_agent_code,
     generate_runner_code,
     assemble_agent_implementation
 )
+from meta_agent.generators.tool_generator import generate_tool_code
 from meta_agent.models import (
     AgentSpecification,
     ToolDefinition,
@@ -30,7 +30,7 @@ def test_dir():
     if os.path.exists(dir_path):
         shutil.rmtree(dir_path)
 
-def test_generate_tool_code():
+async def test_generate_tool_code():
     """Test generating code for a tool."""
     # Create a tool definition
     tool = ToolDefinition(
@@ -54,7 +54,7 @@ def test_generate_tool_code():
     )
     
     # Generate code for the tool
-    code = generate_tool_code(tool)
+    code = await generate_tool_code(tool)
     
     # Verify the generated code
     assert "@function_tool" in code
@@ -138,7 +138,7 @@ def test_generate_runner_code():
     assert "if __name__ == \"__main__\":" in code
     assert "asyncio.run(main())" in code
 
-def test_assemble_agent_implementation():
+async def test_assemble_agent_implementation():
     """Test assembling a complete agent implementation."""
     # Create an agent specification
     spec = AgentSpecification(
@@ -162,7 +162,7 @@ def test_assemble_agent_implementation():
     )
     
     # Generate code components
-    tool_code = [generate_tool_code(tool) for tool in spec.tools]
+    tool_code = [await generate_tool_code(tool) for tool in spec.tools]
     guardrail_code = [generate_guardrail_code(guardrail) for guardrail in spec.guardrails]
     agent_code = generate_agent_code(spec)
     runner_code = generate_runner_code()

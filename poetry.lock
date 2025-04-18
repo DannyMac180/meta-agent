@@ -411,6 +411,17 @@ files = [
 ]
 
 [[package]]
+name = "nest-asyncio"
+version = "1.6.0"
+description = "Patch asyncio to allow nested event loops"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c"},
+    {file = "nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe"},
+]
+
+[[package]]
 name = "openai"
 version = "1.70.0"
 description = "The official Python library for the openai API"
@@ -856,4 +867,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5fcaac75bfe8cbbdb6e47b57fa60921e02c6167b0ec6e4e2568c3574b28a21d0"
+content-hash = "31c5def979c4cd070772f7468b718b0f7f0f6100079a81aaf8b5cfd900c29ad9"
