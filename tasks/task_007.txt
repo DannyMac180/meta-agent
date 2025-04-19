@@ -1,18 +1,17 @@
 # Task ID: 7
-# Title: Build Evaluation Harness
+# Title: Develop Artifact Bundling System
 # Status: pending
-# Dependencies: 3, 5, 6
+# Dependencies: 6
 # Priority: medium
-# Description: Create the system that compiles, executes, and validates the generated agent code
+# Description: Create the system that packages the generated agent code, tests, and dependencies into a usable bundle.
 # Details:
-Implement evaluation system:
-- Code compilation checker
-- Pytest runner in sandbox container
-- Test result parser and reporter
-- Agent execution with sample inputs
-- Guardrail verification
-
-Create summary report generator with pass/fail status and detailed error messages
+1. Implement agent.py file generation
+2. Create tests/ directory structure
+3. Generate requirements.txt with proper dependency versions
+4. Add README.md generation with usage instructions
+5. Implement optional Git repository creation/pushing
+6. Create version tracking metadata
+7. Add bundle validation to ensure completeness
 
 # Test Strategy:
-Test with known-good and known-bad agent code; verify correct identification of issues; test resource limits and timeout handling
+Verify bundles can be installed and run in a fresh environment. Test Git repository creation and pushing. Ensure all dependencies are correctly captured.

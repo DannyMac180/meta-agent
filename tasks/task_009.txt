@@ -1,18 +1,17 @@
 # Task ID: 9
-# Title: Add Telemetry and Tracing
+# Title: Create Template and Pattern Library
 # Status: pending
 # Dependencies: 7
 # Priority: low
-# Description: Implement cost tracking, performance monitoring, and execution tracing
+# Description: Build a library of reusable agent templates and patterns to improve generation quality and consistency.
 # Details:
-Implement telemetry system:
-- OpenAI API usage tracking (tokens, costs)
-- Latency measurements for each component
-- Trace logging for agent execution
-- Cost caps and alerts
-
-Create dashboard for visualizing metrics
-Integrate with Agents-SDK tracing hooks
+1. Design template storage format (JSON/YAML)
+2. Create initial set of agent archetypes
+3. Implement embedding-based template search
+4. Add template versioning and metadata
+5. Create template selection logic based on specifications
+6. Implement template mixing for complex requirements
+7. Add user-defined template support
 
 # Test Strategy:
-Verify accurate token counting and cost calculation; test latency tracking; ensure trace logs capture all relevant events
+Test template retrieval with various specifications. Verify template mixing produces valid results. Test with intentionally vague specifications to ensure appropriate templates are selected.

@@ -1,19 +1,17 @@
 # Task ID: 5
-# Title: Develop Tool Designer Sub-agent
+# Title: Implement Guardrail Designer Sub-agent
 # Status: pending
-# Dependencies: 3, 4
-# Priority: medium
-# Description: Create the sub-agent responsible for generating tool code and unit tests
+# Dependencies: 3
+# Priority: high
+# Description: Create the specialized sub-agent that generates validation logic and guardrails for the agent.
 # Details:
-Implement Tool Designer using o4-mini-high model:
-- Accept tool specifications from Meta Agent
-- Generate Python code for each tool
-- Create unit tests for each tool
-- Package as ToolArtifact objects
-- Implement web search capability for API documentation lookup
-- Add Python interpreter integration for code validation
-
-Include template library for common tool patterns
+1. Configure gpt-4o model integration
+2. Implement guardrail generation logic using Pydantic models
+3. Create test cases for guardrail validation
+4. Implement policy check generators
+5. Add regex pattern creation for input/output validation
+6. Create hooks into Agents SDK guardrail system
+7. Generate documentation for implemented guardrails
 
 # Test Strategy:
-Test with sample tool specifications; verify generated code compiles and passes tests in sandbox; check edge cases like complex APIs
+Test with various guardrail specifications. Verify guardrails catch problematic inputs/outputs. Test against common evasion techniques.

@@ -1,4 +1,1 @@
-"""
-meta_agent package initialization.
-"""
-from .__about__ import __version__
+# meta_agent package init

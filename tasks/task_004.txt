@@ -1,19 +1,17 @@
 # Task ID: 4
-# Title: Implement Meta Agent Orchestrator
+# Title: Build Tool Designer Sub-agent
 # Status: pending
-# Dependencies: 2
+# Dependencies: 2, 3
 # Priority: high
-# Description: Develop the core orchestration logic that decomposes specs and coordinates sub-agents
+# Description: Create the specialized sub-agent that generates Python code for tools specified in the requirements.
 # Details:
-Implement orchestrator using openai-agents-python SDK:
-- Initialize with o3 model
-- Create planning method to break down specs into tasks
-- Implement delegation logic for Tool Designer and Guardrail Designer
-- Add assembly logic to combine sub-agent outputs
-- Implement retry mechanisms for failed generations
-- Add clarifying question generation for ambiguous specs
-
-Create interfaces for sub-agents to implement
+1. Configure o4-mini-high model integration
+2. Implement tool code generation logic based on specifications
+3. Create unit test generator for tools
+4. Add web search capability for API documentation lookup
+5. Implement code validation using the sandbox environment
+6. Create retry/refinement loop for failed code generation
+7. Add documentation generation for tools
 
 # Test Strategy:
-Unit tests with mocked sub-agents; integration test with simplified spec to verify orchestration flow
+Test with various tool specifications. Verify generated code compiles and passes basic functionality tests. Check edge cases like complex APIs or unusual requirements.

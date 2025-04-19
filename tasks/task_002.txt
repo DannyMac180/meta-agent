@@ -1,19 +1,17 @@
 # Task ID: 2
-# Title: Implement SpecSchema and Natural Language Processing
+# Title: Implement Docker Sandbox Environment
 # Status: pending
 # Dependencies: 1
 # Priority: high
-# Description: Create the data model for parsed specifications and implement the natural language ingestion component
+# Description: Create a Docker-based sandbox environment for safe execution of generated code with appropriate security constraints.
 # Details:
-Develop Pydantic models for SpecSchema including:
-- goal: str
-- io_contract: {input: str, output: str}
-- tools: List[Tool]
-- guardrails: List[Guardrail]
-- constraints: Dict[str, Any]
-
-Implement spec parser using OpenAI o3 model to convert free-form text or structured YAML into SpecSchema instances
-Add validation methods to ensure spec completeness
+1. Create Dockerfile for sandbox environment
+2. Configure seccomp/apparmor profiles for security
+3. Set up read-only filesystem with specific write permissions
+4. Implement network isolation (no outbound connections by default)
+5. Create sandbox API for code execution and result retrieval
+6. Add resource limits (CPU, memory, execution time)
+7. Include Python environment with pytest and common dependencies
 
 # Test Strategy:
-Unit tests with sample specifications in both free-form and YAML formats; test edge cases like ambiguous specs
+Test sandbox isolation by attempting various escape vectors. Verify resource limits work as expected. Ensure Python code can be executed and results retrieved correctly.

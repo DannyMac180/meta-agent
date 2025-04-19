@@ -1,24 +1,17 @@
 # Task ID: 3
-# Title: Build Docker Sandbox Environment
+# Title: Develop Meta Agent Orchestrator
 # Status: pending
 # Dependencies: 1
 # Priority: high
-# Description: Create a secure Docker container for safely executing and testing generated code
+# Description: Implement the core orchestration logic that plans the agent creation process and delegates tasks to specialized sub-agents.
 # Details:
-Create Dockerfile with:
-- Python base image
-- Pytest installation
-- Security configurations (seccomp/apparmor profiles)
-- Read-only filesystem except for designated directories
-- Network isolation (no outbound by default)
-- Resource limits (CPU/memory)
-
-Implement sandbox manager class to:
-- Build container
-- Mount generated code
-- Execute tests
-- Capture output
-- Enforce timeouts
+1. Initialize OpenAI Agents SDK integration
+2. Implement orchestration workflow that decomposes spec into tasks
+3. Create planning logic to determine tool and guardrail requirements
+4. Implement sub-agent delegation framework
+5. Add state management for tracking generation progress
+6. Create template for final agent assembly
+7. Implement retry logic for failed generations
 
 # Test Strategy:
-Test container isolation by attempting network access; verify resource limits; ensure test results are properly captured
+Unit tests for orchestration logic with mocked sub-agents. Integration tests with simplified specifications to verify full workflow execution.

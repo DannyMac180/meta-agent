@@ -1,18 +1,17 @@
 # Task ID: 8
-# Title: Implement Artifact Bundling and Dependency Management
+# Title: Implement Cost and Trace Telemetry
 # Status: pending
-# Dependencies: 7
+# Dependencies: 3, 4, 5
 # Priority: medium
-# Description: Create the system for packaging generated agents with dependencies and documentation
+# Description: Add systems to track token usage, latency, and costs associated with agent generation.
 # Details:
-Implement artifact bundling:
-- Generate agent.py with all required imports
-- Create tests/ directory with all test files
-- Generate requirements.txt with pinned dependencies
-- Create README.md with usage instructions
-- Implement Git/S3 integration for artifact storage
-
-Add versioning and dependency locking using pip-tools
+1. Integrate with OpenAI usage APIs
+2. Implement token counting and cost calculation
+3. Create latency tracking for each generation step
+4. Build telemetry dashboard (CLI-based initially)
+5. Add cost caps and warnings
+6. Implement telemetry storage for historical analysis
+7. Create export functionality for telemetry data
 
 # Test Strategy:
-Verify bundled agents can be installed and run with a single command; test dependency resolution; check Git/S3 integration
+Verify accuracy of token counting and cost calculations. Test cost caps by creating specifications that would exceed limits. Ensure telemetry data is correctly stored and retrievable.

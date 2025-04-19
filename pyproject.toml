@@ -26,10 +26,10 @@ classifiers = [
 ]
 dependencies = [
     "openai-agents~=0.0.11",
-    "openai>=0.27.0,<1.0.0",
-    "pyyaml>=6.0",
     "pytest",
     "ruff",
+    "pydantic>=2",  # Added for data validation models
+    "pyyaml>=6",    # Added for potential YAML parsing
 ]
 
 [project.urls]
@@ -39,6 +39,15 @@ Source = "https://github.com/Danny McAteer/meta-agent"
 
 [tool.hatch.version]
 path = "src/meta_agent/__about__.py"
+
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest",
+  "pytest-cov", # Added for coverage
+]
+[tool.hatch.envs.test.scripts]
+test = "pytest {args:tests}" # Script to run pytest
+cov = "pytest --cov=src/meta_agent --cov-report=term-missing {args:tests}" # Script for coverage
 
 [tool.hatch.envs.types]
 extra-dependencies = [
