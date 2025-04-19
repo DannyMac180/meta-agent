@@ -1,0 +1,24 @@
+# Task ID: 3
+# Title: Build Docker Sandbox Environment
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create a secure Docker container for safely executing and testing generated code
+# Details:
+Create Dockerfile with:
+- Python base image
+- Pytest installation
+- Security configurations (seccomp/apparmor profiles)
+- Read-only filesystem except for designated directories
+- Network isolation (no outbound by default)
+- Resource limits (CPU/memory)
+
+Implement sandbox manager class to:
+- Build container
+- Mount generated code
+- Execute tests
+- Capture output
+- Enforce timeouts
+
+# Test Strategy:
+Test container isolation by attempting network access; verify resource limits; ensure test results are properly captured

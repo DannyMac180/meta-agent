@@ -1,0 +1,18 @@
+# Task ID: 6
+# Title: Implement Guardrail Designer Sub-agent
+# Status: pending
+# Dependencies: 3, 4
+# Priority: medium
+# Description: Create the sub-agent that generates validation logic and guardrail tests
+# Details:
+Implement Guardrail Designer using gpt-4o model:
+- Accept guardrail specifications from Meta Agent
+- Generate Pydantic validators, regex patterns, and policy checks
+- Create test cases that verify guardrails catch violations
+- Integrate with Agents-SDK guardrail hooks
+- Package as GuardrailArtifact objects
+
+Implement common guardrail patterns (PII detection, output validation, etc.)
+
+# Test Strategy:
+Test with sample guardrail specifications; verify generated guardrails catch violations in test cases; test edge cases like complex policy rules

@@ -1,0 +1,83 @@
+# Task ID: 1
+# Title: Setup Project Repository and CLI Skeleton
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the project structure with a CLI interface that accepts natural language specifications
+# Details:
+Create a Python project with the following structure:
+- meta_agent/
+  - __init__.py
+  - cli.py (argparse implementation for spec input)
+  - spec_schema.py (Pydantic models for SpecSchema)
+  - orchestrator.py (stub for Meta Agent)
+  - utils/
+    - logging.py
+    - config.py
+Implement basic CLI commands: `generate`, `--audit`, `--demo`
+Setup Hatch for dependency management
+
+# Test Strategy:
+Unit tests for CLI argument parsing; integration test with a simple spec input
+
+# Subtasks:
+## 1. Initialize Project Structure and Dependency Management [in-progress]
+### Dependencies: None
+### Description: Create the base project directory structure and set up dependency management with Hatch
+### Details:
+1. Create the main project directory `meta_agent`
+2. Configure Hatch in pyproject.toml for dependency management and build backend
+3. Add core dependencies: argparse, pydantic
+4. Create empty __init__.py files in all directories
+5. Setup .gitignore file with Python patterns
+6. Create README.md with project description
+7. Test by verifying Hatch environment can be activated with `hatch shell`
+
+## 2. Implement Utility Modules [pending]
+### Dependencies: 1.1
+### Description: Create utility modules for logging and configuration management
+### Details:
+1. Create utils/ directory
+2. Implement logging.py with configurable logging levels
+3. Implement config.py with functions to load/save configuration
+4. Add appropriate type hints
+5. Include docstrings for all functions
+6. Test logging functionality by writing test messages to console and file
+7. Test config functionality by creating and loading a sample configuration
+
+## 3. Create Pydantic Spec Schema Models [pending]
+### Dependencies: 1.1
+### Description: Define Pydantic models for the specification schema
+### Details:
+1. Create spec_schema.py file
+2. Import necessary Pydantic components
+3. Define SpecSchema base class with common attributes
+4. Add validation rules for required fields
+5. Include example factory methods
+6. Add docstrings with examples
+7. Test by creating sample instances and validating their structure
+
+## 4. Implement CLI Interface with Argparse [pending]
+### Dependencies: 1.1, 1.2
+### Description: Create the command-line interface that accepts natural language specifications
+### Details:
+1. Create cli.py file
+2. Import argparse and utility modules
+3. Define ArgumentParser with program description
+4. Add 'generate' command with appropriate arguments
+5. Add '--audit' and '--demo' flags
+6. Implement argument validation
+7. Create main() function entry point
+8. Test by running help command and verifying all options are displayed correctly
+
+## 5. Create Orchestrator Module Stub [pending]
+### Dependencies: 1.1, 1.3, 1.4
+### Description: Implement a stub for the Meta Agent orchestrator that will process specifications
+### Details:
+1. Create orchestrator.py file
+2. Define MetaAgent class with constructor for dependencies
+3. Implement placeholder methods for processing specifications
+4. Connect CLI commands to orchestrator methods
+5. Add proper error handling
+6. Implement logging throughout the module
+7. Test the integration between CLI and orchestrator by verifying command execution flow

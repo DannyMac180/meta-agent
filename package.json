@@ -1,6 +1,16 @@
 {
+  "name": "meta-agent",
+  "version": "0.0.1",
+  "description": "An agent that compiles new agents",
+  "author": "Dan Mac",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "list": "node scripts/dev.js list",
+    "generate": "node scripts/dev.js generate",
+    "parse-prd": "node scripts/dev.js parse-prd"
+  },
   "dependencies": {
-    "task-master-ai": "^0.9.30",
     "@anthropic-ai/sdk": "^0.39.0",
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
@@ -11,12 +21,5 @@
     "gradient-string": "^2.0.2",
     "cli-table3": "^0.6.3",
     "ora": "^7.0.1"
-  },
-  "scripts": {
-    "dev": "node scripts/dev.js",
-    "list": "node scripts/dev.js list",
-    "generate": "node scripts/dev.js generate",
-    "parse-prd": "node scripts/dev.js parse-prd"
-  },
-  "type": "module"
+  }
 }

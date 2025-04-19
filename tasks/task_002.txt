@@ -1,0 +1,19 @@
+# Task ID: 2
+# Title: Implement SpecSchema and Natural Language Processing
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create the data model for parsed specifications and implement the natural language ingestion component
+# Details:
+Develop Pydantic models for SpecSchema including:
+- goal: str
+- io_contract: {input: str, output: str}
+- tools: List[Tool]
+- guardrails: List[Guardrail]
+- constraints: Dict[str, Any]
+
+Implement spec parser using OpenAI o3 model to convert free-form text or structured YAML into SpecSchema instances
+Add validation methods to ensure spec completeness
+
+# Test Strategy:
+Unit tests with sample specifications in both free-form and YAML formats; test edge cases like ambiguous specs

@@ -1,0 +1,21 @@
+# Task ID: 10
+# Title: Implement Template Library and Diagram Generation
+# Status: pending
+# Dependencies: 8
+# Priority: low
+# Description: Create a library of agent templates and auto-generate architecture diagrams
+# Details:
+Implement template system:
+- Create JSON/YAML files for common agent patterns
+- Build embedding-based search for finding relevant templates
+- Implement Chroma vector store for template indexing
+
+Add Mermaid diagram generation:
+- Create component relationship graphs
+- Generate data flow diagrams
+- Auto-render for README inclusion
+
+Implement colored CLI feedback for build status
+
+# Test Strategy:
+Test template retrieval accuracy; verify diagram generation correctly represents agent architecture; test CLI color coding

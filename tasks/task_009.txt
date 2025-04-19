@@ -1,0 +1,18 @@
+# Task ID: 9
+# Title: Add Telemetry and Tracing
+# Status: pending
+# Dependencies: 7
+# Priority: low
+# Description: Implement cost tracking, performance monitoring, and execution tracing
+# Details:
+Implement telemetry system:
+- OpenAI API usage tracking (tokens, costs)
+- Latency measurements for each component
+- Trace logging for agent execution
+- Cost caps and alerts
+
+Create dashboard for visualizing metrics
+Integrate with Agents-SDK tracing hooks
+
+# Test Strategy:
+Verify accurate token counting and cost calculation; test latency tracking; ensure trace logs capture all relevant events
