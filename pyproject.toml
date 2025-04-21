@@ -31,6 +31,7 @@ dependencies = [
     "pydantic>=2",  # Added for data validation models
     "pyyaml>=6",    # Added for potential YAML parsing
     "click>=8",     # Added for CLI implementation
+    "docker>=7",    # Added for Docker sandbox interaction
 ]
 
 [project.urls]
