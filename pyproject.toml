@@ -30,6 +30,7 @@ dependencies = [
     "ruff",
     "pydantic>=2",  # Added for data validation models
     "pyyaml>=6",    # Added for potential YAML parsing
+    "click>=8",     # Added for CLI implementation
 ]
 
 [project.urls]
@@ -37,8 +38,15 @@ Documentation = "https://github.com/Danny McAteer/meta-agent#readme"
 Issues = "https://github.com/Danny McAteer/meta-agent/issues"
 Source = "https://github.com/Danny McAteer/meta-agent"
 
+[project.scripts]
+meta-agent = "meta_agent.cli.main:cli"
+
 [tool.hatch.version]
 path = "src/meta_agent/__about__.py"
+
+[tool.hatch.envs.default]
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
 
 [tool.hatch.envs.test]
 dependencies = [
@@ -74,5 +82,7 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+[tool.hatch.scripts]
+test = { env = "test", run = "pytest {args:tests}" }
 [tool.hatch.build.targets.wheel]
 packages = ["src/meta_agent"]

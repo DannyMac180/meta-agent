@@ -4,7 +4,7 @@ import yaml
 from pathlib import Path
 from pydantic import ValidationError
 
-from src.meta_agent.models.spec_schema import SpecSchema
+from meta_agent.models.spec_schema import SpecSchema
 
 # --- Fixtures ---
 
@@ -80,7 +80,7 @@ def test_from_json_file(sample_spec_json_file, valid_spec_dict):
 
 def test_from_json_invalid_string():
     """Test from_json raises error for invalid JSON string."""
-    invalid_json_str = "{"task_description": "test""
+    invalid_json_str = '{"task_description": "test"' 
     with pytest.raises(json.JSONDecodeError):
         SpecSchema.from_json(invalid_json_str)
 

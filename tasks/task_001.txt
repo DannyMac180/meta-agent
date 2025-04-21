@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Setup Project Repository and CLI Skeleton
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Create the initial project structure with CLI interface that accepts natural language specifications and establishes the SpecSchema data model.
@@ -45,7 +45,7 @@ Testing approach:
 - Ensure package can be installed in development mode with `pip install -e .`
 - Confirm Git repository is properly initialized
 
-## 2. Implement SpecSchema Data Model [pending]
+## 2. Implement SpecSchema Data Model [done]
 ### Dependencies: 1.1
 ### Description: Create the core data model for specification validation using Pydantic with appropriate schema definitions.
 ### Details:
@@ -69,7 +69,7 @@ Testing approach:
 - Test factory methods with different input types
 - Test edge cases with missing or malformed data
 
-## 3. Build CLI Interface with Spec Parsing [pending]
+## 3. Build CLI Interface with Spec Parsing [done]
 ### Dependencies: 1.1, 1.2
 ### Description: Implement the command-line interface that accepts specifications in different formats and initializes the SpecSchema model.
 ### Details:
