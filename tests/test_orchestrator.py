@@ -12,6 +12,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from meta_agent.orchestrator import MetaAgentOrchestrator
+# Import placeholder agents to check isinstance if needed, though mocks are usually sufficient
+from meta_agent.sub_agent_manager import CoderAgent, TesterAgent, BaseAgent
 
 # Fixture for a mock agent (main agent, less relevant now but keep for init)
 @pytest.fixture
@@ -49,21 +51,27 @@ async def test_orchestrator_run_success(orchestrator, sample_spec, caplog):
         "execution_order": ["task_1", "task_2"],
         "dependencies": {}
     }
-    mock_coder_agent = MagicMock(name="CoderAgent")
-    mock_tester_agent = MagicMock(name="TesterAgent")
+    # Create mocks for the sub-agents with an async run method
+    mock_coder_agent = MagicMock(spec=CoderAgent, name="CoderAgent")
+    mock_coder_agent.run = AsyncMock(return_value={"status": "coder_success", "output": "Code generated for task_1"})
+    mock_coder_agent.name = "CoderAgent"
+
+    mock_tester_agent = MagicMock(spec=TesterAgent, name="TesterAgent")
+    mock_tester_agent.run = AsyncMock(return_value={"status": "tester_success", "output": "Tests passed for task_2"})
+    mock_tester_agent.name = "TesterAgent"
 
     # Patch methods on the specific orchestrator instance
     with patch.object(orchestrator, 'decompose_spec', return_value=dummy_tasks) as mock_decompose, \
          patch.object(orchestrator.planning_engine, 'analyze_tasks', return_value=dummy_plan) as mock_analyze, \
          patch.object(orchestrator.sub_agent_manager, 'get_or_create_agent') as mock_get_create:
-        
+
         # Define side effects for get_or_create_agent based on task_id
         def side_effect(req):
             if req['task_id'] == 'task_1':
                 return mock_coder_agent
             elif req['task_id'] == 'task_2':
                 return mock_tester_agent
-            return None
+            return None # Should not happen in this test case
         mock_get_create.side_effect = side_effect
 
         with caplog.at_level(logging.INFO):
@@ -73,21 +81,25 @@ async def test_orchestrator_run_success(orchestrator, sample_spec, caplog):
     mock_decompose.assert_called_once_with(sample_spec)
     mock_analyze.assert_called_once_with(dummy_tasks)
     assert mock_get_create.call_count == 2
+    # Check calls to get_or_create_agent with the correct requirements
     mock_get_create.assert_any_call(dummy_plan['task_requirements'][0])
     mock_get_create.assert_any_call(dummy_plan['task_requirements'][1])
 
+    # Check calls to sub-agent run methods
+    mock_coder_agent.run.assert_called_once_with(specification=dummy_plan['task_requirements'][0])
+    mock_tester_agent.run.assert_called_once_with(specification=dummy_plan['task_requirements'][1])
+
+    # Check final results returned by orchestrator.run
     assert isinstance(result, dict)
     assert 'task_1' in result
-    assert result['task_1'].get('status') == 'simulated_success'
-    assert result['task_1'].get('output') == 'Result for task_1'
+    assert result['task_1'] == mock_coder_agent.run.return_value # Check if result matches mock return
     assert 'task_2' in result
-    assert result['task_2'].get('status') == 'simulated_success'
-    assert result['task_2'].get('output') == 'Result for task_2'
+    assert result['task_2'] == mock_tester_agent.run.return_value
 
     # Check logs
     assert f"Starting orchestration for specification: {sample_spec['name']}" in caplog.text
-    assert f"Executing task task_1 using agent {mock_coder_agent}..." in caplog.text
-    assert f"Executing task task_2 using agent {mock_tester_agent}..." in caplog.text
+    assert f"Executing task task_1 using agent {mock_coder_agent.name}..." in caplog.text
+    assert f"Executing task task_2 using agent {mock_tester_agent.name}..." in caplog.text
     assert "Orchestration completed successfully." in caplog.text
 
 @pytest.mark.asyncio
@@ -123,8 +135,7 @@ async def test_orchestrator_run_empty_plan(orchestrator, sample_spec, caplog):
 
     # Patch methods needed before the check for empty execution_order
     with patch.object(orchestrator, 'decompose_spec', return_value=dummy_tasks) as mock_decompose, \
-         patch.object(orchestrator.planning_engine, 'analyze_tasks', return_value=empty_plan) as mock_analyze, \
-         patch.object(orchestrator, 'delegate_to_sub_agents') as mock_delegate:
+         patch.object(orchestrator.planning_engine, 'analyze_tasks', return_value=empty_plan) as mock_analyze:
 
         with caplog.at_level(logging.WARNING):
             result = await orchestrator.run(sample_spec)
@@ -132,7 +143,6 @@ async def test_orchestrator_run_empty_plan(orchestrator, sample_spec, caplog):
     # Assertions
     mock_decompose.assert_called_once_with(sample_spec)
     mock_analyze.assert_called_once_with(dummy_tasks)
-    mock_delegate.assert_called_once_with(empty_plan)
     assert isinstance(result, dict)
     assert result.get('status') == 'No tasks to execute'
     assert "Execution order is empty. No tasks to execute." in caplog.text

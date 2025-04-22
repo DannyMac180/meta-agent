@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meta-agent"
+
 dynamic = ["version"]
 description = 'init hatch'
 readme = "README.md"
@@ -32,6 +33,7 @@ dependencies = [
     "pyyaml>=6",    # Added for potential YAML parsing
     "click>=8",     # Added for CLI implementation
     "docker>=7",    # Added for Docker sandbox interaction
+    "Jinja2>=3.0.0"
 ]
 
 [project.urls]

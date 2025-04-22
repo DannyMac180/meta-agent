@@ -3,82 +3,123 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 """
 
 import logging
-from typing import Dict, Any, Optional
-
-# Assuming the Agent class is available from the SDK
-# from agents import Agent
+from typing import Dict, Any, Optional, Type
+from agents import Agent, Tool
 
 logger = logging.getLogger(__name__)
 
+# --- Placeholder Sub-Agent Classes --- #
+
+class BaseAgent(Agent):
+    """A generic base agent for tasks without specific tools."""
+    def __init__(self):
+        super().__init__(name="BaseAgent", tools=[])
+
+    async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info(f"BaseAgent running with spec: {specification.get('description')}")
+        # Simulate work
+        return {"status": "simulated_success", "output": f"Result from BaseAgent for {specification.get('task_id')}"}
+
+class CoderAgent(Agent):
+    """Agent specialized for coding tasks."""
+    def __init__(self):
+        super().__init__(name="CoderAgent", tools=[])
+
+    async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info(f"CoderAgent running with spec: {specification.get('description')}")
+        # Simulate coding work
+        return {"status": "simulated_success", "output": f"Generated code by CoderAgent for {specification.get('task_id')}"}
+
+class TesterAgent(Agent):
+    """Agent specialized for testing tasks."""
+    def __init__(self):
+        super().__init__(name="TesterAgent", tools=[])
+
+    async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info(f"TesterAgent running with spec: {specification.get('description')}")
+        # Simulate testing work
+        return {"status": "simulated_success", "output": f"Test results from TesterAgent for {specification.get('task_id')}"}
+
+class ReviewerAgent(Agent):
+    """Agent specialized for review tasks."""
+    def __init__(self):
+        super().__init__(name="ReviewerAgent", tools=[])
+
+    async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info(f"ReviewerAgent running with spec: {specification.get('description')}")
+        # Simulate review work
+        return {"status": "simulated_success", "output": f"Review comments from ReviewerAgent for {specification.get('task_id')}"}
+
+
+# --- SubAgentManager --- #
 
 class SubAgentManager:
-    """
-    Handles the lifecycle (creation, retrieval, management) of specialized sub-agents.
-    """
+    """Manages the lifecycle and delegation to specialized sub-agents."""
+
+    AGENT_TOOL_MAP: Dict[str, Type[Agent]] = {
+        "coder_tool": CoderAgent,
+        "tester_tool": TesterAgent,
+        "reviewer_tool": ReviewerAgent,
+        # Add other tool-to-agent mappings here
+    }
 
     def __init__(self):
         """Initializes the SubAgentManager."""
-        self._agents: Dict[str, Any] = {}  # Store agents by some identifier (e.g., task_id or type)
+        self._agents: Dict[str, Agent] = {}  # Cache for agent instances (by type/config)
         logger.info("SubAgentManager initialized.")
 
-    def get_or_create_agent(self, task_requirements: Dict[str, Any]) -> Any:
+    def get_or_create_agent(self, task_requirements: Dict[str, Any]) -> Optional[Agent]:
         """
-        Retrieves an existing suitable agent or creates a new one based on task requirements.
+        Retrieves or creates a sub-agent based on task requirements.
+        Uses a simple mapping from the first tool found.
 
         Args:
-            task_requirements: A dictionary describing the requirements for the agent,
-                               including necessary tools and guardrails.
-                               (e.g., {'task_id': 't1', 'tools': ['tool_a'], 'guardrails': ['g1']})
+            task_requirements: A dictionary containing 'task_id', 'tools',
+                               'guardrails', and 'description'.
 
         Returns:
-            An instance of a sub-agent (placeholder Any for now).
-            Returns None if an agent cannot be created or found.
+            An instance of the appropriate Agent, or a BaseAgent/None if no
+            specific agent type is determined.
         """
-        # TODO: Implement logic to determine if an existing agent can handle the task
-        # TODO: Implement logic to create a new agent based on requirements
-        #       This might involve calling the main MetaAgent or using templates.
+        task_id = task_requirements.get("task_id", "unknown")
+        tools = task_requirements.get("tools", [])
+        logger.info(f"Getting/creating agent for task {task_id} with tools: {tools}")
 
-        agent_type = self._determine_agent_type(task_requirements)
-        agent_id = f"sub_agent_{agent_type}_{len(self._agents) + 1}"
+        agent_class: Optional[Type[Agent]] = None
+        selected_tool = None
 
-        if agent_id in self._agents:
-            logger.info(f"Reusing existing agent: {agent_id}")
-            return self._agents[agent_id]
-        else:
-            logger.info(f"Creating new sub-agent for task: {task_requirements.get('task_id', 'unknown')}")
-            # Placeholder for agent creation
-            new_agent = self._create_new_agent(agent_id, task_requirements)
-            if new_agent:
-                self._agents[agent_id] = new_agent
-                logger.info(f"Successfully created agent: {agent_id}")
-                return new_agent
+        if tools:
+            # Simple approach: Use the first tool to determine agent type
+            selected_tool = tools[0]
+            agent_class = self.AGENT_TOOL_MAP.get(selected_tool)
+
+        if agent_class:
+            agent_type_name = agent_class.__name__
+            # Basic caching: Check if an agent of this type already exists
+            if agent_type_name in self._agents:
+                 logger.debug(f"Reusing existing {agent_type_name} for task {task_id}")
+                 return self._agents[agent_type_name]
             else:
-                logger.error(f"Failed to create agent for task: {task_requirements.get('task_id', 'unknown')}")
-                return None
+                logger.info(f"Creating new {agent_type_name} for task {task_id} based on tool '{selected_tool}'")
+                try:
+                    # Instantiate the agent
+                    new_agent = agent_class()
+                    self._agents[agent_type_name] = new_agent # Cache it
+                    return new_agent
+                except Exception as e:
+                    logger.error(f"Failed to create agent {agent_type_name}: {e}", exc_info=True)
+                    return None # Or raise?
+        else:
+            logger.warning(f"No specific agent class found for tools {tools} for task {task_id}. Falling back to BaseAgent.")
+            # Fallback to a generic agent if no specific tool/agent mapping found
+            if BaseAgent.__name__ not in self._agents:
+                 self._agents[BaseAgent.__name__] = BaseAgent()
+            return self._agents[BaseAgent.__name__]
 
-    def _determine_agent_type(self, task_requirements: Dict[str, Any]) -> str:
-        """Placeholder logic to determine the type of agent needed."""
-        # Simple logic based on tools for now
-        tools = task_requirements.get('tools', [])
-        if "code_generator_tool" in tools:
-            return "coder"
-        if "test_writer_tool" in tools:
-            return "tester"
-        return "general"
-
-    def _create_new_agent(self, agent_id: str, task_requirements: Dict[str, Any]) -> Optional[Any]:
-        """Placeholder for the actual agent creation logic."""
-        # This would involve configuring an Agent instance with specific
-        # instructions, tools, guardrails based on task_requirements.
-        logger.info(f"Simulating creation of agent {agent_id} with requirements: {task_requirements}")
-        # Replace 'object()' with actual Agent creation using the SDK
-        # Example: return Agent(name=agent_id, instructions=..., tools=..., guardrails=...)
-        return object() # Placeholder agent object
-
-    def get_agent(self, agent_id: str) -> Optional[Any]:
+    def get_agent(self, agent_id: str) -> Optional[Agent]:
         """Retrieves an agent by its ID."""
         return self._agents.get(agent_id)
 
-    def list_agents(self) -> Dict[str, Any]:
+    def list_agents(self) -> Dict[str, Agent]:
         """Lists all managed agents."""
         return self._agents
