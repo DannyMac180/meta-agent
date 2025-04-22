@@ -45,14 +45,11 @@ meta-agent = "meta_agent.cli.main:cli"
 [tool.hatch.version]
 path = "src/meta_agent/__about__.py"
 
-[tool.hatch.envs.default]
-[tool.hatch.envs.default.scripts]
-test = "pytest {args:tests}"
-
 [tool.hatch.envs.test]
 dependencies = [
   "pytest",
   "pytest-cov", # Added for coverage
+  "pytest-asyncio", # Added for async tests
 ]
 [tool.hatch.envs.test.scripts]
 test = "pytest {args:tests}" # Script to run pytest
@@ -83,6 +80,14 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.pytest.ini_options]
+addopts = ""  # no default addopts, use pytest.ini or args
+markers = [
+    "anyio: mark a test function as asynchronous.",
+    "asyncio: mark a test function as asynchronous (for pytest-asyncio).",
+]
+
 [tool.hatch.scripts]
 test = { env = "test", run = "pytest {args:tests}" }
 [tool.hatch.build.targets.wheel]
