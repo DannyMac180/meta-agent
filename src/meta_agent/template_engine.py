@@ -1,6 +1,7 @@
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from jinja2 import Environment, FileSystemLoader, Template
 import os
+import ast
 
 class TemplateEngine:
     """
@@ -23,3 +24,34 @@ class TemplateEngine:
             template_name = self.default_template_name
         template: Template = self.env.get_template(template_name)
         return template.render(**sub_agent_outputs)
+
+
+def validate_agent_code(code: str) -> Tuple[bool, str]:
+    """
+    Validate that the assembled code is valid Python and contains an Agent subclass with a run method.
+    Returns (True, "") if valid, else (False, error_message).
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+
+    # Look for a class that subclasses Agent and has a 'run' method
+    agent_class_found = False
+    run_method_found = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            for base in node.bases:
+                if (isinstance(base, ast.Name) and base.id == "Agent") or (
+                    isinstance(base, ast.Attribute) and base.attr == "Agent"
+                ):
+                    agent_class_found = True
+                    # Check for run method
+                    for item in node.body:
+                        if isinstance(item, ast.FunctionDef) and item.name == "run":
+                            run_method_found = True
+    if not agent_class_found:
+        return False, "No class subclassing 'Agent' found."
+    if not run_method_found:
+        return False, "No 'run' method found in Agent subclass."
+    return True, ""

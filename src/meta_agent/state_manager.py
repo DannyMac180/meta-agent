@@ -46,6 +46,32 @@ class StateManager:
         with self._lock:
             return dict(self._state)
 
+    def get_report(self, as_dict: bool = False):
+        """
+        Returns a formatted string or dict summarizing status, progress, current step, completed steps, retries, and errors.
+        """
+        with self._lock:
+            report = {
+                'status': self._state['status'],
+                'progress': self._state['progress'],
+                'current_step': self._state['current_step'],
+                'completed_steps': list(self._state['steps']),
+                'retries': dict(self._state['retries']),
+                'error': self._state['error']
+            }
+            if as_dict:
+                return report
+            # Human-friendly string
+            lines = [
+                f"Status: {report['status']}",
+                f"Progress: {report['progress']*100:.1f}%",
+                f"Current step: {report['current_step']}",
+                f"Completed steps: {', '.join(report['completed_steps']) if report['completed_steps'] else 'None'}",
+                f"Retries: {report['retries'] if report['retries'] else 'None'}",
+                f"Error: {report['error'] if report['error'] else 'None'}"
+            ]
+            return "\n".join(lines)
+
     def reset(self):
         with self._lock:
             self._state = {

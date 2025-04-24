@@ -4,7 +4,12 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 
 import logging
 from typing import Dict, Any, Optional, Type
-from agents import Agent, Tool
+from agents import Agent, Tool, Runner
+from meta_agent.models.generated_tool import GeneratedTool
+import ast
+import subprocess
+import tempfile
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +55,97 @@ class ReviewerAgent(Agent):
         # Simulate review work
         return {"status": "simulated_success", "output": f"Review comments from ReviewerAgent for {specification.get('task_id')}"}
 
+# --- Tool Designer Sub-Agent --- #
+
+class ToolDesignerAgent(Agent):
+    """Agent specialized for generating tool code using the o4-mini-high model."""
+    def __init__(self):
+        super().__init__(name="ToolDesignerAgent", tools=[])
+
+    async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
+        logger.info(f"ToolDesignerAgent running with spec: {specification.get('description')}")
+        try:
+            generated = await self.generate_tool(specification)
+            # Validate Python syntax
+            try:
+                ast.parse(generated.code)
+            except SyntaxError as e:
+                return {'status': 'failed', 'error': f'Syntax error: {e}', 'code': generated.code}
+            # Validate with mypy
+            with tempfile.NamedTemporaryFile('w', delete=False, suffix='.py') as f:
+                f.write(generated.code)
+                code_path = f.name
+            try:
+                mypy_result = subprocess.run(['mypy', code_path], capture_output=True, text=True)
+                if mypy_result.returncode != 0:
+                    return {'status': 'failed', 'error': mypy_result.stdout, 'code': generated.code}
+            finally:
+                os.unlink(code_path)
+            # Success
+            return {'status': 'success', 'tool': generated.model_dump()}
+        except Exception as e:
+            logger.error(f"ToolDesignerAgent generation failed: {e}", exc_info=True)
+            return {'status': 'failed', 'error': str(e)}
+
+    async def generate_tool(self, specification: Dict[str, Any]) -> GeneratedTool:
+        # Hosted tool decision logic
+        desc = specification.get('description', '') or specification.get('task_description', '')
+        desc_lc = desc.lower()
+        # Hosted tool: WebSearchTool
+        if any(kw in desc_lc for kw in ['search', 'retrieve', 'web browser', 'lookup', 'google', 'docs', 'documentation']):
+            code = (
+                'from agents.tools import WebSearchTool\n'
+                'from agents import function_tool\n\n'
+                '@function_tool\n'
+                'def search_web(query: str) -> str:\n'
+                '    """Search the web for the given query and return a summary."""\n'
+                '    return WebSearchTool()(query)\n'
+            )
+            tests = (
+                'import pytest\n\n'
+                'def test_search_web():\n'
+                '    result = search_web("openai agents sdk")\n'
+                '    assert isinstance(result, str)\n'
+            )
+            docs = (
+                '# search_web\n\n'
+                'Searches the web for a query using the hosted WebSearchTool.\n'
+                'Returns a summary string.\n'
+            )
+            return GeneratedTool(code=code, tests=tests, docs=docs)
+        # Hosted tool: FileSearchTool (stub)
+        if any(kw in desc_lc for kw in ['file', 'vector', 'embedding', 'document search', 'semantic search']):
+            code = (
+                'from agents.tools import FileSearchTool\n'
+                'from agents import function_tool\n\n'
+                '@function_tool\n'
+                'def search_files(query: str) -> str:\n'
+                '    """Search indexed files or vectors for the given query and return a summary."""\n'
+                '    return FileSearchTool()(query)\n'
+            )
+            tests = (
+                'import pytest\n\n'
+                'def test_search_files():\n'
+                '    result = search_files("project requirements")\n'
+                '    assert isinstance(result, str)\n'
+            )
+            docs = (
+                '# search_files\n\n'
+                'Searches indexed files/vectors for a query using the hosted FileSearchTool.\n'
+                'Returns a summary string.\n'
+            )
+            return GeneratedTool(code=code, tests=tests, docs=docs)
+        # Otherwise: custom tool (use LLM)
+        spec = specification.copy()
+        spec['model'] = 'o4-mini-high'
+        spec['temperature'] = 0.0
+        spec['max_tokens'] = 4096
+        result = await Runner.run(self, spec)
+        code = result.get('code', '')
+        tests = result.get('tests', '')
+        docs = result.get('docs', '')
+        return GeneratedTool(code=code, tests=tests, docs=docs)
+
 
 # --- SubAgentManager --- #
 
@@ -60,6 +156,7 @@ class SubAgentManager:
         "coder_tool": CoderAgent,
         "tester_tool": TesterAgent,
         "reviewer_tool": ReviewerAgent,
+        "tool_designer_tool": ToolDesignerAgent,
         # Add other tool-to-agent mappings here
     }
 
