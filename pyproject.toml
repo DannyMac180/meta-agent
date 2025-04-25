@@ -34,7 +34,9 @@ dependencies = [
     "click>=8",     # Added for CLI implementation
     "docker>=7",    # Added for Docker sandbox interaction
     "Jinja2>=3.0.0",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "pytest-cov",
+    "python-dotenv>=1.0.0" # Added for loading .env files
 ]
 
 [project.urls]
@@ -56,7 +58,7 @@ dependencies = [
 ]
 [tool.hatch.envs.test.scripts]
 test = "pytest {args:tests}" # Script to run pytest
-cov = "pytest --cov=src/meta_agent --cov-report=term-missing {args:tests}" # Script for coverage
+cov = "pytest --cov=src/meta_agent --cov-branch --cov-report=term-missing {args:tests}" # Script for coverage
 
 [tool.hatch.envs.types]
 extra-dependencies = [
