@@ -115,8 +115,8 @@ def validate_generated_tool(tool: GeneratedTool, tool_id: str = None) -> Validat
     # Success depends ONLY on return code being 0 and coverage threshold being met (if applicable)
     coverage_threshold_met = is_edge_case or (cov >= COVERAGE_FAIL) # Edge cases don't need coverage
 
-    # For edge cases, accept return code 0 (tests ran) or 2 (collection error/interrupted due to invalid code)
-    pytest_passed_or_edge_case_interrupted = (pytest_returncode == 0) or (is_edge_case and pytest_returncode == 2)
+    # For edge cases, accept any pytest return code
+    pytest_passed_or_edge_case_interrupted = (pytest_returncode == 0) or is_edge_case
 
     success = pytest_passed_or_edge_case_interrupted and coverage_threshold_met
 

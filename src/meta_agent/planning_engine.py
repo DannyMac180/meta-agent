@@ -90,7 +90,7 @@ class PlanningEngine:
 
             task_requirements.append({
                 "task_id": task_id,
-                "tools": list(required_tools),
+                "tools": sorted(list(required_tools)), # Sort tools list
                 "guardrails": list(required_guardrails),
                 "description": task.get("description") # Keep original description if needed
             })

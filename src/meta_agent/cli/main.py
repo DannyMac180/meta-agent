@@ -6,10 +6,14 @@ import click
 import sys
 import yaml
 import json
+import asyncio
 from pathlib import Path
 from pydantic import ValidationError
 
 from meta_agent.models.spec_schema import SpecSchema
+from meta_agent.orchestrator import MetaAgentOrchestrator
+from meta_agent.planning_engine import PlanningEngine
+from meta_agent.sub_agent_manager import SubAgentManager
 # TODO: Import logging setup from utils
 
 @click.group()
@@ -18,12 +22,11 @@ def cli():
     # TODO: Configure logging
     pass
 
-@cli.command()
 @click.option('--spec-file', type=click.Path(exists=True, dir_okay=False, path_type=Path), 
               help='Path to the specification file (JSON or YAML).')
 @click.option('--spec-text', type=str, 
               help='Specification provided as a text string.')
-def generate(spec_file: Path | None, spec_text: str | None):
+async def generate(spec_file: Path | None, spec_text: str | None):
     """Generate agent code based on a specification."""
     if not spec_file and not spec_text:
         click.echo("Error: Please provide either --spec-file or --spec-text.", err=True)
@@ -81,8 +84,20 @@ def generate(spec_file: Path | None, spec_text: str | None):
             click.echo(f"  Task Description: {spec.task_description[:100]}...") 
             click.echo(f"  Inputs: {spec.inputs}")
             click.echo(f"  Outputs: {spec.outputs}")
-            # Placeholder for generation
-            click.echo("\n(Agent generation logic goes here)") 
+            # Instantiate components
+            # TODO: Configure these properly, maybe via CLI options or config files
+            planning_engine = PlanningEngine()
+            sub_agent_manager = SubAgentManager()
+            orchestrator = MetaAgentOrchestrator(planning_engine, sub_agent_manager)
+
+            # Run the orchestration
+            click.echo("\nStarting agent generation orchestration...")
+            # Convert Pydantic model to dict for the orchestrator
+            spec_dict = spec.model_dump(exclude_unset=True) 
+            results = await orchestrator.run(specification=spec_dict)
+            click.echo("\nOrchestration finished.")
+            click.echo(f"Results: {json.dumps(results, indent=2)}")
+
         else:
              # This case should ideally not be reached due to prior checks/errors
             click.echo("Error: Could not parse or load specification.", err=True)
@@ -100,5 +115,13 @@ def generate(spec_file: Path | None, spec_text: str | None):
         # TODO: Add proper logging here
         sys.exit(1)
 
-if __name__ == '__main__':
-    cli()
+# Note: This basic setup works for a single async command.
+# If more async commands are added, a more robust asyncio setup might be needed.
+@cli.command(name='generate')
+@click.option('--spec-file', type=click.Path(exists=True, dir_okay=False, path_type=Path), 
+              help='Path to the specification file (JSON or YAML).')
+@click.option('--spec-text', type=str, 
+              help='Specification provided as a text string.')
+def generate_command_wrapper(spec_file, spec_text):
+    asyncio.run(generate(spec_file, spec_text))
+cli()

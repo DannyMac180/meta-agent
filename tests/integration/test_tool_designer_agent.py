@@ -73,3 +73,28 @@ async def test_performance_under_60s():
     result = validate_generated_tool(tool, tool_id='perf1')
     assert result.success, f"Validation failed: {result.errors}"
     assert result.coverage >= 0.9
+
+@pytest.mark.asyncio
+async def test_file_search_stub():
+    agent = ToolDesignerAgent()
+    spec = {"task_id": "files1",
+            "description": "Search indexed files for a term"}
+    tool = await agent.generate_tool(spec)
+    result = validate_generated_tool(tool, tool_id="files1")
+    assert result.success
+
+@pytest.mark.asyncio
+async def test_invalid_json_from_llm():
+    # Monkey-patch Runner.run to return non-JSON output
+    from agents import Runner
+    async def fake_run(*_, **__):
+        class FakeRes: final_output = "nonsense"
+        return FakeRes()
+    Runner.run, orig = fake_run, Runner.run
+    try:
+        agent = ToolDesignerAgent()
+        spec = {"task_id": "badjson", "description": "add 1+1"}
+        tool = await agent.generate_tool(spec)
+        assert tool.code.startswith("# Error"), "Should surface parsing error"
+    finally:
+        Runner.run = orig

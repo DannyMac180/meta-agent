@@ -4,155 +4,152 @@ Unit tests for the MetaAgentOrchestrator.
 
 import pytest
 import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 
-# Make sure the src directory is importable
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+from src.meta_agent.orchestrator import MetaAgentOrchestrator
+from src.meta_agent.models.spec_schema import SpecSchema 
+from src.meta_agent.planning_engine import PlanningEngine 
+from src.meta_agent.sub_agent_manager import SubAgentManager 
 
-from meta_agent.orchestrator import MetaAgentOrchestrator
-# Import placeholder agents to check isinstance if needed, though mocks are usually sufficient
-from meta_agent.sub_agent_manager import CoderAgent, TesterAgent, BaseAgent
-
-# Fixture for a mock agent (main agent, less relevant now but keep for init)
+# Mock for the main agent (if still needed by some tests, otherwise can be removed)
 @pytest.fixture
 def mock_main_agent():
+    """Provides a mock main agent."""
     return MagicMock(name="MockMainAgent")
 
-# Fixture for a sample specification
+# Mock for PlanningEngine
 @pytest.fixture
-def sample_spec():
-    return {"name": "TestAgent", "description": "A test agent specification"}
-
-# Fixture for the orchestrator instance
-@pytest.fixture
-def orchestrator(mock_main_agent):
-    orch = MetaAgentOrchestrator(agent=mock_main_agent)
-    return orch
-
-# --- Updated Tests --- 
-
-@pytest.mark.asyncio
-async def test_orchestrator_run_success(orchestrator, sample_spec, caplog):
-    """Test successful run execution with the new delegation flow."""
-    # Mock data
-    dummy_tasks = {
-        "subtasks": [
-            {"id": "task_1", "description": "Generate code"},
-            {"id": "task_2", "description": "Write tests"}
+def mock_planning_engine():
+    """Provides a mock PlanningEngine."""
+    engine = MagicMock(spec=PlanningEngine)
+    # Configure mock methods as needed for tests, e.g.:
+    engine.analyze_tasks.return_value = {
+        "execution_order": ["task_1", "task_2"],
+        "task_requirements": [
+            {"task_id": "task_1", "description": "Task 1 details", "agent_type": "CodeGenerator"},
+            {"task_id": "task_2", "description": "Task 2 details", "agent_type": "Tester"}
         ]
     }
-    dummy_plan = {
-        "task_requirements": [
-            {"task_id": "task_1", "tools": ["coder"], "guardrails": ["g1"]},
-            {"task_id": "task_2", "tools": ["tester"], "guardrails": ["g1"]}
-        ],
-        "execution_order": ["task_1", "task_2"],
-        "dependencies": {}
-    }
-    # Create mocks for the sub-agents with an async run method
-    mock_coder_agent = MagicMock(spec=CoderAgent, name="CoderAgent")
-    mock_coder_agent.run = AsyncMock(return_value={"status": "coder_success", "output": "Code generated for task_1"})
-    mock_coder_agent.name = "CoderAgent"
+    return engine
 
-    mock_tester_agent = MagicMock(spec=TesterAgent, name="TesterAgent")
-    mock_tester_agent.run = AsyncMock(return_value={"status": "tester_success", "output": "Tests passed for task_2"})
-    mock_tester_agent.name = "TesterAgent"
+# Mock for SubAgentManager
+@pytest.fixture
+def mock_sub_agent_manager():
+    """Provides a mock SubAgentManager."""
+    manager = MagicMock(spec=SubAgentManager)
+    # Configure mock methods as needed, e.g., mock agent creation/retrieval:
+    mock_sub_agent = AsyncMock()
+    mock_sub_agent.name = "MockSubAgent"
+    mock_sub_agent.run = AsyncMock(return_value={"status": "completed"})
+    manager.get_or_create_agent.return_value = mock_sub_agent
+    return manager
 
-    # Patch methods on the specific orchestrator instance
-    with patch.object(orchestrator, 'decompose_spec', return_value=dummy_tasks) as mock_decompose, \
-         patch.object(orchestrator.planning_engine, 'analyze_tasks', return_value=dummy_plan) as mock_analyze, \
-         patch.object(orchestrator.sub_agent_manager, 'get_or_create_agent') as mock_get_create:
+@pytest.fixture
+def orchestrator(mock_planning_engine, mock_sub_agent_manager):
+    """Provides an orchestrator instance with mocked dependencies."""
+    # Updated to use new mocks
+    orch = MetaAgentOrchestrator(planning_engine=mock_planning_engine, sub_agent_manager=mock_sub_agent_manager)
+    return orch
 
-        # Define side effects for get_or_create_agent based on task_id
-        def side_effect(req):
-            if req['task_id'] == 'task_1':
-                return mock_coder_agent
-            elif req['task_id'] == 'task_2':
-                return mock_tester_agent
-            return None # Should not happen in this test case
-        mock_get_create.side_effect = side_effect
-
-        with caplog.at_level(logging.INFO):
-            result = await orchestrator.run(sample_spec)
-
-    # Assertions
-    mock_decompose.assert_called_once_with(sample_spec)
-    mock_analyze.assert_called_once_with(dummy_tasks)
-    assert mock_get_create.call_count == 2
-    # Check calls to get_or_create_agent with the correct requirements
-    mock_get_create.assert_any_call(dummy_plan['task_requirements'][0])
-    mock_get_create.assert_any_call(dummy_plan['task_requirements'][1])
-
-    # Check calls to sub-agent run methods
-    mock_coder_agent.run.assert_called_once_with(specification=dummy_plan['task_requirements'][0])
-    mock_tester_agent.run.assert_called_once_with(specification=dummy_plan['task_requirements'][1])
-
-    # Check final results returned by orchestrator.run
-    assert isinstance(result, dict)
-    assert 'task_1' in result
-    assert result['task_1'] == mock_coder_agent.run.return_value # Check if result matches mock return
-    assert 'task_2' in result
-    assert result['task_2'] == mock_tester_agent.run.return_value
-
-    # Check logs
-    assert f"Starting orchestration for specification: {sample_spec['name']}" in caplog.text
-    assert f"Executing task task_1 using agent {mock_coder_agent.name}..." in caplog.text
-    assert f"Executing task task_2 using agent {mock_tester_agent.name}..." in caplog.text
-    assert "Orchestration completed successfully." in caplog.text
+@pytest.fixture
+def sample_specification():
+    """Provides a sample agent specification dictionary."""
+    return {"name": "TestAgent", "description": "A test agent specification"}
 
 @pytest.mark.asyncio
-async def test_orchestrator_run_planning_failure(orchestrator, sample_spec, caplog):
-    """Test run execution when planning_engine.analyze_tasks raises an exception."""
-    dummy_tasks = {"subtasks": [{"id": "task_1", "description": "..."}]}
-    test_exception = ValueError("Planning Failed")
-
-    # Patch methods
-    with patch.object(orchestrator, 'decompose_spec', return_value=dummy_tasks) as mock_decompose, \
-         patch.object(orchestrator.planning_engine, 'analyze_tasks', side_effect=test_exception) as mock_analyze:
-        
-        with caplog.at_level(logging.ERROR):
-            result = await orchestrator.run(sample_spec)
-
-    # Assertions
-    mock_decompose.assert_called_once_with(sample_spec)
-    mock_analyze.assert_called_once_with(dummy_tasks)
-    assert isinstance(result, dict)
-    assert result.get('status') == 'failed'
-    assert result.get('error') == str(test_exception)
-    assert f"Orchestration failed: {test_exception}" in caplog.text
-
-@pytest.mark.asyncio
-async def test_orchestrator_run_empty_plan(orchestrator, sample_spec, caplog):
-    """Test run execution when the execution plan has no tasks."""
-    dummy_tasks = {"subtasks": []} 
-    empty_plan = {
-        "task_requirements": [],
-        "execution_order": [],
-        "dependencies": {}
-    }
-
-    # Patch methods needed before the check for empty execution_order
-    with patch.object(orchestrator, 'decompose_spec', return_value=dummy_tasks) as mock_decompose, \
-         patch.object(orchestrator.planning_engine, 'analyze_tasks', return_value=empty_plan) as mock_analyze:
-
-        with caplog.at_level(logging.WARNING):
-            result = await orchestrator.run(sample_spec)
-
-    # Assertions
-    mock_decompose.assert_called_once_with(sample_spec)
-    mock_analyze.assert_called_once_with(dummy_tasks)
-    assert isinstance(result, dict)
-    assert result.get('status') == 'No tasks to execute'
-    assert "Execution order is empty. No tasks to execute." in caplog.text
-
-@pytest.mark.asyncio
-async def test_orchestrator_init(mock_main_agent, caplog):
+async def test_orchestrator_init(mock_planning_engine, mock_sub_agent_manager, caplog):
     """Test orchestrator initialization and logging."""
     with caplog.at_level(logging.INFO):
-        orchestrator_instance = MetaAgentOrchestrator(agent=mock_main_agent)
-        assert orchestrator_instance.agent == mock_main_agent
-        assert "MetaAgentOrchestrator initialized." in caplog.text
-        assert "PlanningEngine initialized." in caplog.text
-        assert "SubAgentManager initialized." in caplog.text
+        # Updated to use new mocks
+        orchestrator_instance = MetaAgentOrchestrator(planning_engine=mock_planning_engine, sub_agent_manager=mock_sub_agent_manager)
+    assert isinstance(orchestrator_instance, MetaAgentOrchestrator)
+    assert orchestrator_instance.planning_engine == mock_planning_engine
+    assert orchestrator_instance.sub_agent_manager == mock_sub_agent_manager
+    assert "MetaAgentOrchestrator initialized" in caplog.text
+
+@pytest.mark.asyncio
+async def test_orchestrator_run_success(orchestrator, sample_specification, mock_planning_engine, mock_sub_agent_manager):
+    """Test the successful run of the orchestrator."""
+    # Mock decompose_spec to return something simple
+    orchestrator.decompose_spec = MagicMock(return_value={'subtasks': [{'id': 'task_1'}, {'id': 'task_2'}]})
+
+    results = await orchestrator.run(specification=sample_specification)
+
+    # Assertions:
+    orchestrator.decompose_spec.assert_called_once_with(sample_specification)
+    mock_planning_engine.analyze_tasks.assert_called_once_with({'subtasks': [{'id': 'task_1'}, {'id': 'task_2'}]})
+    assert mock_sub_agent_manager.get_or_create_agent.call_count == 2 # Called for task_1 and task_2
+    # Check if the sub-agent's run method was called for each task
+    mock_sub_agent = mock_sub_agent_manager.get_or_create_agent.return_value
+    assert mock_sub_agent.run.call_count == 2
+    # Check the structure of the results
+    assert "task_1" in results
+    assert "task_2" in results
+    assert results["task_1"]["status"] == "completed"
+    assert results["task_2"]["status"] == "completed"
+
+@pytest.mark.asyncio
+async def test_orchestrator_run_planning_failure(orchestrator, sample_specification, mock_planning_engine):
+    """Test orchestrator run when planning fails."""
+    # Simulate PlanningEngine raising an exception
+    mock_planning_engine.analyze_tasks.side_effect = Exception("Planning Error")
+    orchestrator.decompose_spec = MagicMock(return_value={'subtasks': [{'id': 'task_1'}]})
+
+    results = await orchestrator.run(specification=sample_specification)
+
+    # Assertions:
+    assert results["status"] == "failed"
+    assert "Planning Error" in results["error"]
+    mock_planning_engine.analyze_tasks.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_orchestrator_run_empty_plan(orchestrator, sample_specification, mock_planning_engine, caplog):
+    """Test orchestrator run when the plan has no executable tasks."""
+    # Mock planning to return an empty execution order
+    mock_planning_engine.analyze_tasks.return_value = {"execution_order": [], "task_requirements": []}
+    orchestrator.decompose_spec = MagicMock(return_value={'subtasks': []})
+
+    with caplog.at_level(logging.WARNING):
+        results = await orchestrator.run(specification=sample_specification)
+
+    # Assertions:
+    assert results["status"] == "No tasks to execute"
+    assert "Execution order is empty" in caplog.text
+    mock_planning_engine.analyze_tasks.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_orchestrator_run_sub_agent_failure(orchestrator, sample_specification, mock_planning_engine, mock_sub_agent_manager):
+    """Test orchestrator run when a sub-agent fails."""
+    # Mock planning engine to return a plan
+    mock_planning_engine.analyze_tasks.return_value = {
+        "execution_order": ["task_1"],
+        "task_requirements": [
+            {"task_id": "task_1", "description": "Failing task", "agent_type": "FailingAgent"}
+        ]
+    }
+    orchestrator.decompose_spec = MagicMock(return_value={'subtasks': [{'id': 'task_1'}]})
+
+    # Mock sub-agent manager to return an agent that fails
+    failing_agent = AsyncMock()
+    failing_agent.name = "FailingSubAgent"
+    failing_agent.run = AsyncMock(side_effect=Exception("Sub-agent execution failed"))
+    mock_sub_agent_manager.get_or_create_agent.return_value = failing_agent
+
+    results = await orchestrator.run(specification=sample_specification)
+
+    # Assertions:
+    assert "task_1" in results
+    assert results["task_1"]["status"] == "failed"
+    assert "Sub-agent execution failed" in results["task_1"]["error"]
+    mock_sub_agent_manager.get_or_create_agent.assert_called_once()
+    failing_agent.run.assert_called_once()
+
+# Add more tests as needed for decompose_spec stub, error handling, etc.
+
+# Example test for decompose_spec (assuming it remains a simple stub for now)
+# def test_decompose_spec_stub(orchestrator, sample_specification):
+#     """Test the decompose_spec stub returns expected structure."""
+#     decomposed = orchestrator.decompose_spec(sample_specification)
+#     assert "subtasks" in decomposed
+#     assert isinstance(decomposed["subtasks"], list)
+#     # Add more specific assertions if the stub becomes more complex

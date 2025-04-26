@@ -1,3 +1,3 @@
-# Confusing Function
+# Confusing Annotated Function
 
-This function takes a list of string numbers and returns a list of integers, but the type annotations are deliberately confusing.
+This function returns a list of integers from the input list, but uses incorrect type annotations for demonstration purposes.

@@ -1,9 +1,18 @@
 from tool import multiply
 import pytest
-def test_multiply():
-    assert multiply(2, 3) == 6
-    assert multiply(-1, 5) == -5
-    assert multiply(0, 10) == 0
-    assert multiply(7, 0) == 0
-    assert multiply(-3, -3) == 9
-    assert multiply(2, -4) == -8
+
+def test_multiply_positive_numbers():
+    assert multiply(3, 4) == 12
+
+def test_multiply_negative_numbers():
+    assert multiply(-2, -3) == 6
+
+def test_multiply_positive_and_negative():
+    assert multiply(-2, 3) == -6
+
+def test_multiply_with_zero():
+    assert multiply(5, 0) == 0
+    assert multiply(0, 5) == 0
+
+def test_multiply_large_numbers():
+    assert multiply(100000, 100000) == 10000000000

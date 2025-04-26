@@ -1,3 +1,3 @@
 # Add Function
 
-This function takes two integers as input and returns their sum.
+The `add` function takes two integers `a` and `b` as input and returns their sum.

@@ -1,7 +1,7 @@
-from tool import confusing_function
+from tool import confusing_annotated_function
 import pytest
 
-def test_confusing_function():
-    assert confusing_function(['1', '2', '3']) == [1, 2, 3]
-    assert confusing_function(['10', '20']) == [10, 20]
-    assert confusing_function([]) == []
+def test_confusing_annotated_function():
+    assert confusing_annotated_function([1, 2, 'a', 3]) == [1, 2, 3]
+    assert confusing_annotated_function(['b', 'c', 4, 5]) == [4, 5]
+    assert confusing_annotated_function([]) == []

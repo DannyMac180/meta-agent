@@ -30,6 +30,7 @@ except (ImportError, AttributeError):
     from agents import Agent, Tool, Runner
 
 from meta_agent.models.generated_tool import GeneratedTool
+from meta_agent.template_engine import TemplateEngine
 import ast
 import subprocess
 import tempfile
@@ -126,7 +127,7 @@ class ToolDesignerAgent(Agent):
         desc = specification.get('description', '') or specification.get('task_description', '')
         desc_lc = desc.lower()
         # Hosted tool: WebSearchTool
-        if any(kw in desc_lc for kw in ['search', 'retrieve', 'web browser', 'lookup', 'google', 'docs', 'documentation']):
+        if any(kw in desc_lc for kw in ['search', 'retrieve', 'web browser', 'google', 'docs', 'documentation']):
             code = (
                 'import sys, types\n'
                 '\n'

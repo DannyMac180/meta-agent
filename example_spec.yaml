@@ -1,0 +1,16 @@
+task_description: |
+  Create a simple Python agent that can add two numbers.
+  The agent should take two numbers as input and return their sum.
+inputs:
+  num1: int
+  num2: int
+outputs:
+  sum: int
+constraints:
+  - Must be implemented in Python.
+  - Should handle integer inputs only.
+technical_requirements:
+  - No external libraries needed beyond standard Python.
+metadata:
+  version: "1.0"
+  author: Cascade
