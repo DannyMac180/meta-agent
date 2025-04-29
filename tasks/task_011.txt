@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Implement Tool Designer Sub-agent
-# Status: pending
+# Status: done
 # Dependencies: 3, 4
 # Priority: high
 # Description: Designs and generates code for tools required by the agent based on the specification
@@ -11,7 +11,7 @@
 
 
 # Subtasks:
-## 1. Create Tool Specification Parser [pending]
+## 1. Create Tool Specification Parser [done]
 ### Dependencies: None
 ### Description: Develop a module that can parse and validate tool specifications provided by users or other agents, extracting key information needed for tool generation.
 ### Details:
@@ -28,7 +28,7 @@ Testing approach:
 - Verify parser correctly extracts all required information
 - Test error handling with deliberately malformed specifications
 
-## 2. Implement Tool Code Generator [pending]
+## 2. Implement Tool Code Generator [done]
 ### Dependencies: 11.1
 ### Description: Build a code generation system that can transform parsed tool specifications into executable Python code implementing the requested tool functionality.
 ### Details:
@@ -47,7 +47,7 @@ Testing approach:
 - Verify proper error handling in generated code
 - Check that generated code follows best practices (type hints, documentation)
 
-## 3. Create Tool Designer Agent Interface [pending]
+## 3. Create Tool Designer Agent Interface [done]
 ### Dependencies: 11.1, 11.2
 ### Description: Develop the main Tool Designer sub-agent that coordinates the specification parsing and code generation, providing a unified interface for other parts of the system.
 ### Details:

@@ -1,0 +1,27 @@
+import logging
+from typing import Any, Dict, List, Optional
+
+# TODO: Add any necessary imports based on tool implementation
+
+logger = logging.getLogger(__name__)
+
+def {{ tool.name }}({% for param in tool.input_parameters %}{{ param.name }}: {{ map_type(param.type_) }}{% if param.required == False %} = None{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{ map_type(tool.output_format) }}:
+    """{{ tool.purpose }}
+
+    Args:
+{% for param in tool.input_parameters %}        {{ param.name }}: {{ param.description }} {% if param.required %}(Required){% else %}(Optional){% endif %}
+{% endfor %}    Returns:
+        {{ map_type(tool.output_format) }}: {{ tool.output_format }}
+    """
+    # Filter locals to only include parameters if necessary
+    input_args = {k: v for k, v in locals().items() if k in [p.name for p in tool.input_parameters]}
+    logger.info(f"Running tool '{{ tool.name }}' with inputs: {input_args}")
+
+    # --- Tool Implementation Start --- #
+    # TODO: Replace this with the actual logic for the tool.
+    # Example: Making an API call, processing data, etc.
+    result: {{ map_type(tool.output_format) }} = None  # Placeholder
+    # --- Tool Implementation End --- #
+
+    logger.info(f"Tool '{{ tool.name }}' completed. Result: {result}")
+    return result

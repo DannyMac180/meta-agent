@@ -96,4 +96,4 @@ markers = [
 [tool.hatch.scripts]
 test = { env = "test", run = "pytest {args:tests}" }
 [tool.hatch.build.targets.wheel]
-packages = ["src/meta_agent"]
+packages = ["meta_agent"]
