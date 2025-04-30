@@ -1,13 +1,21 @@
 import json
 import yaml
-from pydantic import BaseModel, Field, ValidationError
-from pydantic import ConfigDict
+from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_validator
 from typing import Any, Dict, List, Optional, Union
 
 
 from pydantic import Field
 
 class ToolParameter(BaseModel):
+    """
+    Represents a single input parameter for a tool specification.
+
+    Attributes:
+        name (str): The name of the parameter.
+        type_ (str): The type of the parameter (aliased as 'type' for compatibility).
+        description (Optional[str]): A human-readable description of the parameter.
+        required (bool): Whether the parameter is required (default: True).
+    """
     model_config = ConfigDict(populate_by_name=True)
     name: str
     type_: str = Field(alias="type")
@@ -16,10 +24,40 @@ class ToolParameter(BaseModel):
 
 
 class ToolSpecification(BaseModel):
+    """
+    Represents the specification for a tool, including its name, purpose, parameters, and output format.
+
+    Attributes:
+        name (str): The name of the tool.
+        purpose (str): A description of what the tool does.
+        input_parameters (List[ToolParameter]): The list of input parameters required by the tool.
+        output_format (str): The expected output type or format.
+    """
     name: str
     purpose: str
     input_parameters: List[ToolParameter] = Field(default_factory=list)
     output_format: str
+
+    @field_validator('name')
+    @classmethod
+    def name_must_be_valid_identifier(cls, v: str) -> str:
+        """Validate that the tool name is a valid Python identifier."""
+        if not v.isidentifier():
+            raise ValueError('Tool name must be a valid Python identifier')
+        return v
+
+    @field_validator('input_parameters')
+    @classmethod
+    def parameters_must_be_valid(cls, v: List[ToolParameter]) -> List[ToolParameter]:
+        """Validate parameter names are valid identifiers and unique."""
+        seen_names = set()
+        for param in v:
+            if not param.name.isidentifier():
+                raise ValueError(f'Parameter name "{param.name}" must be a valid Python identifier')
+            if param.name in seen_names:
+                raise ValueError(f'Duplicate parameter name "{param.name}" found')
+            seen_names.add(param.name)
+        return v
 
 
 class ToolSpecificationParser:
@@ -88,4 +126,3 @@ class ToolSpecificationParser:
     def get_errors(self) -> List[str]:
         """Returns any errors encountered during parsing or validation."""
         return self.errors
-

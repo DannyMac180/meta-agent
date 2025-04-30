@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Implement Tool Designer Sub-agent
-# Status: done
+# Status: in-progress
 # Dependencies: 3, 4
 # Priority: high
 # Description: Designs and generates code for tools required by the agent based on the specification
@@ -67,4 +67,150 @@ Testing approach:
 - Test error handling and recovery mechanisms
 - Verify logging and monitoring capabilities
 - Test performance with complex tool specifications
+
+## 4. Create Tool Designer Sub-agent Framework [pending]
+### Dependencies: None
+### Description: Implement the base structure for the Tool Designer sub-agent that will be responsible for generating tool code based on specifications
+### Details:
+Implementation steps:
+1. Create a new class `ToolDesignerAgent` with appropriate interfaces and abstract methods
+2. Define the core data structures needed for tool specifications (input/output parameters, description, etc.)
+3. Implement the communication interface between the main agent and this sub-agent
+4. Create a structured template system for tool code generation with placeholders for implementation details
+5. Add configuration options for the Tool Designer
+6. Implement basic validation for tool specifications
+
+Testing approach:
+- Unit test the template system with mock implementations
+- Verify the data structures correctly represent tool specifications
+- Test the communication interface with mock messages
+
+## 5. Implement LLM-backed Code Generation for Tools [pending]
+### Dependencies: None
+### Description: Design and implement the LLM integration that will generate the actual implementation code for tools based on their specifications using the OpenAI Responses API
+### Details:
+Implementation steps:
+1. Design effective prompts for the LLM to generate tool implementation code based on specifications
+2. Implement the OpenAI Responses API to handle LLM API calls with appropriate error handling and retries
+3. Create a context builder that provides relevant information to the LLM (tool purpose, input/output formats, constraints)
+4. Implement code parsing and validation to ensure generated code meets requirements
+5. Add a mechanism to inject the generated implementation into the tool template
+6. Implement fallback strategies for when code generation fails
+
+Testing approach:
+- Test the prompt effectiveness with various tool types
+- Verify generated code compiles and functions correctly
+- Test error handling and fallbacks
+- Create integration tests with sample tool specifications
+
+## 6. Integrate Tool Designer with Main Agent Workflow [pending]
+### Dependencies: None
+### Description: Connect the Tool Designer sub-agent with the main agent workflow and implement the end-to-end process for tool creation
+### Details:
+Implementation steps:
+1. Implement the main workflow for tool creation: specification → code generation → validation → registration
+2. Add functionality to dynamically load and register newly created tools with the main agent
+3. Implement a caching mechanism for previously generated tools to avoid redundant generation
+4. Create a feedback loop mechanism where the main agent can request modifications to tools
+5. Add logging and monitoring for the tool generation process
+6. Implement versioning for generated tools
+7. Create a user interface or API endpoint for manual tool specification submission
+
+Testing approach:
+- End-to-end testing with sample specifications
+- Verify tools are correctly registered and usable by the main agent
+- Test the modification and feedback loop process
+- Performance testing for tool generation time
+- Test caching mechanisms work correctly
+
+## 7. Create Tool Designer Sub-agent Core Structure [pending]
+### Dependencies: None
+### Description: Implement the base structure for the Tool Designer sub-agent that will be responsible for generating code for tools based on specifications.
+### Details:
+Implementation details:
+
+1. Create a new class `ToolDesignerAgent` that extends the base agent class with the following components:
+   - Constructor that accepts tool specifications and configuration parameters
+   - Methods for parsing and validating tool specifications
+   - Core prompt templates for tool design and code generation
+   - State management for tracking the design process
+
+2. Implement the main execution flow:
+   - Analyze tool specification requirements
+   - Generate a design plan for the requested tool
+   - Structure the code generation process
+   - Return the generated tool code
+
+3. Add configuration options for:
+   - Code style preferences
+   - Documentation requirements
+   - Language/framework specifications
+   - Testing requirements
+
+Testing approach:
+- Unit test the agent initialization and configuration
+- Test specification parsing with various input formats
+- Verify the agent can process basic tool specifications
+
+## 8. Implement Web Search Integration for Tool Research [pending]
+### Dependencies: None
+### Description: Add capabilities for the Tool Designer to leverage web search for researching APIs, code examples, and existing tools to improve code generation.
+### Details:
+Implementation details:
+
+1. Integrate OpenAI Responses API [web] tool or equivalent search capability:
+   - Create a `ToolResearchManager` class that handles web searches
+   - Implement methods to formulate search queries based on tool specifications
+   - Add functionality to extract and process relevant information from search results
+
+2. Enhance the Tool Designer with research capabilities:
+   - Add a research phase before code generation
+   - Implement methods to search for:
+     * Relevant APIs and documentation
+     * Code examples and patterns
+     * Existing tools with similar functionality
+     * Best practices for the specific tool type
+
+3. Make the research process configurable:
+   - Add options to enable/disable web search
+   - Configure search depth and breadth
+   - Set relevance thresholds for incorporating found information
+   - Add caching mechanisms for search results
+
+Testing approach:
+- Test search query generation with various tool specifications
+- Verify proper extraction of relevant information from search results
+- Test the integration of search results into the code generation process
+- Benchmark performance with and without web search integration
+
+## 9. Implement Code Generation and Testing Capabilities [pending]
+### Dependencies: None
+### Description: Develop the core code generation functionality with testing and validation capabilities to ensure the generated tools work as expected.
+### Details:
+Implementation details:
+
+1. Implement advanced code generation:
+   - Create a `ToolCodeGenerator` class that uses LLM to generate code based on specifications and research
+   - Add support for multiple programming languages and frameworks
+   - Implement structured generation for different tool components (interfaces, implementation, utilities)
+   - Include proper error handling and documentation in generated code
+
+2. Add code validation and testing capabilities:
+   - Implement static code analysis to verify syntax and structure
+   - Generate unit tests for the created tools
+   - Create a sandbox environment for basic runtime validation
+   - Add self-correction mechanisms for when validation fails
+
+3. Implement tool packaging and integration:
+   - Generate necessary package metadata (requirements, dependencies)
+   - Create installation/usage instructions
+   - Provide integration examples for the main agent system
+   - Add versioning support for generated tools
+
+Testing approach:
+- Test code generation with various tool specifications
+- Verify the quality of generated code against best practices
+- Test the validation and testing mechanisms
+- Ensure generated tools can be properly integrated into the main agent system
+- Perform end-to-end testing with sample tool specifications
 

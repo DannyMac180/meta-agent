@@ -156,3 +156,34 @@ def test_parse_yaml_not_dict():
     errors = parser.get_errors()
     assert len(errors) == 1
     assert errors[0] == "YAML specification did not parse into a dictionary."
+
+def test_parse_invalid_name_identifier():
+    """Tests parsing a spec with invalid tool name identifier."""
+    bad_spec = {
+        "name": "123invalid",
+        "purpose": "Invalid name",
+        "input_parameters": [],
+        "output_format": "int"
+    }
+    parser = ToolSpecificationParser(bad_spec)
+    assert parser.parse() is False
+    errors = parser.get_errors()
+    # Expect the field validator error for name
+    assert any("name: Tool name must be a valid Python identifier" in err for err in errors)
+
+def test_parse_duplicate_param_names():
+    """Tests parsing a spec with duplicate parameter names."""
+    bad_spec = {
+        "name": "dup_tool",
+        "purpose": "Duplicate params",
+        "input_parameters": [
+            {"name": "a", "type": "int", "required": True},
+            {"name": "a", "type": "int", "required": True}
+        ],
+        "output_format": "int"
+    }
+    parser = ToolSpecificationParser(bad_spec)
+    assert parser.parse() is False
+    errors = parser.get_errors()
+    # Expect duplicate param name error
+    assert any("input_parameters: Duplicate parameter name \"a\" found" in err for err in errors)

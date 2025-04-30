@@ -124,4 +124,6 @@ async def generate(spec_file: Path | None, spec_text: str | None):
               help='Specification provided as a text string.')
 def generate_command_wrapper(spec_file, spec_text):
     asyncio.run(generate(spec_file, spec_text))
-cli()
+
+if __name__ == "__main__":
+    cli()

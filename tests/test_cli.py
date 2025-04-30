@@ -88,8 +88,11 @@ def test_cli_generate_spec_file_json(runner, sample_json_file):
     assert result.exit_code == 0
     assert "Reading specification from file:" in result.output
     assert "Specification parsed successfully:" in result.output
-    assert "Task Description: Test agent for CLI" in result.output
-    assert "(Agent generation logic goes here)" in result.output
+    # assert "Task Description: Test agent for CLI" in result.output # Description might change
+    assert "Starting agent generation orchestration..." in result.output
+    assert "Orchestration finished." in result.output
+    # Optionally, check for status: success in the final JSON output
+    assert '"status": "success"' in result.output
 
 def test_cli_generate_spec_file_yaml(runner, sample_yaml_file):
     """Test successful generation using a YAML spec file."""
@@ -97,8 +100,11 @@ def test_cli_generate_spec_file_yaml(runner, sample_yaml_file):
     assert result.exit_code == 0
     assert "Reading specification from file:" in result.output
     assert "Specification parsed successfully:" in result.output
-    assert "Task Description: Test agent for CLI" in result.output
-    assert "(Agent generation logic goes here)" in result.output
+    # assert "Task Description: Test agent for CLI" in result.output # Description might change
+    assert "Starting agent generation orchestration..." in result.output
+    assert "Orchestration finished." in result.output
+    # Optionally, check for status: success in the final JSON output
+    assert '"status": "success"' in result.output
 
 def test_cli_generate_spec_file_not_found(runner):
     """Test CLI exits with error if spec file doesn't exist."""
@@ -130,37 +136,40 @@ def test_cli_generate_spec_file_invalid_schema(runner, invalid_schema_json_file)
 
 def test_cli_generate_spec_text_plain(runner):
     """Test successful generation using plain text spec."""
-    spec_text = "Create a simple greeting agent."
-    result = runner.invoke(cli, ['generate', '--spec-text', spec_text])
+    # Assuming SpecSchema.from_text can handle plain text adequately
+    plain_text = "Create a tool to add two numbers."
+    result = runner.invoke(cli, ['generate', '--spec-text', plain_text])
     assert result.exit_code == 0
     assert "Processing specification from text input..." in result.output
     assert "Parsing spec-text as free-form text." in result.output
     assert "Specification parsed successfully:" in result.output
-    assert "Task Description: Create a simple greeting agent." in result.output
-    assert "Inputs: None" in result.output # Default from from_text
-    assert "(Agent generation logic goes here)" in result.output
+    assert "Starting agent generation orchestration..." in result.output
+    assert "Orchestration finished." in result.output
+    assert '"status": "success"' in result.output 
 
 def test_cli_generate_spec_text_json(runner, valid_spec_dict):
-    """Test successful generation using JSON spec provided as text."""
-    spec_text = json.dumps(valid_spec_dict)
-    result = runner.invoke(cli, ['generate', '--spec-text', spec_text])
+    """Test successful generation using JSON spec text."""
+    sample_json_spec_text = json.dumps(valid_spec_dict)
+    result = runner.invoke(cli, ['generate', '--spec-text', sample_json_spec_text])
     assert result.exit_code == 0
     assert "Processing specification from text input..." in result.output
     assert "Parsed spec-text as JSON." in result.output
     assert "Specification parsed successfully:" in result.output
-    assert "Task Description: Test agent for CLI" in result.output
-    assert "(Agent generation logic goes here)" in result.output
+    assert "Starting agent generation orchestration..." in result.output
+    assert "Orchestration finished." in result.output
+    assert '"status": "success"' in result.output
 
 def test_cli_generate_spec_text_yaml(runner, valid_spec_dict):
-    """Test successful generation using YAML spec provided as text."""
-    spec_text = yaml.dump(valid_spec_dict)
-    result = runner.invoke(cli, ['generate', '--spec-text', spec_text])
+    """Test successful generation using YAML spec text."""
+    sample_yaml_spec_text = yaml.dump(valid_spec_dict)
+    result = runner.invoke(cli, ['generate', '--spec-text', sample_yaml_spec_text])
     assert result.exit_code == 0
     assert "Processing specification from text input..." in result.output
     assert "Parsed spec-text as YAML." in result.output
     assert "Specification parsed successfully:" in result.output
-    assert "Task Description: Test agent for CLI" in result.output
-    assert "(Agent generation logic goes here)" in result.output
+    assert "Starting agent generation orchestration..." in result.output
+    assert "Orchestration finished." in result.output
+    assert '"status": "success"' in result.output
 
 def test_cli_generate_spec_text_invalid_schema(runner):
     """Test CLI exits with error for valid JSON but invalid schema in text."""

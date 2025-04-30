@@ -89,6 +89,6 @@ def test_agent_caching(manager):
     assert agent1 is not agent3
 
     # Check internal cache state (optional)
-    assert CoderAgent.__name__ in manager._agents
-    assert TesterAgent.__name__ in manager._agents
-    assert len(manager._agents) == 2 # Only one CoderAgent and one TesterAgent cached
+    assert CoderAgent.__name__ in manager.active_agents
+    assert TesterAgent.__name__ in manager.active_agents
+    assert len(manager.active_agents) == 2 # Only one CoderAgent and one TesterAgent cached

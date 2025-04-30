@@ -72,11 +72,9 @@ def sub_agent_manager(
 
 def test_sub_agent_manager_initialization(sub_agent_manager): 
     """Test that SubAgentManager initializes correctly."""
-    # __init__ is very simple based on outline, just check internal state if any
-    # The outline shows a _agents cache initialized.
-    assert hasattr(sub_agent_manager, '_agents')
-    assert sub_agent_manager._agents == {}
-    # Other attributes like base_agents_dir seem not to be set in __init__
+    # Check the actual initialized attribute
+    assert hasattr(sub_agent_manager, 'active_agents')
+    assert sub_agent_manager.active_agents == {}
 
 # --- get_or_create_agent Tests ---
 
@@ -85,66 +83,66 @@ def test_get_or_create_coder_agent(sub_agent_manager):
     requirements = {"task_id": "task-1", "tools": ["coder_tool"], "description": "write code"}
     agent = sub_agent_manager.get_or_create_agent(requirements)
     assert isinstance(agent, CoderAgent)
-    assert agent is sub_agent_manager._agents.get("CoderAgent") # Check it's cached
+    assert agent is sub_agent_manager.active_agents.get("CoderAgent") # Check cache with correct attribute
 
 def test_get_or_create_tester_agent(sub_agent_manager):
     """Test getting a TesterAgent using 'tester_tool'."""
     requirements = {"task_id": "task-2", "tools": ["tester_tool"], "description": "write tests"}
     agent = sub_agent_manager.get_or_create_agent(requirements)
     assert isinstance(agent, TesterAgent)
-    assert agent is sub_agent_manager._agents.get("TesterAgent") # Check it's cached
+    assert agent is sub_agent_manager.active_agents.get("TesterAgent") # Check cache with correct attribute
 
 def test_get_or_create_tool_designer_agent(sub_agent_manager):
     """Test getting a ToolDesignerAgent using 'tool_designer_tool'."""
     requirements = {"task_id": "task-3", "tools": ["tool_designer_tool"], "description": "design a tool"}
     agent = sub_agent_manager.get_or_create_agent(requirements)
     assert isinstance(agent, ToolDesignerAgent)
-    assert agent is sub_agent_manager._agents.get("ToolDesignerAgent") # Check it's cached
+    assert agent is sub_agent_manager.active_agents.get("ToolDesignerAgent") # Check cache with correct attribute
 
 def test_get_or_create_fallback_agent_unknown_tool(sub_agent_manager):
     """Test getting the BaseAgent when the tool is unknown."""
     requirements = {"task_id": "task-4", "tools": ["unknown_tool"], "description": "do something"}
     agent = sub_agent_manager.get_or_create_agent(requirements)
     assert isinstance(agent, BaseAgent)
-    assert agent is sub_agent_manager._agents.get("BaseAgent") # Check it's cached
+    assert agent is sub_agent_manager.active_agents.get("BaseAgent") # Check cache with correct attribute
 
 def test_get_or_create_fallback_agent_no_tool(sub_agent_manager):
     """Test getting the BaseAgent when no tools are provided."""
     requirements = {"task_id": "task-5", "tools": [], "description": "do something else"}
     agent = sub_agent_manager.get_or_create_agent(requirements)
     assert isinstance(agent, BaseAgent)
-    assert agent is sub_agent_manager._agents.get("BaseAgent") # Check it's cached
+    assert agent is sub_agent_manager.active_agents.get("BaseAgent") # Check cache with correct attribute
 
 def test_get_or_create_agent_caching(sub_agent_manager):
     """Test that agent instances are cached and reused."""
     requirements1 = {"task_id": "task-6", "tools": ["coder_tool"], "description": "code"}
     agent1 = sub_agent_manager.get_or_create_agent(requirements1)
     assert isinstance(agent1, CoderAgent)
-    assert "CoderAgent" in sub_agent_manager._agents
-    assert len(sub_agent_manager._agents) == 1
+    assert "CoderAgent" in sub_agent_manager.active_agents
+    assert len(sub_agent_manager.active_agents) == 1
 
     requirements2 = {"task_id": "task-7", "tools": ["coder_tool"], "description": "code again"}
     agent2 = sub_agent_manager.get_or_create_agent(requirements2)
-    assert agent2 is agent1 # Should be the exact same instance
-    assert len(sub_agent_manager._agents) == 1 # Cache size shouldn't increase
+    assert agent2 is agent1
+    assert len(sub_agent_manager.active_agents) == 1
 
     requirements3 = {"task_id": "task-8", "tools": ["tester_tool"], "description": "test"}
     agent3 = sub_agent_manager.get_or_create_agent(requirements3)
     assert isinstance(agent3, TesterAgent)
-    assert agent3 is not agent1 # Should be a different instance
-    assert "TesterAgent" in sub_agent_manager._agents
-    assert len(sub_agent_manager._agents) == 2 # Cache size increases for new type
+    assert agent3 is not agent1
+    assert "TesterAgent" in sub_agent_manager.active_agents
+    assert len(sub_agent_manager.active_agents) == 2
 
     requirements4 = {"task_id": "task-9", "tools": [], "description": "fallback"}
     agent4 = sub_agent_manager.get_or_create_agent(requirements4)
     assert isinstance(agent4, BaseAgent)
-    assert "BaseAgent" in sub_agent_manager._agents
-    assert len(sub_agent_manager._agents) == 3
+    assert "BaseAgent" in sub_agent_manager.active_agents
+    assert len(sub_agent_manager.active_agents) == 3
 
     requirements5 = {"task_id": "task-10", "tools": ["unknown"], "description": "another fallback"}
     agent5 = sub_agent_manager.get_or_create_agent(requirements5)
-    assert agent5 is agent4 # Should reuse the cached BaseAgent
-    assert len(sub_agent_manager._agents) == 3
+    assert agent5 is agent4
+    assert len(sub_agent_manager.active_agents) == 3
 
 # Prepare mock for the failing agent instantiation test
 mock_failing_coder = MagicMock(side_effect=Exception("Failed to initialize"))
@@ -161,17 +159,17 @@ def test_get_or_create_agent_instantiation_fails(sub_agent_manager): # No need t
 
     # Assert that None is returned and the agent wasn't cached
     assert agent is None
-    assert "CoderAgent" not in sub_agent_manager._agents 
+    assert "CoderAgent" not in sub_agent_manager.active_agents # Check correct attribute
 
 # --- get_agent Tests ---
 
 def test_get_agent_exists(sub_agent_manager):
-    """Test retrieving an existing agent by its class name (ID)."""
-    # First, create an agent to ensure it's in the cache
-    requirements = {"task_id": "task-11", "tools": ["coder_tool"], "description": "code"}
+    """Test retrieving an existing agent by its requirement key."""
+    requirements = {"task_id": "task-exist", "tools": ["coder_tool"], "description": "get existing"}
     coder_agent = sub_agent_manager.get_or_create_agent(requirements)
 
-    retrieved_agent = sub_agent_manager.get_agent("CoderAgent")
+    # Retrieve using the tool requirement key used for caching
+    retrieved_agent = sub_agent_manager.get_agent("coder_tool")
     assert retrieved_agent is coder_agent
 
 def test_get_agent_not_exists(sub_agent_manager):
@@ -325,3 +323,34 @@ async def test_tool_designer_generate_tool_fallback_llm(monkeypatch):
     assert result.code.startswith("# Error"), "Expected an error stub when JSON parsing fails"
 
 # --- SubAgentManager Tests ---
+
+def test_tool_designer_generate_tool_websearch(sub_agent_manager, mock_tool_designer):
+    """Test tool generation dispatch for web search (placeholder)."""
+    # This test might need more mocking if it directly interacts with ToolDesignerAgent methods
+    # Assuming get_agent is the primary interaction point for now
+    requirements = {"task_id": "task-web", "tools": ["tool_designer_tool"], "description": "design web search"}
+    # Patch the AGENT_TOOL_MAP temporarily for this test
+    with patch.dict(sub_agent_manager.AGENT_TOOL_MAP, {'tool_designer_tool': lambda **kwargs: mock_tool_designer}):
+        agent = sub_agent_manager.get_agent(tool_requirement="tool_designer_tool", **requirements) # Use get_agent
+        assert agent is mock_tool_designer
+
+def test_tool_designer_generate_tool_filesearch(sub_agent_manager, mock_tool_designer):
+    """Test tool generation dispatch for file search (placeholder)."""
+    requirements = {"task_id": "task-file", "tools": ["tool_designer_tool"], "description": "design file search"}
+    with patch.dict(sub_agent_manager.AGENT_TOOL_MAP, {'tool_designer_tool': lambda **kwargs: mock_tool_designer}):
+        agent = sub_agent_manager.get_agent(tool_requirement="tool_designer_tool", **requirements)
+        assert agent is mock_tool_designer
+
+def test_tool_designer_generate_tool_openweathermap(sub_agent_manager, mock_tool_designer):
+    """Test tool generation dispatch for OpenWeatherMap (placeholder)."""
+    requirements = {"task_id": "task-weather", "tools": ["tool_designer_tool"], "description": "design weather tool"}
+    with patch.dict(sub_agent_manager.AGENT_TOOL_MAP, {'tool_designer_tool': lambda **kwargs: mock_tool_designer}):
+        agent = sub_agent_manager.get_agent(tool_requirement="tool_designer_tool", **requirements)
+        assert agent is mock_tool_designer
+
+def test_tool_designer_generate_tool_fallback_llm(sub_agent_manager, mock_tool_designer):
+    """Test tool generation dispatch using LLM fallback (placeholder)."""
+    requirements = {"task_id": "task-llm", "tools": ["tool_designer_tool"], "description": "design fallback tool"}
+    with patch.dict(sub_agent_manager.AGENT_TOOL_MAP, {'tool_designer_tool': lambda **kwargs: mock_tool_designer}):
+        agent = sub_agent_manager.get_agent(tool_requirement="tool_designer_tool", **requirements)
+        assert agent is mock_tool_designer

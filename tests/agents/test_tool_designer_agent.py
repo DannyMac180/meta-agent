@@ -67,11 +67,59 @@ def test_design_tool_invalid_spec():
     assert "purpose" in str(excinfo.value)
     assert "output_format" in str(excinfo.value)
 
+    # Invalid name identifier test
+    # Already tested missing fields; next test invalid identifier
+
+def test_design_tool_invalid_name_identifier():
+    agent = ToolDesignerAgent()
+    bad_spec = {
+        "name": "123invalid",
+        "purpose": "Invalid name tool",
+        "input_parameters": [],
+        "output_format": "int"
+    }
+    with pytest.raises(ValueError) as excinfo:
+        agent.design_tool(bad_spec)
+    assert "Tool name must be a valid Python identifier" in str(excinfo.value)
+
+def test_design_tool_duplicate_param_names():
+    agent = ToolDesignerAgent()
+    bad_spec = {
+        "name": "duplicate_param_tool",
+        "purpose": "Test duplicate params",
+        "input_parameters": [
+            {"name": "a", "type": "int", "description": "first", "required": True},
+            {"name": "a", "type": "int", "description": "second", "required": True}
+        ],
+        "output_format": "int"
+    }
+    with pytest.raises(ValueError) as excinfo:
+        agent.design_tool(bad_spec)
+    assert 'Duplicate parameter name "a" found' in str(excinfo.value)
+
+# Async run tests
+@pytest.mark.asyncio
+async def test_run_success_dict_async():
+    agent = ToolDesignerAgent()
+    result = await agent.run(VALID_DICT_SPEC)
+    assert result['status'] == 'success'
+    output = result['output']
+    assert isinstance(output, dict)
+    assert 'code' in output and 'tests' in output and 'docs' in output
+
+@pytest.mark.asyncio
+async def test_run_missing_template():
+    # Using non-existent template should produce error status
+    agent = ToolDesignerAgent(template_name='nonexistent.j2')
+    result = await agent.run(VALID_DICT_SPEC)
+    assert result['status'] == 'error'
+    assert "Tool template 'nonexistent.j2' not found" in result['error']
+
 # Potential future test: Mock CodeGenerator to raise CodeGenerationError
-# def test_design_tool_generation_error():
-#     agent = ToolDesignerAgent()
-#     with patch('meta_agent.generators.tool_code_generator.ToolCodeGenerator.generate') as mock_generate:
-#         mock_generate.side_effect = CodeGenerationError("Mocked generation failure")
-#         with pytest.raises(CodeGenerationError) as excinfo:
-#             agent.design_tool(VALID_YAML_SPEC)
-#         assert "Mocked generation failure" in str(excinfo.value)
+def test_design_tool_generation_error():
+    agent = ToolDesignerAgent()
+    with patch('meta_agent.generators.tool_code_generator.ToolCodeGenerator.generate') as mock_generate:
+        mock_generate.side_effect = CodeGenerationError("Mocked generation failure")
+        with pytest.raises(CodeGenerationError) as excinfo:
+            agent.design_tool(VALID_YAML_SPEC)
+        assert "Mocked generation failure" in str(excinfo.value)

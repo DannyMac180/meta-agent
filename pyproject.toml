@@ -36,7 +36,7 @@ dependencies = [
     "Jinja2>=3.0.0",
     "pytest-asyncio",
     "pytest-cov",
-    "python-dotenv>=1.0.0" # Added for loading .env files
+    "python-dotenv>=1.0.0", # Added for loading .env files
 ]
 
 [project.urls]
@@ -57,8 +57,10 @@ dependencies = [
   "pytest-asyncio", # Added for async tests
 ]
 [tool.hatch.envs.test.scripts]
-test = "pytest {args:tests}" # Script to run pytest
-cov = "pytest --cov=src/meta_agent --cov-branch --cov-report=term-missing {args:tests}" # Script for coverage
+_test_impl = "pytest tests/ {args}"
+test = "_test_impl tests/"
+lint = "pytest --flake8 {args}"
+cov = "pytest --cov=src/meta_agent --cov-branch --cov-report=term-missing {args}"
 
 [tool.hatch.envs.types]
 extra-dependencies = [
