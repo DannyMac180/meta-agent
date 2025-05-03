@@ -1,16 +1,30 @@
-import sys, types
+import logging
+from typing import Any # Add other necessary imports based on spec
 
-# Always define the stub class directly
-class WebSearchTool:  # pragma: no cover – stub for CI
-    def __init__(self, *_a, **_kw):
-        pass
-    def run(self, query: str, *_a, **_kw) -> str:
-        return f"Search results for (stub.run): {query}"
+logger = logging.getLogger(__name__)
 
-def search_web(query: str, tool_instance: WebSearchTool) -> str:
-    """Search the web for the given query using the provided tool instance."""
-    try:
-        result = tool_instance.run(query)
-        return result
-    except Exception as e:
-        raise e
+# Searches files for a term
+def file_search(
+    term: str,
+    path: str = None
+) -> list:
+    """Searches files for a term
+
+    Args:
+        term (str): Search term
+        path (str, optional): File path
+
+    Returns:
+        list: Description of the expected output.
+    """
+    logger.info(f"Running tool: file_search")
+    # --- Tool Implementation Start ---
+    # TODO: Implement the core logic for the file_search tool.
+    # Use the input parameters: term, path
+    # Expected output format: list
+    
+    result = None # Placeholder for the actual result
+    logger.warning("Tool logic not yet implemented!")
+    
+    # --- Tool Implementation End ---
+    return result

@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import patch, MagicMock
+import jinja2
 from meta_agent.agents.tool_designer_agent import ToolDesignerAgent, CodeGenerationError
 
 # --- Test Fixtures ---
@@ -42,9 +44,12 @@ def test_design_tool_success_yaml():
     """Test successful tool design from a YAML string spec."""
     agent = ToolDesignerAgent()
     generated_code = agent.design_tool(VALID_YAML_SPEC)
-    assert "def calculate_sum(a: int, b: int) -> int:" in generated_code
+    assert "def calculate_sum(" in generated_code
+    assert "a: int," in generated_code
+    assert "b: int" in generated_code
+    assert "-> int:" in generated_code
     assert "Calculates the sum of two integers." in generated_code
-    assert "logger.info(f\"Running tool 'calculate_sum'" in generated_code
+    assert "logger.info(f\"Running tool: calculate_sum\")" in generated_code
     assert "return result" in generated_code
 
 def test_design_tool_success_dict():
@@ -52,9 +57,12 @@ def test_design_tool_success_dict():
     agent = ToolDesignerAgent()
     generated_code = agent.design_tool(VALID_DICT_SPEC)
     # The current template outputs '= None' for optional parameters
-    assert "def multiply_numbers(x: float, y: float = None) -> float:" in generated_code
+    assert "def multiply_numbers(" in generated_code
+    assert "x: float," in generated_code
+    assert "y: float = None" in generated_code
+    assert "-> float:" in generated_code
     assert "Multiplies two numbers." in generated_code
-    assert "logger.info(f\"Running tool 'multiply_numbers'" in generated_code
+    assert "logger.info(f\"Running tool: multiply_numbers\")" in generated_code
     assert "return result" in generated_code
 
 def test_design_tool_invalid_spec():
@@ -115,11 +123,16 @@ async def test_run_missing_template():
     assert result['status'] == 'error'
     assert "Tool template 'nonexistent.j2' not found" in result['error']
 
-# Potential future test: Mock CodeGenerator to raise CodeGenerationError
+# Test for template rendering error
 def test_design_tool_generation_error():
     agent = ToolDesignerAgent()
-    with patch('meta_agent.generators.tool_code_generator.ToolCodeGenerator.generate') as mock_generate:
-        mock_generate.side_effect = CodeGenerationError("Mocked generation failure")
+    
+    # Create a mock template that raises an exception when render is called
+    mock_template = MagicMock()
+    mock_template.render.side_effect = Exception("Mocked rendering failure")
+    
+    # Patch the get_template method to return our mock
+    with patch.object(agent.jinja_env, 'get_template', return_value=mock_template):
         with pytest.raises(CodeGenerationError) as excinfo:
             agent.design_tool(VALID_YAML_SPEC)
-        assert "Mocked generation failure" in str(excinfo.value)
+        assert "Failed to render template: Mocked rendering failure" in str(excinfo.value)
