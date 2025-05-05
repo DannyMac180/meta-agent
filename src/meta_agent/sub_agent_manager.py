@@ -138,6 +138,7 @@ class SubAgentManager:
             return self.active_agents[tool_requirement]
         else:
             logger.warning(f"No agent found for tool requirement: {tool_requirement}")
+            return None
 
     def get_or_create_agent(self, task_requirements: Dict[str, Any]) -> Optional[Agent]:
         """
@@ -168,25 +169,34 @@ class SubAgentManager:
             agent_type_name = agent_class.__name__
             # Basic caching: Check if an agent of this type already exists
             if agent_type_name in self.active_agents:
-                 logger.debug(f"Reusing existing {agent_type_name} for task {task_id}")
-                 return self.active_agents[agent_type_name]
-            else:
-                logger.info(f"Creating new {agent_type_name} for task {task_id} based on tool '{selected_tool}'")
-                try:
-                    # Instantiate the agent
-                    new_agent = agent_class()
-                    self.active_agents[agent_type_name] = new_agent # Cache it
-                    return new_agent
-                except Exception as e:
-                    logger.error(f"Failed to create agent {agent_type_name}: {e}", exc_info=True)
-                    return None # Or raise?
+                logger.debug(f"Reusing existing {agent_type_name} for task {task_id}")
+                agent = self.active_agents[agent_type_name]
+                # Also cache by tool requirement for get_agent() to find it
+                if selected_tool and selected_tool not in self.active_agents:
+                    self.active_agents[selected_tool] = agent
+                return agent
+
+            logger.info(f"Creating new {agent_type_name} for task {task_id} based on tool '{selected_tool}'")
+            try:
+                # Instantiate the agent
+                new_agent = agent_class()
+                self.active_agents[agent_type_name] = new_agent # Cache by class name
+                # Also cache by tool requirement for get_agent() to find it
+                if selected_tool:
+                    self.active_agents[selected_tool] = new_agent
+                return new_agent
+            except Exception as e:
+                logger.error(f"Failed to create agent {agent_type_name}: {e}", exc_info=True)
+                return None # Or raise?
         else:
             logger.warning(f"No specific agent class found for tools {tools} for task {task_id}. Falling back to BaseAgent.")
             # Fallback to a generic agent if no specific tool/agent mapping found
             if BaseAgent.__name__ not in self.active_agents:
-                 self.active_agents[BaseAgent.__name__] = BaseAgent()
+                self.active_agents[BaseAgent.__name__] = BaseAgent()
             return self.active_agents[BaseAgent.__name__]
 
     def list_agents(self) -> Dict[str, Agent]:
-        """Lists all managed agents."""
-        return self.active_agents
+        """Lists all managed agents by their class name."""
+        # Filter out tool requirement keys, keeping only class name keys
+        return {k: v for k, v in self.active_agents.items()
+                if k in [cls.__name__ for cls in self.AGENT_TOOL_MAP.values()] or k == BaseAgent.__name__}

@@ -91,4 +91,5 @@ def test_agent_caching(manager):
     # Check internal cache state (optional)
     assert CoderAgent.__name__ in manager.active_agents
     assert TesterAgent.__name__ in manager.active_agents
-    assert len(manager.active_agents) == 2 # Only one CoderAgent and one TesterAgent cached
+    # Check that list_agents only returns the class-based agents (not tool-based)
+    assert len(manager.list_agents()) == 2 # Only one CoderAgent and one TesterAgent cached

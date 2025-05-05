@@ -70,7 +70,7 @@ def sub_agent_manager(
 
 # --- Initialization Tests ---
 
-def test_sub_agent_manager_initialization(sub_agent_manager): 
+def test_sub_agent_manager_initialization(sub_agent_manager):
     """Test that SubAgentManager initializes correctly."""
     # Check the actual initialized attribute
     assert hasattr(sub_agent_manager, 'active_agents')
@@ -119,30 +119,31 @@ def test_get_or_create_agent_caching(sub_agent_manager):
     agent1 = sub_agent_manager.get_or_create_agent(requirements1)
     assert isinstance(agent1, CoderAgent)
     assert "CoderAgent" in sub_agent_manager.active_agents
-    assert len(sub_agent_manager.active_agents) == 1
+    # Check that list_agents only returns the class-based agents (not tool-based)
+    assert len(sub_agent_manager.list_agents()) == 1
 
     requirements2 = {"task_id": "task-7", "tools": ["coder_tool"], "description": "code again"}
     agent2 = sub_agent_manager.get_or_create_agent(requirements2)
     assert agent2 is agent1
-    assert len(sub_agent_manager.active_agents) == 1
+    assert len(sub_agent_manager.list_agents()) == 1
 
     requirements3 = {"task_id": "task-8", "tools": ["tester_tool"], "description": "test"}
     agent3 = sub_agent_manager.get_or_create_agent(requirements3)
     assert isinstance(agent3, TesterAgent)
     assert agent3 is not agent1
     assert "TesterAgent" in sub_agent_manager.active_agents
-    assert len(sub_agent_manager.active_agents) == 2
+    assert len(sub_agent_manager.list_agents()) == 2
 
     requirements4 = {"task_id": "task-9", "tools": [], "description": "fallback"}
     agent4 = sub_agent_manager.get_or_create_agent(requirements4)
     assert isinstance(agent4, BaseAgent)
     assert "BaseAgent" in sub_agent_manager.active_agents
-    assert len(sub_agent_manager.active_agents) == 3
+    assert len(sub_agent_manager.list_agents()) == 3
 
     requirements5 = {"task_id": "task-10", "tools": ["unknown"], "description": "another fallback"}
     agent5 = sub_agent_manager.get_or_create_agent(requirements5)
     assert agent5 is agent4
-    assert len(sub_agent_manager.active_agents) == 3
+    assert len(sub_agent_manager.list_agents()) == 3
 
 # Prepare mock for the failing agent instantiation test
 mock_failing_coder = MagicMock(side_effect=Exception("Failed to initialize"))
