@@ -37,6 +37,8 @@ dependencies = [
     "pytest-asyncio",
     "pytest-cov",
     "python-dotenv>=1.0.0", # Added for loading .env files
+    "aiohttp~=3.9", # Added for async HTTP requests
+    "backoff>=2.2.1,<3.0.0", # Added to resolve ModuleNotFoundError
 ]
 
 [project.urls]

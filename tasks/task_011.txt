@@ -68,7 +68,7 @@ Testing approach:
 - Verify logging and monitoring capabilities
 - Test performance with complex tool specifications
 
-## 4. Create Tool Designer Sub-agent Framework [pending]
+## 4. Create Tool Designer Sub-agent Framework [done]
 ### Dependencies: None
 ### Description: Implement the base structure for the Tool Designer sub-agent that will be responsible for generating tool code based on specifications
 ### Details:
@@ -87,11 +87,11 @@ Testing approach:
 
 ## 5. Implement LLM-backed Code Generation for Tools [pending]
 ### Dependencies: None
-### Description: Design and implement the LLM integration that will generate the actual implementation code for tools based on their specifications using the OpenAI Responses API
+### Description: Design and implement the LLM integration that will generate the actual implementation code for tools based on their specifications
 ### Details:
 Implementation steps:
 1. Design effective prompts for the LLM to generate tool implementation code based on specifications
-2. Implement the OpenAI Responses API to handle LLM API calls with appropriate error handling and retries
+2. Implement a service to handle LLM API calls with appropriate error handling and retries
 3. Create a context builder that provides relevant information to the LLM (tool purpose, input/output formats, constraints)
 4. Implement code parsing and validation to ensure generated code meets requirements
 5. Add a mechanism to inject the generated implementation into the tool template
