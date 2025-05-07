@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meta-agent-deployment
+  labels:
+    app: meta-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meta-agent
+  template:
+    metadata:
+      labels:
+        app: meta-agent
+    spec:
+      containers:
+      - name: meta-agent
+        image: meta-agent:latest # Assumes k3d can access this local image
+        imagePullPolicy: IfNotPresent # Use IfNotPresent or Never for local images
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret # Name of the K8s secret
+              key: api-key       # Key within the secret
+        # If the container exits immediately because meta-agent prints help and exits,
+        # you might need to make it sleep or run a long-lived command.
+        # For example, to keep it running:
+        command: ["/bin/sh", "-c", "sleep infinity"]
+        # Then you would 'kubectl exec' into it and run 'meta-agent' manually.
+        # If meta-agent itself can idle or has an interactive mode started by just 'meta-agent',
+        # then you might not need the sleep command.
+        # The current Dockerfile entrypoint is 'meta-agent', which prints help and exits.
+        # So, 'sleep infinity' is likely needed to keep the pod running for 'exec'.
+      # If your k3d cluster uses a different architecture (e.g. arm64 vs amd64 for the image)
+      # you might need to specify node selectors or ensure your image is multi-arch.
+
