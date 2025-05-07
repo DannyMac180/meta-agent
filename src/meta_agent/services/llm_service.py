@@ -34,13 +34,13 @@ class LLMService:
             model: Model to use for code generation
             max_retries: Maximum number of retries for failed API calls
             timeout: Timeout in seconds for API calls
-            api_base: Base URL for the API (defaults to OpenAI's API)
+            api_base: Base URL for the API (defaults to OpenAI's responses API)
         """
         self.api_key = api_key
         self.model = model
         self.max_retries = max_retries
         self.timeout = timeout
-        self.api_base = api_base or "https://api.openai.com/v1/chat/completions"
+        self.api_base = api_base or "https://api.openai.com/v1/responses"
         self.logger = logging.getLogger(__name__)
         
     async def generate_code(self, prompt: str, context: Dict[str, Any]) -> str:
@@ -126,12 +126,9 @@ class LLMService:
         # Prepare the API request payload
         payload = {
             "model": self.model,
-            "messages": messages,
+            "input": messages,
             "temperature": 0.2,  # Lower temperature for more deterministic code generation
-            "max_tokens": 2000,  # Adjust based on expected code length
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0
+            "max_output_tokens": 2000,  # Adjust based on expected code length
         }
         
         # Set up headers
@@ -170,13 +167,33 @@ class LLMService:
             str: The extracted code, or an empty string if extraction fails
         """
         try:
-            # Extract the content from the response
-            if "choices" not in response or not response["choices"]:
-                self.logger.error("Invalid API response: no choices found")
+            # Extract the content from the response according to the 'responses' API structure
+            # Expected: response.output[0].content[0].text
+            if not (
+                response.get("output") and 
+                isinstance(response["output"], list) and 
+                len(response["output"]) > 0 and
+                isinstance(response["output"][0], dict) and
+                response["output"][0].get("content") and
+                isinstance(response["output"][0]["content"], list) and
+                len(response["output"][0]["content"]) > 0 and
+                isinstance(response["output"][0]["content"][0], dict) and
+                "text" in response["output"][0]["content"][0]
+            ):
+                self.logger.error(
+                    "Invalid API response structure from 'responses' endpoint. Missing expected fields."
+                )
+                self.logger.debug(f"Full response for debugging: {json.dumps(response, indent=2)}")
                 return ""
             
-            content = response["choices"][0]["message"]["content"]
+            content = response["output"][0]["content"][0]["text"]
+
+        except (KeyError, IndexError, TypeError) as e:
+            self.logger.error(f"Error accessing content from 'responses' API structure: {e}")
+            self.logger.debug(f"Full response for debugging: {json.dumps(response, indent=2)}")
+            return ""
             
+        try:
             # Try to extract code blocks with Python markers
             python_blocks = re.findall(r"```python\n(.*?)```", content, re.DOTALL)
             if python_blocks:
