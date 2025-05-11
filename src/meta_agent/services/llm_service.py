@@ -8,12 +8,15 @@ Large Language Model (LLM) APIs for code generation.
 import asyncio
 import json
 import logging
+import os
 import re
 from typing import Any, Dict, Optional, Union
 
+from dotenv import load_dotenv
 import aiohttp
 import backoff
 
+load_dotenv()
 
 class LLMService:
     """
@@ -23,19 +26,25 @@ class LLMService:
     handling errors and retries, and extracting code from responses.
     """
     
-    def __init__(self, api_key: str, model: str = "gpt-4", 
+    def __init__(self, api_key: Optional[str] = None, model: str = "o4-mini", 
                  max_retries: int = 3, timeout: int = 30,
                  api_base: Optional[str] = None):
         """
         Initialize the LLMService.
         
         Args:
-            api_key: API key for the LLM provider
+            api_key: API key for the LLM provider. If None, attempts to load from OPENAI_API_KEY env var.
             model: Model to use for code generation
             max_retries: Maximum number of retries for failed API calls
             timeout: Timeout in seconds for API calls
             api_base: Base URL for the API (defaults to OpenAI's responses API)
         """
+        if api_key is None:
+            api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            raise ValueError("OpenAI API key not provided and not found in environment variables (OPENAI_API_KEY).")
+            
         self.api_key = api_key
         self.model = model
         self.max_retries = max_retries
@@ -127,7 +136,6 @@ class LLMService:
         payload = {
             "model": self.model,
             "input": messages,
-            "temperature": 0.2,  # Lower temperature for more deterministic code generation
             "max_output_tokens": 2000,  # Adjust based on expected code length
         }
         
@@ -166,46 +174,46 @@ class LLMService:
         Returns:
             str: The extracted code, or an empty string if extraction fails
         """
+        content_str = "" 
         try:
-            # Extract the content from the response according to the 'responses' API structure
-            # Expected: response.output[0].content[0].text
-            if not (
-                response.get("output") and 
-                isinstance(response["output"], list) and 
-                len(response["output"]) > 0 and
-                isinstance(response["output"][0], dict) and
-                response["output"][0].get("content") and
-                isinstance(response["output"][0]["content"], list) and
-                len(response["output"][0]["content"]) > 0 and
-                isinstance(response["output"][0]["content"][0], dict) and
-                "text" in response["output"][0]["content"][0]
-            ):
+            if isinstance(response.get("output"), list):
+                for item in response["output"]:
+                    if isinstance(item, dict) and item.get("type") == "message":
+                        if (
+                            isinstance(item.get("content"), list) and
+                            len(item["content"]) > 0 and
+                            isinstance(item["content"][0], dict) and
+                            item["content"][0].get("type") == "output_text" and
+                            isinstance(item["content"][0].get("text"), str)
+                        ):
+                            content_str = item["content"][0]["text"]
+                            break # Found the main message content
+            
+            if not content_str:
                 self.logger.error(
-                    "Invalid API response structure from 'responses' endpoint. Missing expected fields."
+                    "Failed to extract content string from 'responses' endpoint. Expected 'output' list with a 'message' type item containing 'output_text'."
                 )
                 self.logger.debug(f"Full response for debugging: {json.dumps(response, indent=2)}")
                 return ""
-            
-            content = response["output"][0]["content"][0]["text"]
 
         except (KeyError, IndexError, TypeError) as e:
             self.logger.error(f"Error accessing content from 'responses' API structure: {e}")
             self.logger.debug(f"Full response for debugging: {json.dumps(response, indent=2)}")
             return ""
-            
+        
         try:
             # Try to extract code blocks with Python markers
-            python_blocks = re.findall(r"```python\n(.*?)```", content, re.DOTALL)
+            python_blocks = re.findall(r"```python\n(.*?)```", content_str, re.DOTALL)
             if python_blocks:
                 return python_blocks[0].strip()
             
             # Try to extract any code blocks
-            code_blocks = re.findall(r"```(.*?)```", content, re.DOTALL)
+            code_blocks = re.findall(r"```(.*?)```", content_str, re.DOTALL)
             if code_blocks:
                 return code_blocks[0].strip()
             
             # If no code blocks found, try to extract based on common patterns
-            lines = content.split("\n")
+            lines = content_str.split("\n")
             code_lines = []
             in_code = False
             
@@ -227,7 +235,7 @@ class LLMService:
             
             # If all else fails, return the entire content
             self.logger.warning("Could not extract specific code blocks, returning full content")
-            return content.strip()
+            return content_str.strip()
             
         except Exception as e:
             self.logger.error(f"Error extracting code from response: {str(e)}", exc_info=True)

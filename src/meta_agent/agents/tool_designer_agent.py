@@ -46,8 +46,8 @@ class ToolDesignerAgent(Agent): # Inherit from Agent
                  model_name: str = "o4-mini-high", 
                  template_dir: Optional[str] = None,
                  template_name: str = "tool_template.py.j2",
-                 llm_api_key: Optional[str] = None,
-                 llm_model: str = "gpt-4",
+                 llm_api_key: Optional[str] = None, 
+                 llm_model: str = "gpt-4", 
                  examples_repository: Optional[Dict[str, Any]] = None,
                  ):
         """Initializes the Tool Designer Agent.
@@ -58,14 +58,14 @@ class ToolDesignerAgent(Agent): # Inherit from Agent
                                          Defaults to '../templates' relative to this file.
             template_name (str): The name of the Jinja2 template file to use.
                                 Defaults to 'tool_template.py.j2'.
-            llm_api_key (Optional[str]): API key for the LLM service. If None, LLM-backed generation will be disabled.
+            llm_api_key (Optional[str]): API key for the LLM service. If None, LLMService will try to load from env.
             llm_model (str): The model to use for LLM-backed generation.
             examples_repository (Optional[Dict[str, Any]]): Repository of example tools for reference.
         """
         super().__init__(name="ToolDesignerAgent", tools=[]) # Initialize base Agent with name
         self.model_name = model_name
         self.template_name = template_name
-        self.llm_api_key = llm_api_key
+        self.llm_api_key = llm_api_key 
         self.llm_model = llm_model
         self.examples_repository = examples_repository or {}
 
@@ -82,43 +82,48 @@ class ToolDesignerAgent(Agent): # Inherit from Agent
         )
         logger.info(f"Jinja environment loaded from: {self.template_dir}")
         
-        # Initialize LLM components if API key is provided
-        if llm_api_key:
-            self._initialize_llm_components(llm_api_key, llm_model)
-            logger.info("LLM-backed code generation components initialized")
-        else:
-            self.llm_code_generator = None
-            logger.info("LLM-backed code generation disabled (no API key provided)")
+        # Always attempt to initialize LLM components.
+        # _initialize_llm_components will handle cases where API key isn't available.
+        self._initialize_llm_components(self.llm_api_key, self.llm_model)
 
-    def _initialize_llm_components(self, api_key: str, model: str):
+    def _initialize_llm_components(self, api_key: Optional[str], model: str):
         """Initialize the LLM-backed code generation components."""
-        # Create LLM service
-        llm_service = LLMService(api_key=api_key, model=model)
-        
-        # Create prompt builder
-        prompt_builder = PromptBuilder(prompt_templates=PROMPT_TEMPLATES)
-        
-        # Create context builder
-        context_builder = ContextBuilder(examples_repository=self.examples_repository)
-        
-        # Create code validator
-        code_validator = CodeValidator()
-        
-        # Create implementation injector
-        implementation_injector = ImplementationInjector(template_engine=self.jinja_env)
-        
-        # Create fallback manager
-        fallback_manager = FallbackManager(llm_service=llm_service, prompt_builder=prompt_builder)
-        
-        # Create LLM code generator
-        self.llm_code_generator = LLMCodeGenerator(
-            llm_service=llm_service,
-            prompt_builder=prompt_builder,
-            context_builder=context_builder,
-            code_validator=code_validator,
-            implementation_injector=implementation_injector,
-            fallback_manager=fallback_manager
-        )
+        try:
+            # LLMService will use api_key if provided, otherwise try os.getenv("OPENAI_API_KEY")
+            # It will raise ValueError if no key is found.
+            self.llm_service = LLMService(api_key=api_key, model=model) 
+            
+            # Initialize other components that depend on llm_service
+            self.prompt_builder = PromptBuilder(PROMPT_TEMPLATES)
+            self.context_builder = ContextBuilder(self.examples_repository)
+            self.code_validator = CodeValidator()
+            self.implementation_injector = ImplementationInjector(self.jinja_env)
+            self.fallback_manager = FallbackManager(
+                self.llm_service,
+                self.prompt_builder
+            )
+
+            self.llm_code_generator = LLMCodeGenerator(
+                llm_service=self.llm_service,
+                prompt_builder=self.prompt_builder,
+                context_builder=self.context_builder,
+                code_validator=self.code_validator,
+                implementation_injector=self.implementation_injector,
+                fallback_manager=self.fallback_manager
+            )
+            logger.info("LLM-backed code generation components initialized successfully.")
+
+        except ValueError as e:
+            # This typically means LLMService couldn't find an API key.
+            self.llm_service = None
+            self.llm_code_generator = None
+            logger.warning(f"Failed to initialize LLM components: {e}. LLM-backed generation will be disabled.")
+        except Exception as e:
+            # Catch any other unexpected errors during initialization
+            self.llm_service = None
+            self.llm_code_generator = None
+            logger.error(f"Unexpected error initializing LLM components: {e}", exc_info=True)
+            logger.warning("LLM-backed generation will be disabled due to an unexpected error.")
 
     def design_tool(self, specification: Union[str, Dict[str, Any]]) -> str:
         """Parses the specification and generates tool code using a Jinja2 template."""
@@ -298,12 +303,14 @@ if __name__ == '__main__':
     '''
 
     async def test_agent():
-        # Get API key from environment variable
-        api_key = os.environ.get("OPENAI_API_KEY")
+        # Get API key from environment variable (LLMService will also do this if not passed)
+        # api_key = os.environ.get("OPENAI_API_KEY") 
         
-        # Create agent with and without LLM capability
-        agent_template = ToolDesignerAgent()
-        agent_llm = ToolDesignerAgent(llm_api_key=api_key) if api_key else None
+        # Create agent. LLMService will try to get API_KEY from env if not provided.
+        agent_template = ToolDesignerAgent() # For template-based
+        agent_llm = ToolDesignerAgent() # For LLM-based (will use env key or passed key)
+        # To test with an explicit key (e.g. if .env is not set or to override):
+        # agent_llm_explicit_key = ToolDesignerAgent(llm_api_key="your_explicit_key_here")
 
         # Test template-based generation
         try:
@@ -316,7 +323,7 @@ if __name__ == '__main__':
             print(f"\n--- Error Designing Tool --- \n{e}")
 
         # Test LLM-based generation if available
-        if agent_llm:
+        if agent_llm.llm_code_generator: # Check if LLM components were successfully initialized
             try:
                 print("\n--- Designing Tool from YAML Spec (LLM-based) ---")
                 generated_code_llm = await agent_llm.design_tool_with_llm(example_yaml_spec)
@@ -326,7 +333,7 @@ if __name__ == '__main__':
             except (ValueError, CodeGenerationError, RuntimeError) as e:
                 print(f"\n--- Error Designing Tool with LLM --- \n{e}")
         else:
-            print("\n--- LLM-based generation not available (no API key) ---")
+            print("\n--- LLM-based generation not available (no API key found or error during init) ---")
 
         # Example Invalid Spec
         invalid_spec = '{"name": "bad_tool"}'  # Missing purpose, output_format
