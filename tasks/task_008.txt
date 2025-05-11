@@ -1,0 +1,17 @@
+# Task ID: 8
+# Title: Implement Cost and Trace Telemetry
+# Status: pending
+# Dependencies: 3, 4, 5
+# Priority: medium
+# Description: Add systems to track token usage, latency, and costs associated with agent generation.
+# Details:
+1. Integrate with OpenAI usage APIs
+2. Implement token counting and cost calculation
+3. Create latency tracking for each generation step
+4. Build telemetry dashboard (CLI-based initially)
+5. Add cost caps and warnings
+6. Implement telemetry storage for historical analysis
+7. Create export functionality for telemetry data
+
+# Test Strategy:
+Verify accuracy of token counting and cost calculations. Test cost caps by creating specifications that would exceed limits. Ensure telemetry data is correctly stored and retrievable.

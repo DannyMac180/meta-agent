@@ -1,0 +1,75 @@
+# Task ID: 5
+# Title: Implement Guardrail Designer Sub-agent
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create the specialized sub-agent that generates validation logic and guardrails for the agent.
+# Details:
+1. Configure gpt-4o model integration
+2. Implement guardrail generation logic using Pydantic models
+3. Create test cases for guardrail validation
+4. Implement policy check generators
+5. Add regex pattern creation for input/output validation
+6. Create hooks into Agents SDK guardrail system
+7. Generate documentation for implemented guardrails
+
+# Test Strategy:
+Test with various guardrail specifications. Verify guardrails catch problematic inputs/outputs. Test against common evasion techniques.
+
+# Subtasks:
+## 1. Set up Guardrail Designer Sub-agent with Model Integration [pending]
+### Dependencies: None
+### Description: Create the base structure for the Guardrail Designer Sub-agent and integrate the gpt-4o model for guardrail generation capabilities.
+### Details:
+Implementation steps:
+1. Create a new GuardrailDesignerAgent class that inherits from the base Agent class
+2. Configure the connection to gpt-4o model with appropriate system prompts for guardrail design
+3. Implement the basic agent interface methods (initialize, process_request, generate_response)
+4. Create a configuration class to store guardrail designer settings
+5. Implement proper error handling for model API failures
+6. Set up logging for guardrail generation activities
+
+Testing approach:
+1. Create unit tests to verify model connection and basic prompt handling
+2. Test the agent initialization with various configuration parameters
+3. Mock the model responses to test error handling paths
+
+## 2. Implement Core Guardrail Generation Logic [pending]
+### Dependencies: 5.1
+### Description: Develop the core logic for generating validation rules, Pydantic models, and regex patterns based on input specifications.
+### Details:
+Implementation steps:
+1. Create specialized methods for different types of guardrails (input validation, output validation, policy checking)
+2. Implement Pydantic model generation logic with type inference capabilities
+3. Build regex pattern generator for string validation
+4. Create a policy check generator that can produce validation logic for content policies
+5. Implement a guardrail template system for common validation patterns
+6. Design a structured output format for generated guardrails
+7. Add context-aware guardrail suggestion based on agent purpose
+
+Testing approach:
+1. Create test cases with various input scenarios to verify generated Pydantic models
+2. Test regex pattern generation with edge cases
+3. Verify policy check generators with simulated harmful inputs
+4. Validate that generated guardrails properly enforce the intended constraints
+
+## 3. Integrate with Agent SDK and Create Documentation [pending]
+### Dependencies: 5.2
+### Description: Connect the Guardrail Designer to the Agents SDK guardrail system and generate comprehensive documentation for the implemented guardrails.
+### Details:
+Implementation steps:
+1. Create hooks into the Agents SDK guardrail system for seamless integration
+2. Implement a guardrail registration mechanism to activate generated guardrails
+3. Build a documentation generator that explains each implemented guardrail
+4. Create sample usage examples for different types of guardrails
+5. Implement test case generation for validating guardrails
+6. Add a guardrail visualization component for easier understanding
+7. Create a feedback mechanism to improve guardrail effectiveness
+
+Testing approach:
+1. Integration tests with the full Agent SDK to verify guardrail activation
+2. Test documentation generation for accuracy and completeness
+3. Verify test case generation produces valid test scenarios
+4. End-to-end tests with various agents using the generated guardrails
+5. User acceptance testing for documentation clarity
+

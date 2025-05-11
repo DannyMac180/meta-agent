@@ -1,0 +1,17 @@
+# Task ID: 6
+# Title: Create Evaluation Harness
+# Status: pending
+# Dependencies: 2, 4, 5
+# Priority: medium
+# Description: Build the system that compiles, executes, and validates the generated agent code and tests.
+# Details:
+1. Implement pytest runner in sandbox environment
+2. Create result collection and reporting system
+3. Add code compilation verification
+4. Implement test coverage analysis
+5. Create failure analysis for debugging
+6. Add performance metrics collection
+7. Generate evaluation summary report
+
+# Test Strategy:
+Test with both valid and intentionally broken agent code. Verify all issues are correctly detected and reported. Ensure sandbox security during execution.

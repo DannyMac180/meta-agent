@@ -1,0 +1,25 @@
+"""
+Auto-generated agent implementation
+"""
+from agents import Agent
+
+class {{ agent_class_name }}(Agent):
+    def __init__(self):
+        super().__init__(
+            name="{{ name }}",
+            instructions="""{{ instructions }}"""
+        )
+
+    def run(self, input):
+        # Core logic from sub-agents
+        {{ core_logic | indent(8) }}
+
+    # Tools
+    {% for tool in tools %}
+    {{ tool }}
+    {% endfor %}
+
+    # Guardrails
+    {% for guardrail in guardrails %}
+    {{ guardrail }}
+    {% endfor %}
