@@ -116,10 +116,11 @@ Implementation steps:
 6. Implement versioning for generated tools
 7. Create a user interface or API endpoint for manual tool specification submission
 
-Additional Implementation Guidance:
+#### Additional Implementation Guidance  
 These notes clarify design expectations so the coding agent can move quickly without ambiguity.
 
-Overall control-flow (happy path):
+**Overall control-flow (happy path)**  
+```
 User / Upstream-Agent → MetaAgentOrchestrator → PlanningEngine → SubAgentManager →
    ToolDesignerAgent  ─┐
                        │  (1) design_tool_with_llm / design_tool
@@ -131,46 +132,54 @@ User / Upstream-Agent → MetaAgentOrchestrator → PlanningEngine → SubAgentM
                        │  (3) return handle / module path
                        ▼
           Orchestrator pipelines tool into next task
+```
 
-1. Workflow implementation:
-   - Add a new method `create_tool(spec: ToolSpec) -> GeneratedToolHandle` in `SubAgentManager` that wraps the full pipeline (parse → generate → validate → register).
-   - Extend `MetaAgentOrchestrator.handle_task()` to call this helper whenever a tool-design task bubble is detected in the plan tree.
+**1. Workflow implementation**
+* Add a new method `create_tool(spec: ToolSpec) -> GeneratedToolHandle` in `SubAgentManager` that
+  wraps the full pipeline (parse → generate → validate → register).
+* Extend `MetaAgentOrchestrator.handle_task()` to call this helper whenever a *tool-design* task
+  bubble is detected in the plan tree.
 
-2. Tool registration & dynamic loading:
-   - Introduce `ToolRegistry` under `src/meta_agent/registry.py` with APIs:
-     class ToolRegistry:
-         def register(tool: GeneratedTool, version: str) -> str:  # returns fully-qualified module path
-         def get(name: str, version: str | None = None) -> ModuleType | None
-         def latest(name: str) -> ModuleType | None
-   - Registration writes the tool's Python file into `src/.tool_designer/artefacts/<tool_name>/<version>/tool.py` and uses `importlib.util.module_from_spec` to load it at runtime.
-   - Maintain `registry.json` manifest (tool → versions → path, checksum, created_at).
+**2. Tool registration & dynamic loading**
+* Introduce `ToolRegistry` under `src/meta_agent/registry.py` with APIs:
+  ```python
+  class ToolRegistry:
+      def register(tool: GeneratedTool, version: str) -> str:  # returns fully-qualified module path
+      def get(name: str, version: str | None = None) -> ModuleType | None
+      def latest(name: str) -> ModuleType | None
+  ```
+* Registration writes the tool's Python file into `src/.tool_designer/artefacts/<tool_name>/<version>/tool.py`
+  and uses `importlib.util.module_from_spec` to load it at runtime.
+* Maintain `registry.json` manifest (tool → versions → path, checksum, created_at).
 
-3. Caching:
-   - Compute `spec_fingerprint = sha256(normalised_spec_json)[:16]`.
-   - Before generation look up `<tool_name>/<spec_fingerprint>` in the manifest; if present, reuse path.
+**3. Caching**
+* Compute `spec_fingerprint = sha256(normalised_spec_json)[:16]`.
+* Before generation look up `<tool_name>/<spec_fingerprint>` in the manifest; if present, reuse path.
 
-4. Feedback loop:
-   - Provide an `update_tool(tool_name, modifications)` method which sends a refine request back to `ToolDesignerAgent` with the original spec + diff instructions.
-   - Store last N revisions per tool; bump version (major.minor.patch or timestamp) each time.
+**4. Feedback loop**
+* Provide an `update_tool(tool_name, modifications)` method which sends a *refine* request back to
+  ToolDesignerAgent with the original spec + diff instructions.
+* Store last N revisions per tool; bump version (`major.minor.patch` or timestamp) each time.
 
-5. Logging & monitoring:
-   - Emit structured JSON logs at INFO for each stage with keys: tool, event, duration_ms, success.
-   - Capture metrics counters: tool_generated_total, tool_generation_failed_total, tool_cached_hit_total.
+**5. Logging & monitoring**  
+* Emit structured JSON logs at `INFO` for each stage with keys: `tool`, `event`, `duration_ms`, `success`.
+* Capture metrics counters: `tool_generated_total`, `tool_generation_failed_total`, `tool_cached_hit_total`.
 
-6. Versioning strategy:
-   - Default 0.1.0 for first generation.
-   - Minor bump for non-breaking edits (feedback loop).
-   - Major bump if input/output contract changes (detected via spec diff on IO definition section).
+**6. Versioning strategy**  
+* Default `0.1.0` for first generation.  
+* Minor bump for non-breaking edits (feedback loop).  
+* Major bump if input/output contract changes (detected via spec diff on IO definition section).
 
-7. UI / API consideration:
-   - Expose a new CLI command: `meta-agent tool create path/to/spec.yaml --use-llm`.
-   - In future a lightweight FastAPI service can proxy spec submissions; design interfaces accordingly but CLI is MVP.
+**7. UI / API consideration**  
+* Expose a new CLI command: `meta-agent tool create path/to/spec.yaml --use-llm`.  
+* In future a lightweight FastAPI service can proxy spec submissions; design interfaces accordingly but
+  CLI is MVP.
 
-Acceptance Criteria:
-- `tests/integration/test_tool_lifecycle.py` demonstrates end-to-end creation, caching hit, and registry load.
-- Tools appear in manifest with correct metadata and can be imported and executed.
-- Generating the same spec twice results in a cache hit (no LLM call).
-- Feedback update bumps version and registry returns the latest by default.
+**Acceptance Criteria**  
+* `tests/integration/test_tool_lifecycle.py` demonstrates end-to-end creation, caching hit, and registry load.  
+* Tools appear in manifest with correct metadata and can be imported and executed.  
+* Generating the same spec twice results in a cache hit (no LLM call).  
+* Feedback update bumps version and registry returns the latest by default.
 
 Testing approach:
 - End-to-end testing with sample specifications

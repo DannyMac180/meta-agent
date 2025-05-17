@@ -40,7 +40,7 @@ class ToolCodeGenerator:
         self.specification = specification
         if not ToolCodeGenerator._env:
             ToolCodeGenerator._env = Environment(
-                loader=FileSystemLoader(searchpath="src/meta_agent/generators"),
+                loader=FileSystemLoader(searchpath="."),
                 trim_blocks=True, lstrip_blocks=True
             )
             ToolCodeGenerator._env.globals['map_type'] = map_type
