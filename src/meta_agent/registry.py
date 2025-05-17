@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -50,13 +51,20 @@ class ToolRegistry:
         if tool_version_dir.exists():
             logger.warning(f"Tool '{tool.name}' version '{version}' already exists at {tool_version_dir}. Overwriting.")
         try:
-            tool_version_dir.mkdir(parents=True, exist_ok=True)
-            (tool_package_dir / "__init__.py").touch(exist_ok=True)
+            # Ensure all parent directories exist and are Python packages
+            tool_version_dir.parent.parent.mkdir(parents=True, exist_ok=True)
+            (tool_version_dir.parent.parent / "__init__.py").touch(exist_ok=True)
+            tool_version_dir.parent.mkdir(exist_ok=True)
+            (tool_version_dir.parent / "__init__.py").touch(exist_ok=True)
+            tool_version_dir.mkdir(exist_ok=True)
             (tool_version_dir / "__init__.py").touch(exist_ok=True)
+            
+            # Create the tool code file
             tool_code_path = tool_version_dir / TOOL_CODE_FILE_NAME
             with open(tool_code_path, "w", encoding="utf-8") as f:
                 f.write(tool.code)
-            module_import_path = f"meta_agent.{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}.{TOOL_CODE_FILE_NAME[:-3]}"
+            # Construct module path relative to tools_dir
+            module_import_path = f"{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}"
             metadata = {
                 "name": tool.name,
                 "original_name": tool.name,
@@ -85,7 +93,7 @@ class ToolRegistry:
         versions = []
         for version_name_dir in tool_package_dir.iterdir():
             metadata_path = version_name_dir / METADATA_FILE_NAME
-            if version_name_dir.is_dir() and metadata_path.exists():
+            if version_name_dir.is_dir() and (version_name_dir / "__init__.py").exists() and metadata_path.exists():
                 try:
                     with open(metadata_path, "r", encoding="utf-8") as f:
                         metadata = json.load(f)
@@ -110,24 +118,49 @@ class ToolRegistry:
             actual_version_str = version
         version_sanitized = "v" + actual_version_str.replace(".", "_")
         metadata = self.get_tool_metadata(tool_name, actual_version_str)
-        if not metadata or "module_path" not in metadata:
-            module_full_path = f"meta_agent.{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}.{TOOL_CODE_FILE_NAME[:-3]}"
-        else:
-            module_full_path = metadata["module_path"]
         tool_code_file = self._get_tool_version_dir(tool_name_sanitized, version_sanitized) / TOOL_CODE_FILE_NAME
         if not tool_code_file.exists():
             logger.error(f"Tool code file not found for '{tool_name}' v{actual_version_str} at {tool_code_file}")
             return None
+
+        # Get metadata to get the module path
+        metadata = self.get_tool_metadata(tool_name, actual_version_str)
+        if not metadata or "module_path" not in metadata:
+            logger.error(f"No metadata found for tool '{tool_name}' version '{actual_version_str}'")
+            return None
+            
+        module_full_path = metadata["module_path"]
+
+        importlib.invalidate_caches() # Ensure import system sees new files
+        original_sys_path = sys.path[:]
+        path_added_to_sys = False
         try:
+            # Add the base directory to sys.path
+            if str(self.base_dir) not in sys.path:
+                sys.path.insert(0, str(self.base_dir))
+                path_added_to_sys = True
+                importlib.invalidate_caches() # Ensure import system sees new files after sys.path change
+
+            logger.info(f"[DIAGNOSTIC] Attempting to import: {module_full_path}")
+            logger.info(f"[DIAGNOSTIC] Current sys.path: {sys.path}")
             tool_module = importlib.import_module(module_full_path)
+            # Get the tool class from the module
+            tool_class = getattr(tool_module, tool_name_sanitized)
+            # Create an instance of the tool
+            tool_instance = tool_class()
             logger.info(f"Tool '{tool_name}' version '{actual_version_str}' loaded successfully from {module_full_path}")
-            return tool_module
+            return tool_instance
         except ImportError as e:
             logger.error(f"Failed to import tool '{tool_name}' version '{actual_version_str}' from {module_full_path}: {e}")
             return None
         except Exception as e:
             logger.error(f"An unexpected error occurred while loading tool '{tool_name}' version '{actual_version_str}': {e}")
             return None
+        finally:
+            if path_added_to_sys:
+                sys.path = original_sys_path
+                importlib.invalidate_caches() # Ensure import system sees new files after sys.path restoration
+                # Consider importlib.invalidate_caches() here if needed after sys.path restoration
 
     def list_tools(self) -> List[Dict[str, Any]]:
         available_tools = []

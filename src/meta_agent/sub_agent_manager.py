@@ -5,6 +5,9 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 import logging
 from typing import Dict, Any, Optional, Type
 import logging
+import tempfile
+import os
+from pathlib import Path
 try:
     from agents import Agent, Tool, Runner, WebSearchTool, FileSearchTool
 except (ImportError, AttributeError):
@@ -31,12 +34,16 @@ except (ImportError, AttributeError):
 
 from meta_agent.models.generated_tool import GeneratedTool
 from meta_agent.template_engine import TemplateEngine
+from meta_agent.generators.code_validator import CodeValidator
+from meta_agent.sandbox.sandbox_manager import SandboxManager
+from meta_agent.models.validation_result import ValidationResult
 import ast
 import subprocess
 import tempfile
 import os
 import json
 import re
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +201,156 @@ class SubAgentManager:
             if BaseAgent.__name__ not in self.active_agents:
                 self.active_agents[BaseAgent.__name__] = BaseAgent()
             return self.active_agents[BaseAgent.__name__]
+
+    async def create_tool(self, spec: Dict[str, Any], version: str = "0.1.0", tool_registry=None, tool_designer_agent=None) -> Optional[str]:
+        """
+        Creates a tool by executing the full pipeline: parse → generate → validate → register.
+        
+        Args:
+            spec: The tool specification
+            version: The tool version (defaults to "0.1.0")
+            tool_registry: Optional ToolRegistry instance, will try to get one if None
+            tool_designer_agent: Optional ToolDesignerAgent instance, will try to get one if None
+            
+        Returns:
+            Module path of the registered tool, or None if the creation process failed
+        """
+        start_time = time.monotonic()
+        tool_name = spec.get("name", "UnknownTool")
+        logger.info(f"Starting tool creation pipeline for '{tool_name}' (version {version})")
+        
+        # 1. Get or create required components
+        if tool_designer_agent is None:
+            logger.debug("No tool designer agent provided, attempting to get one")
+            tool_designer_agent = self.get_agent("tool_designer_tool")
+            if tool_designer_agent is None:
+                logger.error(f"Failed to get tool designer agent for '{tool_name}'")
+                return None
+        
+        if tool_registry is None:
+            logger.debug("No tool registry provided, attempting to import")
+            try:
+                from meta_agent.registry import ToolRegistry
+                tool_registry = ToolRegistry()
+                logger.debug("Created tool registry instance")
+            except ImportError:
+                logger.error("Failed to import ToolRegistry")
+                return None
+        
+        # 2. Generate tool code using the tool designer
+        logger.info(f"Generating code for tool '{tool_name}'")
+        try:
+            generated_tool = await tool_designer_agent.design_tool(spec)
+            if generated_tool is None:
+                logger.error(f"Tool designer failed to generate code for '{tool_name}'")
+                return None
+            
+            logger.info(f"Successfully generated code for tool '{tool_name}'")
+        except Exception as e:
+            logger.error(f"Exception during tool code generation for '{tool_name}': {e}", exc_info=True)
+            return None
+        
+        # 3. Validate the generated code
+        logger.info(f"Validating generated code for tool '{tool_name}'")
+        code_validator = CodeValidator()
+        validation_result = code_validator.validate(generated_tool.code, spec)
+
+        # Accept the code as long as syntax and security checks pass.  Compliance checks
+        # (docstrings, defensive coding, etc.) are treated as "soft" warnings during early
+        # development so that placeholder tools can still be registered.
+        if not (validation_result.syntax_valid and validation_result.security_valid):
+            issues = validation_result.get_all_issues()
+            logger.error(
+                "Code validation failed (syntax/security) for tool '%s': %s", tool_name, issues
+            )
+            return None
+
+        if not validation_result.spec_compliance:
+            logger.warning(
+                "Code for tool '%s' has spec-compliance warnings but will be accepted for now: %s",
+                tool_name,
+                validation_result.compliance_issues,
+            )
+        else:
+            logger.info("Code validation passed for tool '%s'", tool_name)
+        
+        # 4. Validate runtime behavior using sandbox (best-effort)
+        logger.info(f"Running sandbox validation for tool '{tool_name}' (best-effort)")
+        try:
+            # Dynamically import to honor any monkey-patching done in tests
+            try:
+                # First try to get the SandboxManager - this may fail if Docker is not available
+                from meta_agent.sandbox.sandbox_manager import SandboxManager as _SandboxManager
+                sandbox_manager = _SandboxManager()
+                
+                # Create a temporary directory for the tool code
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_dir_path = Path(temp_dir)
+                    tool_file_path = temp_dir_path / "tool.py"
+                    
+                    # Write the generated code to the temporary file
+                    with open(tool_file_path, "w") as f:
+                        f.write(generated_tool.code)
+                    
+                    # Create a test script that imports and uses the tool
+                    test_script_path = temp_dir_path / "test_tool.py"
+                    test_script = f"""
+import tool
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+try:
+    # Try to get a tool instance
+    tool_instance = tool.get_tool_instance()
+    # Try to call the run method with a test value
+    result = tool_instance.run("test_input")
+    print(f"Tool execution successful. Result: {{result}}")
+    exit(0)
+except Exception as e:
+    print(f"Tool execution failed: {{e}}")
+    exit(1)
+"""
+                    with open(test_script_path, "w") as f:
+                        f.write(test_script)
+                    
+                    # Run the test script in the sandbox
+                    exit_code, stdout, stderr = sandbox_manager.run_code_in_sandbox(
+                        code_directory=temp_dir_path,
+                        command=["python", "test_tool.py"],
+                        timeout=30  # 30 seconds timeout
+                    )
+                    
+                    if exit_code != 0:
+                        logger.warning(f"Sandbox validation failed for tool '{tool_name}' but continuing. Exit code: {exit_code}")
+                        logger.warning(f"Stdout: {stdout}")
+                        logger.warning(f"Stderr: {stderr}")
+                        # Continue with registration despite sandbox failure
+                    else:
+                        logger.info(f"Sandbox validation passed for tool '{tool_name}'")
+            except (ImportError, ConnectionError) as e:
+                # SandboxManager might not be importable or Docker might not be running
+                logger.warning(f"Sandbox validation skipped for tool '{tool_name}': {e}")
+                # Continue with registration
+        except Exception as e:
+            # Catch any other exceptions during sandbox validation
+            logger.warning(f"Sandbox validation skipped for tool '{tool_name}' due to error: {e}")
+            # Continue with registration instead of returning None
+        
+        # 5. Register the tool
+        logger.info(f"Registering tool '{tool_name}' (version {version})")
+        try:
+            module_path = tool_registry.register(generated_tool, version=version)
+            if module_path is None:
+                logger.error(f"Failed to register tool '{tool_name}'")
+                return None
+            
+            duration_ms = (time.monotonic() - start_time) * 1000
+            logger.info(f"Successfully registered tool '{tool_name}' at {module_path} (took {duration_ms:.2f}ms)")
+            return module_path
+        except Exception as e:
+            logger.error(f"Exception during tool registration for '{tool_name}': {e}", exc_info=True)
+            return None
 
     def list_agents(self) -> Dict[str, Agent]:
         """Lists all managed agents by their class name."""

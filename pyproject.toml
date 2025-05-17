@@ -57,6 +57,7 @@ dependencies = [
   "pytest",
   "pytest-cov", # Added for coverage
   "pytest-asyncio", # Added for async tests
+  "pytest-mock", # Added for mocker fixture
 ]
 [tool.hatch.envs.test.scripts]
 _test_impl = "pytest tests/ {args}"

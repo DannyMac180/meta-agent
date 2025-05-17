@@ -14,6 +14,8 @@ from meta_agent.models.spec_schema import SpecSchema
 from meta_agent.orchestrator import MetaAgentOrchestrator
 from meta_agent.planning_engine import PlanningEngine
 from meta_agent.sub_agent_manager import SubAgentManager
+from meta_agent.registry import ToolRegistry
+from meta_agent.tool_designer import ToolDesignerAgent
 # TODO: Import logging setup from utils
 
 @click.group()
@@ -124,6 +126,107 @@ async def generate(spec_file: Path | None, spec_text: str | None):
               help='Specification provided as a text string.')
 def generate_command_wrapper(spec_file, spec_text):
     asyncio.run(generate(spec_file, spec_text))
+
+async def create_tool(spec_file: Path, use_llm: bool, version: str):
+    """Create a tool based on a specification file."""
+    click.echo(f"Reading tool specification from file: {spec_file}")
+    
+    try:
+        # Parse the specification file
+        tool_spec = None
+        if spec_file.suffix.lower() == '.json':
+            with open(spec_file, 'r') as f:
+                tool_spec = json.load(f)
+            click.echo("Parsed tool specification from JSON file.")
+        elif spec_file.suffix.lower() in ['.yaml', '.yml']:
+            with open(spec_file, 'r') as f:
+                tool_spec = yaml.safe_load(f)
+            click.echo("Parsed tool specification from YAML file.")
+        else:
+            click.echo(f"Error: Unsupported file type: {spec_file.suffix}. Please use JSON or YAML.", err=True)
+            sys.exit(1)
+        
+        if not tool_spec:
+            click.echo("Error: Empty or invalid tool specification.", err=True)
+            sys.exit(1)
+        
+        # Validate basic structure
+        if not isinstance(tool_spec, dict):
+            click.echo("Error: Tool specification must be a dictionary/object.", err=True)
+            sys.exit(1)
+        
+        if "name" not in tool_spec:
+            click.echo("Error: Tool specification must include a 'name' field.", err=True)
+            sys.exit(1)
+        
+        # Initialize components
+        click.echo("Initializing components for tool creation...")
+        sub_agent_manager = SubAgentManager()
+        tool_registry = ToolRegistry()
+        tool_designer_agent = ToolDesignerAgent()
+        
+        # Create the tool
+        click.echo(f"Creating tool '{tool_spec.get('name')}' (version {version})...")
+        if use_llm:
+            click.echo("Using LLM for code generation (--use-llm flag enabled).")
+            # Note: Currently the LLM is always used in the implementation,
+            # but we keep the flag for future flexibility
+        
+        module_path = await sub_agent_manager.create_tool(
+            spec=tool_spec,
+            version=version,
+            tool_registry=tool_registry,
+            tool_designer_agent=tool_designer_agent
+        )
+        
+        if module_path:
+            click.echo(click.style(f"\n✓ Tool created successfully!", fg="green", bold=True))
+            click.echo(f"Module path: {module_path}")
+            click.echo(f"You can import this tool using: from {module_path} import get_tool_instance")
+            return module_path
+        else:
+            click.echo(click.style("\n✗ Tool creation failed.", fg="red", bold=True))
+            click.echo("Check the logs for more details on the failure.")
+            sys.exit(1)
+            
+    except FileNotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except (json.JSONDecodeError, yaml.YAMLError) as e:
+        click.echo(f"Error parsing specification file: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"An unexpected error occurred: {e}", err=True)
+        sys.exit(1)
+
+@cli.command(name='tool')
+@click.argument('action', type=click.Choice(['create', 'list', 'delete']))
+@click.option('--spec-file', type=click.Path(exists=True, dir_okay=False, path_type=Path),
+              help='Path to the tool specification file (JSON or YAML).')
+@click.option('--use-llm', is_flag=True, default=True,
+              help='Use LLM for code generation (default: enabled).')
+@click.option('--version', type=str, default="0.1.0",
+              help='Version for the created tool (default: 0.1.0).')
+def tool_command_wrapper(action, spec_file, use_llm, version):
+    """
+    Manage tools for the meta-agent.
+    
+    ACTION can be one of:
+    
+    \b
+    create: Create a new tool from a specification file
+    list: List all available tools (not implemented yet)
+    delete: Delete a tool (not implemented yet)
+    """
+    if action == 'create':
+        if not spec_file:
+            click.echo("Error: --spec-file is required for the 'create' action.", err=True)
+            sys.exit(1)
+        asyncio.run(create_tool(spec_file, use_llm, version))
+    elif action == 'list':
+        click.echo("Tool listing is not implemented yet.")
+    elif action == 'delete':
+        click.echo("Tool deletion is not implemented yet.")
 
 if __name__ == "__main__":
     cli()
