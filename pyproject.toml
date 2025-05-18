@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meta-agent"
-dynamic = ["version"]
+version = "0.1.0"      # ← static; edit as you like
 requires-python = ">=3.11"
 dependencies = [
   "openai-agents~=0.0.11",
