@@ -26,6 +26,4 @@ node_modules/
 
 # Task files
 tasks.json
-tasks/ hatch.lock
-hatch.lock
-hatch.lock
+tasks/

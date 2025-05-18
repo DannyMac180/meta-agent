@@ -3,6 +3,8 @@
 
 A task management system for AI-driven development with Claude, designed to work seamlessly with Cursor AI.
 
+Use **uv** for everything (`uv venv`, `uv pip install -r uv.lock`). We no longer use Hatch; hatchling only builds wheels.
+
 ## Requirements
 
 - Node.js 14.0.0 or higher
