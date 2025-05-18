@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
-# 1️⃣ Install Hatch – pipx is preinstalled in the image
-pipx install hatch           # ~1-2 s download
-
-# 2️⃣ Install your project (and runtime deps) into the *system* interpreter
-pip install -e .
-
-# That’s it – the network will be disabled right after this script exits
+# Install project + test extras into the system interpreter
+python -m pip install -e ".[test]"
