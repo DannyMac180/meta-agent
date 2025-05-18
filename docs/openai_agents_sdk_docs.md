@@ -18,11 +18,11 @@ that can be composed into arbitrarily complex workflows.
 ```bash
 # Create an isolated project
 mkdir my_project && cd my_project
-python -m venv .venv
+uv venv
 source .venv/bin/activate
 
 # Install the SDK
-pip install openai-agents           # or: uv add openai-agents
+uv pip install openai-agents           # or: uv add openai-agents
 
 # Configure credentials
 export OPENAI_API_KEY="sk‑…"        # required for LLM calls & tracing

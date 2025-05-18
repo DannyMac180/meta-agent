@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-# Install project + test extras into the system interpreter
-python -m pip install -e ".[test]"
+# Create a virtual environment and install dependencies
+uv venv
+uv pip install -r uv.lock --extra test
+
