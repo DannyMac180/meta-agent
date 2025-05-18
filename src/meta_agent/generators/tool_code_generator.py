@@ -2,6 +2,7 @@ import ast
 import logging
 import re
 from typing import Any, Dict
+from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from meta_agent.parsers.tool_spec_parser import ToolSpecification
 
@@ -39,17 +40,19 @@ class ToolCodeGenerator:
     def __init__(self, specification: ToolSpecification):
         self.specification = specification
         if not ToolCodeGenerator._env:
+            template_dir = Path(__file__).parent.parent / "templates"
             ToolCodeGenerator._env = Environment(
-                loader=FileSystemLoader(searchpath="."),
-                trim_blocks=True, lstrip_blocks=True
+                loader=FileSystemLoader(searchpath=str(template_dir)),
+                trim_blocks=True,
+                lstrip_blocks=True,
             )
             ToolCodeGenerator._env.globals['map_type'] = map_type
         if not ToolCodeGenerator._template:
-            ToolCodeGenerator._template = ToolCodeGenerator._env.get_template("tool_template.j2")
+            ToolCodeGenerator._template = ToolCodeGenerator._env.get_template("tool_template.py.j2")
 
     def generate(self) -> str:
         try:
-            generated_code = ToolCodeGenerator._template.render(tool=self.specification)
+            generated_code = ToolCodeGenerator._template.render(spec=self.specification)
             try:
                 ast.parse(generated_code)
             except SyntaxError as se:

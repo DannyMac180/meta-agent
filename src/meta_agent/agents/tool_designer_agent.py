@@ -80,6 +80,7 @@ class ToolDesignerAgent(Agent): # Inherit from Agent
             loader=jinja2.FileSystemLoader(self.template_dir),
             autoescape=jinja2.select_autoescape(['html', 'xml'])
         )
+        self.jinja_env.globals['map_type'] = lambda t: TYPE_MAP.get(t.lower(), t)
         logger.info(f"Jinja environment loaded from: {self.template_dir}")
         
         # Always attempt to initialize LLM components.

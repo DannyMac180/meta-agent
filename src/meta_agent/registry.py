@@ -144,12 +144,33 @@ class ToolRegistry:
             logger.info(f"[DIAGNOSTIC] Attempting to import: {module_full_path}")
             logger.info(f"[DIAGNOSTIC] Current sys.path: {sys.path}")
             tool_module = importlib.import_module(module_full_path)
-            # Get the tool class from the module
-            tool_class = getattr(tool_module, tool_name_sanitized)
-            # Create an instance of the tool
-            tool_instance = tool_class()
-            logger.info(f"Tool '{tool_name}' version '{actual_version_str}' loaded successfully from {module_full_path}")
-            return tool_instance
+
+            # Prefer a get_tool_instance factory if available
+            factory = getattr(tool_module, "get_tool_instance", None)
+            if callable(factory):
+                tool_instance = factory()
+                logger.info(
+                    f"Tool '{tool_name}' version '{actual_version_str}' loaded successfully from {module_full_path} via factory"
+                )
+                return tool_instance
+
+            # Fallback to a class named after the sanitized tool name or with 'Tool' suffix
+            tool_class = getattr(tool_module, tool_name_sanitized, None)
+            if not tool_class:
+                camel = "".join(part.capitalize() for part in tool_name_sanitized.split("_"))
+                tool_class = getattr(tool_module, f"{camel}Tool", None) or getattr(tool_module, camel, None)
+
+            if tool_class:
+                tool_instance = tool_class()
+                logger.info(
+                    f"Tool '{tool_name}' version '{actual_version_str}' loaded successfully from {module_full_path}"
+                )
+                return tool_instance
+            else:
+                logger.error(
+                    f"Tool class not found in module '{module_full_path}' for '{tool_name}'"
+                )
+                return None
         except ImportError as e:
             logger.error(f"Failed to import tool '{tool_name}' version '{actual_version_str}' from {module_full_path}: {e}")
             return None
