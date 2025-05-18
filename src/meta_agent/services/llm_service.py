@@ -178,17 +178,18 @@ class LLMService:
         try:
             if isinstance(response.get("output"), list):
                 for item in response["output"]:
-                    if isinstance(item, dict) and item.get("type") == "message":
-                        if (
-                            isinstance(item.get("content"), list) and
-                            len(item["content"]) > 0 and
-                            isinstance(item["content"][0], dict) and
-                            item["content"][0].get("type") == "output_text" and
-                            isinstance(item["content"][0].get("text"), str)
-                        ):
-                            content_str = item["content"][0]["text"]
-                            break # Found the main message content
-            
+                    if isinstance(item, dict):
+                        content = None
+                        if isinstance(item.get("content"), list) and item["content"]:
+                            first = item["content"][0]
+                            if isinstance(first, dict) and isinstance(first.get("text"), str):
+                                content = first["text"]
+                        elif isinstance(item.get("text"), str):
+                            content = item["text"]
+                        if content:
+                            content_str = content
+                            break
+
             if not content_str:
                 self.logger.error(
                     "Failed to extract content string from 'responses' endpoint. Expected 'output' list with a 'message' type item containing 'output_text'."
