@@ -4,47 +4,20 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meta-agent"
-
 dynamic = ["version"]
-description = 'init hatch'
-readme = "README.md"
-requires-python = ">=3.8"
-license = "MIT"
-keywords = []
-authors = [
-  { name = "Danny McAteer", email = "mcateerd2@gmail.com" },
-]
-classifiers = [
-  "Development Status :: 4 - Beta",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
-]
+requires-python = ">=3.11"      # match the image default 3.11.12 :contentReference[oaicite:1]{index=1}
 dependencies = [
-    "openai-agents~=0.0.11",
-    "pytest",
-    "ruff",
-    "pydantic>=2",  # Added for data validation models
-    "pyyaml>=6",    # Added for potential YAML parsing
-    "click>=8",     # Added for CLI implementation
-    "docker>=7",    # Added for Docker sandbox interaction
-    "Jinja2>=3.0.0",
-    "pytest-asyncio",
-    "pytest-cov",
-    "python-dotenv>=1.0.0", # Added for loading .env files
-    "aiohttp~=3.9", # Added for async HTTP requests
-    "backoff>=2.2.1,<3.0.0", # Added to resolve ModuleNotFoundError
+  # -- runtime only --
+  "openai-agents~=0.0.11",
+  "pydantic>=2",
+  "pyyaml>=6",
+  "click>=8",
+  "docker>=7",
+  "Jinja2>=3.0.0",
+  "python-dotenv>=1.0.0",
+  "aiohttp~=3.9",
+  "backoff>=2.2.1,<3.0.0",
 ]
-
-[project.urls]
-Documentation = "https://github.com/Danny McAteer/meta-agent#readme"
-Issues = "https://github.com/Danny McAteer/meta-agent/issues"
-Source = "https://github.com/Danny McAteer/meta-agent"
 
 [project.scripts]
 meta-agent = "meta_agent.cli.main:cli"
@@ -52,53 +25,24 @@ meta-agent = "meta_agent.cli.main:cli"
 [tool.hatch.version]
 path = "src/meta_agent/__about__.py"
 
+# ➜ A *system* env that re-uses the already-installed interpreter
+[tool.hatch.envs.default]
+python = "sys"            # ← critical: don’t create a new venv
+dependencies = []         # rely on the setup script’s pip install
+
+# ➜ Testing env piggy-backs on the same interpreter
 [tool.hatch.envs.test]
+python = "sys"
 dependencies = [
-  "pytest",
-  "pytest-cov", # Added for coverage
-  "pytest-asyncio", # Added for async tests
-  "pytest-mock", # Added for mocker fixture
+  "pytest-cov",
+  "pytest-mock",
 ]
 [tool.hatch.envs.test.scripts]
-_test_impl = "pytest tests/ {args}"
-test = "_test_impl tests/"
-lint = "pytest --flake8 {args}"
-cov = "pytest --cov=src/meta_agent --cov-branch --cov-report=term-missing {args}"
+run = "pytest {args:tests}"
 
+# Static type env – mypy is preinstalled in the image :contentReference[oaicite:2]{index=2}
 [tool.hatch.envs.types]
-extra-dependencies = [
-  "mypy>=1.0.0",
-]
+python = "sys"
+extra-dependencies = []
 [tool.hatch.envs.types.scripts]
 check = "mypy --install-types --non-interactive {args:src/meta_agent tests}"
-
-[tool.coverage.run]
-source_pkgs = ["meta_agent", "tests"]
-branch = true
-parallel = true
-omit = [
-  "src/meta_agent/__about__.py",
-]
-
-[tool.coverage.paths]
-meta_agent = ["src/meta_agent", "*/meta-agent/src/meta_agent"]
-tests = ["tests", "*/meta-agent/tests"]
-
-[tool.coverage.report]
-exclude_lines = [
-  "no cov",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-]
-
-[tool.pytest.ini_options]
-addopts = ""  # no default addopts, use pytest.ini or args
-markers = [
-    "anyio: mark a test function as asynchronous.",
-    "asyncio: mark a test function as asynchronous (for pytest-asyncio).",
-]
-
-[tool.hatch.scripts]
-test = { env = "test", run = "pytest {args:tests}" }
-[tool.hatch.build.targets.wheel]
-packages = ["src/meta_agent"]
