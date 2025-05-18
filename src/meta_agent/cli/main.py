@@ -90,7 +90,14 @@ async def generate(spec_file: Path | None, spec_text: str | None):
             # TODO: Configure these properly, maybe via CLI options or config files
             planning_engine = PlanningEngine()
             sub_agent_manager = SubAgentManager()
-            orchestrator = MetaAgentOrchestrator(planning_engine, sub_agent_manager)
+            tool_registry = ToolRegistry()
+            tool_designer_agent = ToolDesignerAgent()
+            orchestrator = MetaAgentOrchestrator(
+                planning_engine=planning_engine,
+                sub_agent_manager=sub_agent_manager,
+                tool_registry=tool_registry,
+                tool_designer_agent=tool_designer_agent,
+            )
 
             # Run the orchestration
             click.echo("\nStarting agent generation orchestration...")
