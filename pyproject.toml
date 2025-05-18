@@ -29,32 +29,6 @@ test = [
 [project.scripts]
 meta-agent = "meta_agent.cli.main:cli"
 
-[tool.hatch.version]
-path = "src/meta_agent/__about__.py"
-
-# ➜ A *system* env that re-uses the already-installed interpreter
-[tool.hatch.envs.default]
-python = "sys"            # ← critical: don’t create a new venv
-dependencies = []         # rely on the setup script’s pip install
-
-# ➜ Testing env piggy-backs on the same interpreter
-[tool.hatch.envs.test]
-python = "sys"
-dependencies = [
-  "pytest-cov",
-  "pytest-mock",
-]
-[tool.hatch.envs.test.scripts]
-run = "pytest {args:tests}"
-cov = "pytest --cov=src/meta_agent --cov-branch {args:tests}"
-
-# Static type env – mypy is preinstalled in the image :contentReference[oaicite:2]{index=2}
-[tool.hatch.envs.types]
-python = "sys"
-extra-dependencies = []
-[tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/meta_agent tests}"
-
 [tool.coverage.run]
 source_pkgs = ["meta_agent", "tests"]
 branch = true
