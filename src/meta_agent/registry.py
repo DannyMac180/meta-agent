@@ -64,7 +64,7 @@ class ToolRegistry:
             with open(tool_code_path, "w", encoding="utf-8") as f:
                 f.write(tool.code)
             # Construct module path relative to tools_dir
-            module_import_path = f"{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}"
+            module_import_path = f"{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}.tool"
             metadata = {
                 "name": tool.name,
                 "original_name": tool.name,

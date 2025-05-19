@@ -26,18 +26,19 @@ class MetaAgentOrchestrator:
     using specialized sub-agents.
     """
 
-    def __init__(self, 
-                 planning_engine: PlanningEngine, 
+    def __init__(self,
+                 planning_engine: PlanningEngine,
                  sub_agent_manager: SubAgentManager,
-                 tool_registry: ToolRegistry,
-                 tool_designer_agent: ToolDesignerAgent
+                 tool_registry: Optional[ToolRegistry] = None,
+                 tool_designer_agent: Optional[ToolDesignerAgent] = None
                  ):
         """Initializes the Orchestrator with necessary components."""
         # self.agent = agent # Removed main agent dependency
         self.planning_engine = planning_engine
         self.sub_agent_manager = sub_agent_manager
-        self.tool_registry = tool_registry
-        self.tool_designer_agent = tool_designer_agent
+        # Allow constructing with defaults for easier testing
+        self.tool_registry = tool_registry or ToolRegistry()
+        self.tool_designer_agent = tool_designer_agent or ToolDesignerAgent()
         self.spec_fingerprint_cache: Dict[str, str] = {} # Added cache
         # Metrics Counters
         self.tool_cached_hit_total = 0
@@ -118,42 +119,45 @@ class MetaAgentOrchestrator:
         
         logger.info(f"Cache miss for fingerprint '{fingerprint}'. Proceeding with design.", extra={**log_extra_base, "event": "design_cache_miss", "fingerprint": fingerprint})
 
-        # 2. Design the tool using SubAgentManager (Cache Miss)
+        # 2. Design the tool (cache miss path)
         try:
             start_time_design = time.monotonic()
-            # Delegate to SubAgentManager.create_tool instead of direct calls
-            module_path = await self.sub_agent_manager.create_tool(
-                spec=tool_spec, 
-                version=version,
-                tool_registry=self.tool_registry,
-                tool_designer_agent=self.tool_designer_agent
-            )
+            generated_tool = await self.tool_designer_agent.design_tool(tool_spec)
+
+            if not generated_tool:
+                design_duration_ms = (time.monotonic() - start_time_design) * 1000
+                duration_ms = (time.monotonic() - start_time_full) * 1000
+                self.tool_generation_failed_total += 1
+                logger.error(
+                    "Tool design or registration failed.",
+                    extra={**log_extra_base, "event": "design_error", "error": "designer_returned_none", "design_duration_ms": design_duration_ms, "duration_ms": duration_ms, "success": False}
+                )
+                return None
+
+            module_path = self.tool_registry.register(generated_tool, version=version)
             design_duration_ms = (time.monotonic() - start_time_design) * 1000
             duration_ms = (time.monotonic() - start_time_full) * 1000
 
             if module_path:
-                # Tool creation succeeded
                 self.tool_generated_total += 1
-                # Store in cache upon successful registration
                 self.spec_fingerprint_cache[fingerprint] = module_path
                 logger.info(
-                    f"Tool designed and registered successfully at {module_path}. Stored in cache.", 
+                    f"Tool designed and registered successfully at {module_path}. Stored in cache.",
                     extra={**log_extra_base, "event": "design_success", "fingerprint": fingerprint, "module_path": module_path, "design_duration_ms": design_duration_ms, "duration_ms": duration_ms, "success": True}
                 )
                 return module_path
             else:
-                # Tool creation failed
                 self.tool_generation_failed_total += 1
                 logger.error(
-                    f"Tool design or registration failed.", 
-                    extra={**log_extra_base, "event": "design_error", "error": "creation_failed", "design_duration_ms": design_duration_ms, "duration_ms": duration_ms, "success": False}
+                    "Tool design or registration failed.",
+                    extra={**log_extra_base, "event": "design_error", "error": "registration_failed", "design_duration_ms": design_duration_ms, "duration_ms": duration_ms, "success": False}
                 )
                 return None
         except Exception as e:
             duration_ms = (time.monotonic() - start_time_full) * 1000
             self.tool_generation_failed_total += 1
             logger.error(
-                f"Exception during tool design or registration: {e}", 
+                f"Exception during tool design or registration: {e}",
                 exc_info=True,
                 extra={**log_extra_base, "event": "design_exception", "duration_ms": duration_ms, "success": False}
             )

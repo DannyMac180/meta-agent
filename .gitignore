@@ -27,3 +27,8 @@ node_modules/
 # Task files
 tasks.json
 tasks/
+
+# Python caches
+__pycache__/
+*.pyc
+

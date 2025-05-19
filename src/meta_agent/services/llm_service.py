@@ -146,7 +146,8 @@ class LLMService:
         }
         
         # Make the API call
-        async with aiohttp.ClientSession() as session:
+        session = aiohttp.ClientSession()
+        try:
             async with session.post(
                 self.api_base,
                 headers=headers,
@@ -157,9 +158,11 @@ class LLMService:
                     error_text = await response.text()
                     self.logger.error(f"API error: {response.status} - {error_text}")
                     raise ValueError(f"API returned error: {response.status} - {error_text}")
-                
+
                 result = await response.json()
                 return result
+        finally:
+            await session.close()
     
     def _extract_code_from_response(self, response: Dict[str, Any]) -> str:
         """
