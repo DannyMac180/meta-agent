@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-# Create a virtual environment and install dependencies
+# Create a virtual environment
 uv venv
-uv pip install -r uv.lock --extra test
 
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Install the package in development mode with test extras
+uv pip install -e ".[test]"
