@@ -1,0 +1,2 @@
+exclude = ["AGENTS.md"]
+force-exclude = true
