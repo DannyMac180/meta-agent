@@ -31,4 +31,4 @@ async def test_llm_service_live_api_call():
         pytest.fail(f"LLMService.generate_code failed with an unexpected exception: {e}")
 
 # To run this test specifically (ensure .env or OPENAI_API_KEY is set):
-# hatch run test tests/integration/test_llm_service_integration.py
+# uv pip install -r uv.lock --extra test && pytest tests/integration/test_llm_service_integration.py

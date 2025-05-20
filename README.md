@@ -2,6 +2,10 @@
 
 ## Overview
 
+Use **uv** for everything (`uv venv`, `uv pip install -r uv.lock`). We no longer use Hatch; hatchling only builds wheels.
+
+## Requirements
+
 Meta Agent is a Python application that automatically produces a fully-functional OpenAI Agents SDK agent (code + tests + guardrails) from a natural-language specification. It aims to eliminate hand-coding boilerplate, accelerate prototyping, and enforce best practices from day one.
 
 ## Problem Solved
