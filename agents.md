@@ -82,3 +82,10 @@ Codex does not have access to the network.
 ## Repo Rules
 Check the `.windsurfrules` file for more information on how to use this repo, especially when working
 with task-master tasks.
+
+## Task-master tasks overview
+This project uses a Node CLI called `task-master` to manage tasks. The tasks are stored in the `tasks/` directory and are parsed using a custom parser. The tasks were originally generated using the PRD.txt file in the root directory of the project. If I ask you to work on a task or a subtask, you should check the task file in the `tasks/` directory and ask for clarification if needed. 
+
+For example, if I ask you to work on task 11, you should check the `task_011.txt` file in the `tasks/` directory and ask for clarification if needed. And if I ask you to work on subtask 11.6, you should check the `task_011.txt` file in the `tasks/` directory and ask for clarification if needed. Subtask 11.6 will be found in the `task_011.txt` file in the `tasks/` directory as here:
+
+```## 6. Integrate Tool Designer with Main Agent Workflow [pending]
