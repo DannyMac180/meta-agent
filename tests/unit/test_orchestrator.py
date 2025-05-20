@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import AsyncMock, MagicMock, call, patch
 from pytest_mock import MockerFixture
 
 from agents import Agent
@@ -16,8 +16,18 @@ def mock_planning_engine():
     engine = MagicMock(spec=PlanningEngine)
     engine.analyze_tasks.return_value = {
         "task_requirements": [
-            {"task_id": "task_1", "tools": ["coder_tool"], "guardrails": [], "description": "task 1 desc"},
-            {"task_id": "task_2", "tools": ["tester_tool"], "guardrails": [], "description": "task 2 desc"},
+            {
+                "task_id": "task_1",
+                "tools": ["coder_tool"],
+                "guardrails": [],
+                "description": "task 1 desc",
+            },
+            {
+                "task_id": "task_2",
+                "tools": ["tester_tool"],
+                "guardrails": [],
+                "description": "task 2 desc",
+            },
         ],
         "execution_order": ["task_1", "task_2"],
         "dependencies": {},
@@ -29,15 +39,15 @@ def mock_planning_engine():
 def mock_sub_agent_manager(mocker: MockerFixture) -> MagicMock:
     """Provides a mocked SubAgentManager."""
     mock_manager = MagicMock(spec=SubAgentManager)
-    
-    mock_agent_instance = MagicMock(spec=Agent) 
-    mock_agent_instance.name = "MockedTestAgent_NoToolReq" # For logging
+
+    mock_agent_instance = MagicMock(spec=Agent)
+    mock_agent_instance.name = "MockedTestAgent_NoToolReq"  # For logging
     # Explicitly set run as an AsyncMock returning a string
-    mock_agent_instance.run = mocker.AsyncMock(return_value="mock result") 
-    
+    mock_agent_instance.run = mocker.AsyncMock(return_value="mock result")
+
     mock_manager.get_or_create_agent.return_value = mock_agent_instance
     # Store the agent instance on the manager mock if tests rely on this pattern
-    mock_manager.mock_agent_instance = mock_agent_instance 
+    mock_manager.mock_agent_instance = mock_agent_instance
     return mock_manager
 
 
@@ -45,8 +55,11 @@ def mock_sub_agent_manager(mocker: MockerFixture) -> MagicMock:
 def mock_tool_registry():
     """Fixture for a mocked ToolRegistry."""
     registry = MagicMock(spec=ToolRegistry)
-    registry.register = MagicMock(return_value="/path/to/mock_tool/v0.1.0") # Simulate successful registration
-    registry.get_tool_metadata = MagicMock(return_value=None) # Default to not found
+    registry.register = MagicMock(
+        return_value="/path/to/mock_tool/v0.1.0"
+    )  # Simulate successful registration
+    registry.get_tool_metadata = MagicMock(return_value=None)  # Default to not found
+    registry.find_by_fingerprint = MagicMock(return_value=None)
     return registry
 
 
@@ -55,23 +68,32 @@ def mock_tool_designer_agent():
     """Fixture for a mocked ToolDesignerAgent."""
     designer = MagicMock(spec=ToolDesignerAgent)
     # design_tool and refine_design are async, so use AsyncMock for their return values or the methods themselves
-    designer.design_tool = AsyncMock(return_value=None) # Default to design failure for safety
-    designer.refine_design = AsyncMock(return_value=None) # Default to refine failure
+    designer.design_tool = AsyncMock(
+        return_value=None
+    )  # Default to design failure for safety
+    designer.refine_design = AsyncMock(return_value=None)  # Default to refine failure
     return designer
 
 
 @pytest.fixture
-def orchestrator(mock_planning_engine, mock_sub_agent_manager, mock_tool_registry, mock_tool_designer_agent):
+def orchestrator(
+    mock_planning_engine,
+    mock_sub_agent_manager,
+    mock_tool_registry,
+    mock_tool_designer_agent,
+):
     """Fixture for MetaAgentOrchestrator with mocked dependencies."""
     return MetaAgentOrchestrator(
-        planning_engine=mock_planning_engine, 
-        sub_agent_manager=mock_sub_agent_manager, 
-        tool_registry=mock_tool_registry, 
-        tool_designer_agent=mock_tool_designer_agent
+        planning_engine=mock_planning_engine,
+        sub_agent_manager=mock_sub_agent_manager,
+        tool_registry=mock_tool_registry,
+        tool_designer_agent=mock_tool_designer_agent,
     )
 
 
-def test_orchestrator_initialization(orchestrator, mock_planning_engine, mock_sub_agent_manager):
+def test_orchestrator_initialization(
+    orchestrator, mock_planning_engine, mock_sub_agent_manager
+):
     """Test that the orchestrator initializes correctly with its components."""
     assert orchestrator.planning_engine is mock_planning_engine
     assert orchestrator.sub_agent_manager is mock_sub_agent_manager
@@ -89,12 +111,17 @@ def test_decompose_spec_stub(orchestrator):
 
 
 @pytest.mark.asyncio
-async def test_run_orchestration_flow(orchestrator, mock_planning_engine, mock_sub_agent_manager):
+async def test_run_orchestration_flow(
+    orchestrator, mock_planning_engine, mock_sub_agent_manager
+):
     """Test the basic orchestration flow using mocks."""
     dummy_spec = {"name": "Test Spec"}
 
     decomposed_tasks_output = {
-        "subtasks": [{"id": "task_1", "description": "..."}, {"id": "task_2", "description": "..."}]
+        "subtasks": [
+            {"id": "task_1", "description": "..."},
+            {"id": "task_2", "description": "..."},
+        ]
     }
     orchestrator.decompose_spec = MagicMock(return_value=decomposed_tasks_output)
     plan = mock_planning_engine.analyze_tasks.return_value
@@ -104,20 +131,27 @@ async def test_run_orchestration_flow(orchestrator, mock_planning_engine, mock_s
     orchestrator.decompose_spec.assert_called_once_with(dummy_spec)
     mock_planning_engine.analyze_tasks.assert_called_once_with(decomposed_tasks_output)
 
-    assert mock_sub_agent_manager.get_or_create_agent.call_count == len(plan["execution_order"])
+    assert mock_sub_agent_manager.get_or_create_agent.call_count == len(
+        plan["execution_order"]
+    )
     manager_expected_calls = [call(req) for req in plan["task_requirements"]]
-    mock_sub_agent_manager.get_or_create_agent.assert_has_calls(manager_expected_calls, any_order=True)
+    mock_sub_agent_manager.get_or_create_agent.assert_has_calls(
+        manager_expected_calls, any_order=True
+    )
 
     mock_agent_instance = mock_sub_agent_manager.mock_agent_instance
     assert mock_agent_instance.run.call_count == len(plan["execution_order"])
 
     # Extract the 'specification' from each run call's kwargs
-    actual_specs = [c.kwargs.get("specification") for c in mock_agent_instance.run.call_args_list]
+    actual_specs = [
+        c.kwargs.get("specification") for c in mock_agent_instance.run.call_args_list
+    ]
     assert len(actual_specs) == len(plan["execution_order"])
     actual_task_ids_in_order = [spec.get("task_id") for spec in actual_specs]
     expected_task_ids_in_order = plan["execution_order"]
-    assert actual_task_ids_in_order == expected_task_ids_in_order, \
-        f"Expected agent.run calls for task IDs {expected_task_ids_in_order}, but got {actual_task_ids_in_order}"
+    assert (
+        actual_task_ids_in_order == expected_task_ids_in_order
+    ), f"Expected agent.run calls for task IDs {expected_task_ids_in_order}, but got {actual_task_ids_in_order}"
 
     # Results should be the raw task_result returned by each agent
     assert isinstance(results, dict)
@@ -131,7 +165,9 @@ async def test_run_orchestration_flow(orchestrator, mock_planning_engine, mock_s
 
 
 @pytest.mark.asyncio
-async def test_run_orchestration_agent_creation_fails(orchestrator, mock_planning_engine, mock_sub_agent_manager):
+async def test_run_orchestration_agent_creation_fails(
+    orchestrator, mock_planning_engine, mock_sub_agent_manager
+):
     """Test the flow when sub_agent_manager fails to return an agent."""
     dummy_spec = {"name": "Test Spec Fail"}
 
@@ -139,7 +175,9 @@ async def test_run_orchestration_agent_creation_fails(orchestrator, mock_plannin
     orchestrator.decompose_spec = MagicMock(return_value=decomposed_tasks_output)
 
     plan = {
-        "task_requirements": [{"task_id": "task_1", "tools": ["some_tool"], "description": "..."}],
+        "task_requirements": [
+            {"task_id": "task_1", "tools": ["some_tool"], "description": "..."}
+        ],
         "execution_order": ["task_1"],
         "dependencies": {},
     }
@@ -153,7 +191,9 @@ async def test_run_orchestration_agent_creation_fails(orchestrator, mock_plannin
 
     orchestrator.decompose_spec.assert_called_once_with(dummy_spec)
     mock_planning_engine.analyze_tasks.assert_called_once_with(decomposed_tasks_output)
-    mock_sub_agent_manager.get_or_create_agent.assert_called_once_with(plan["task_requirements"][0])
+    mock_sub_agent_manager.get_or_create_agent.assert_called_once_with(
+        plan["task_requirements"][0]
+    )
 
     assert original_mock_agent_ref.run.call_count == 0
 
@@ -163,7 +203,8 @@ async def test_run_orchestration_agent_creation_fails(orchestrator, mock_plannin
     assert "Sub-agent creation/retrieval failed" in results["task_1"]["error"]
 
 
-# --- Tests for Tool Design and Refinement --- 
+# --- Tests for Tool Design and Refinement ---
+
 
 @pytest.fixture
 def sample_tool_spec():
@@ -171,39 +212,59 @@ def sample_tool_spec():
         "name": "SampleTool",
         "description": "A sample tool for testing.",
         "specification": {
-            "input_schema": {"type": "object", "properties": {"data": {"type": "string"}}},
-            "output_schema": {"type": "string"}
-        }
+            "input_schema": {
+                "type": "object",
+                "properties": {"data": {"type": "string"}},
+            },
+            "output_schema": {"type": "string"},
+        },
     }
 
+
 @pytest.mark.asyncio
-async def test_design_tool_cache_hit(orchestrator, sample_tool_spec, mock_tool_designer_agent):
+async def test_design_tool_cache_hit(
+    orchestrator, sample_tool_spec, mock_tool_designer_agent
+):
     """Test cache hit scenario for design_and_register_tool."""
     fingerprint = "test_fingerprint_cache_hit"
     cached_path = "/cached/path/to/tool/v0.1.0"
     orchestrator.spec_fingerprint_cache[fingerprint] = cached_path
-    
-    with patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint) as mock_fingerprint_calc:
+
+    with patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    ) as mock_fingerprint_calc:
         module_path = await orchestrator.design_and_register_tool(sample_tool_spec)
-    
+
     assert module_path == cached_path
     mock_fingerprint_calc.assert_called_once_with(sample_tool_spec)
-    mock_tool_designer_agent.design_tool.assert_not_called() # Should not design if cache hit
+    mock_tool_designer_agent.design_tool.assert_not_called()  # Should not design if cache hit
     assert orchestrator.tool_cached_hit_total == 1
 
+
 @pytest.mark.asyncio
-async def test_design_tool_cache_miss_success(orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry):
+async def test_design_tool_cache_miss_success(
+    orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry
+):
     """Test cache miss followed by successful design and registration."""
     fingerprint = "test_fingerprint_cache_miss"
-    generated_tool = GeneratedTool(name="SampleTool", description="desc", code="code", specification=sample_tool_spec['specification'])
+    generated_tool = GeneratedTool(
+        name="SampleTool",
+        description="desc",
+        code="code",
+        specification=sample_tool_spec["specification"],
+    )
     mock_tool_designer_agent.design_tool.return_value = generated_tool
     expected_registered_path = "/path/to/SampleTool/v0.1.0"
     mock_tool_registry.register.return_value = expected_registered_path
-    
-    orchestrator.spec_fingerprint_cache = {} # Ensure cache is empty
 
-    with patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint) as mock_fingerprint_calc:
-        module_path = await orchestrator.design_and_register_tool(sample_tool_spec, version="0.1.0")
+    orchestrator.spec_fingerprint_cache = {}  # Ensure cache is empty
+
+    with patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    ) as mock_fingerprint_calc:
+        module_path = await orchestrator.design_and_register_tool(
+            sample_tool_spec, version="0.1.0"
+        )
 
     assert module_path == expected_registered_path
     mock_fingerprint_calc.assert_called_once_with(sample_tool_spec)
@@ -212,50 +273,71 @@ async def test_design_tool_cache_miss_success(orchestrator, sample_tool_spec, mo
     assert orchestrator.spec_fingerprint_cache[fingerprint] == expected_registered_path
     assert orchestrator.tool_generated_total == 1
 
+
 @pytest.mark.asyncio
-async def test_design_tool_fingerprint_failure(orchestrator, sample_tool_spec, mock_tool_designer_agent):
+async def test_design_tool_fingerprint_failure(
+    orchestrator, sample_tool_spec, mock_tool_designer_agent
+):
     """Test scenario where fingerprint calculation fails."""
-    with patch.object(orchestrator, '_calculate_spec_fingerprint', return_value="") as mock_fingerprint_calc:
+    with patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=""
+    ) as mock_fingerprint_calc:
         module_path = await orchestrator.design_and_register_tool(sample_tool_spec)
-    
+
     assert module_path is None
     mock_fingerprint_calc.assert_called_once_with(sample_tool_spec)
     mock_tool_designer_agent.design_tool.assert_not_called()
     assert orchestrator.tool_generation_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_design_tool_designer_fails(orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry):
+async def test_design_tool_designer_fails(
+    orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry
+):
     """Test scenario where the tool designer agent fails to produce a tool."""
     fingerprint = "test_fingerprint_designer_fails"
-    mock_tool_designer_agent.design_tool.return_value = None # Simulate design failure
+    mock_tool_designer_agent.design_tool.return_value = None  # Simulate design failure
     orchestrator.spec_fingerprint_cache = {}
 
-    with patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint):
+    with patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    ):
         module_path = await orchestrator.design_and_register_tool(sample_tool_spec)
-    
+
     assert module_path is None
     mock_tool_designer_agent.design_tool.assert_called_once_with(sample_tool_spec)
     mock_tool_registry.register.assert_not_called()
     assert fingerprint not in orchestrator.spec_fingerprint_cache
     assert orchestrator.tool_generation_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_design_tool_registry_fails(orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry):
+async def test_design_tool_registry_fails(
+    orchestrator, sample_tool_spec, mock_tool_designer_agent, mock_tool_registry
+):
     """Test scenario where tool registration fails."""
     fingerprint = "test_fingerprint_registry_fails"
-    generated_tool = GeneratedTool(name="SampleTool", description="desc", code="code", specification=sample_tool_spec['specification'])
+    generated_tool = GeneratedTool(
+        name="SampleTool",
+        description="desc",
+        code="code",
+        specification=sample_tool_spec["specification"],
+    )
     mock_tool_designer_agent.design_tool.return_value = generated_tool
-    mock_tool_registry.register.return_value = None # Simulate registration failure
+    mock_tool_registry.register.return_value = None  # Simulate registration failure
     orchestrator.spec_fingerprint_cache = {}
 
-    with patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint):
+    with patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    ):
         module_path = await orchestrator.design_and_register_tool(sample_tool_spec)
-    
+
     assert module_path is None
     mock_tool_designer_agent.design_tool.assert_called_once_with(sample_tool_spec)
     mock_tool_registry.register.assert_called_once_with(generated_tool, version="0.1.0")
     assert fingerprint not in orchestrator.spec_fingerprint_cache
     assert orchestrator.tool_generation_failed_total == 1
+
 
 @pytest.fixture
 def original_tool_metadata_fixture(sample_tool_spec):
@@ -263,152 +345,245 @@ def original_tool_metadata_fixture(sample_tool_spec):
         "name": sample_tool_spec["name"],
         "version": "0.1.0",
         "description": sample_tool_spec["description"],
-        "specification": sample_tool_spec["specification"], # Crucial: nested spec
-        "module_path": "/path/to/original/tool/v0.1.0"
+        "specification": sample_tool_spec["specification"],  # Crucial: nested spec
+        "module_path": "/path/to/original/tool/v0.1.0",
     }
 
+
 @pytest.mark.asyncio
-async def test_refine_tool_success_minor_bump(orchestrator, mock_tool_registry, mock_tool_designer_agent, sample_tool_spec, original_tool_metadata_fixture):
+async def test_refine_tool_success_minor_bump(
+    orchestrator,
+    mock_tool_registry,
+    mock_tool_designer_agent,
+    sample_tool_spec,
+    original_tool_metadata_fixture,
+):
     """Test successful tool refinement with a minor version bump (no schema change)."""
     tool_name = sample_tool_spec["name"]
     original_version = "0.1.0"
     feedback = "Make it friendlier"
 
     mock_tool_registry.get_tool_metadata.return_value = original_tool_metadata_fixture
-    
+
     # Refined tool artefact - assume spec (and thus IO schema) is the same for minor bump
     refined_tool_artefact = GeneratedTool(
         name=tool_name,
-        description="A friendlier sample tool.", 
-        code="new friendly code", 
-        specification=sample_tool_spec['specification']
+        description="A friendlier sample tool.",
+        code="new friendly code",
+        specification=sample_tool_spec["specification"],
     )
     mock_tool_designer_agent.refine_design.return_value = refined_tool_artefact
     expected_new_version = "0.2.0"
-    mock_tool_registry.register.return_value = f"/path/to/{tool_name}/{expected_new_version}"
+    mock_tool_registry.register.return_value = (
+        f"/path/to/{tool_name}/{expected_new_version}"
+    )
 
     module_path = await orchestrator.refine_tool(tool_name, original_version, feedback)
 
     assert module_path == f"/path/to/{tool_name}/{expected_new_version}"
-    mock_tool_registry.get_tool_metadata.assert_called_once_with(tool_name, original_version)
+    mock_tool_registry.get_tool_metadata.assert_called_once_with(
+        tool_name, original_version
+    )
     # design_input_spec passed to refine_design should contain the original tool's name, description, and spec
     expected_design_input_spec = {
         "name": tool_name,
         "description": original_tool_metadata_fixture["description"],
-        "specification": original_tool_metadata_fixture["specification"]
+        "specification": original_tool_metadata_fixture["specification"],
     }
-    mock_tool_designer_agent.refine_design.assert_called_once_with(expected_design_input_spec, feedback)
-    mock_tool_registry.register.assert_called_once_with(refined_tool_artefact, version=expected_new_version)
+    mock_tool_designer_agent.refine_design.assert_called_once_with(
+        expected_design_input_spec, feedback
+    )
+    mock_tool_registry.register.assert_called_once_with(
+        refined_tool_artefact, version=expected_new_version
+    )
     assert orchestrator.tool_refined_total == 1
 
+
 @pytest.mark.asyncio
-async def test_refine_tool_success_major_bump(orchestrator, mock_tool_registry, mock_tool_designer_agent, sample_tool_spec, original_tool_metadata_fixture):
+async def test_refine_tool_success_major_bump(
+    orchestrator,
+    mock_tool_registry,
+    mock_tool_designer_agent,
+    sample_tool_spec,
+    original_tool_metadata_fixture,
+):
     """Test successful tool refinement with a major version bump (IO schema change)."""
     tool_name = sample_tool_spec["name"]
     original_version = "0.1.0"
     feedback = "Change input schema"
 
     mock_tool_registry.get_tool_metadata.return_value = original_tool_metadata_fixture
-    
+
     # Refined tool artefact with a different IO schema
     refined_spec_changed_io = {
-        "input_schema": {"type": "object", "properties": {"new_data": {"type": "integer"}}},
-        "output_schema": sample_tool_spec['specification']['output_schema'] # output same for simplicity here
+        "input_schema": {
+            "type": "object",
+            "properties": {"new_data": {"type": "integer"}},
+        },
+        "output_schema": sample_tool_spec["specification"][
+            "output_schema"
+        ],  # output same for simplicity here
     }
     refined_tool_artefact = GeneratedTool(
         name=tool_name,
-        description="A tool with new input.", 
-        code="new code with different input", 
-        specification=refined_spec_changed_io
+        description="A tool with new input.",
+        code="new code with different input",
+        specification=refined_spec_changed_io,
     )
     mock_tool_designer_agent.refine_design.return_value = refined_tool_artefact
-    expected_new_version = "1.0.0" # From 0.1.0 with schema change
-    mock_tool_registry.register.return_value = f"/path/to/{tool_name}/{expected_new_version}"
+    expected_new_version = "1.0.0"  # From 0.1.0 with schema change
+    mock_tool_registry.register.return_value = (
+        f"/path/to/{tool_name}/{expected_new_version}"
+    )
 
     module_path = await orchestrator.refine_tool(tool_name, original_version, feedback)
 
     assert module_path == f"/path/to/{tool_name}/{expected_new_version}"
     mock_tool_designer_agent.refine_design.assert_called_once()
-    mock_tool_registry.register.assert_called_once_with(refined_tool_artefact, version=expected_new_version)
+    mock_tool_registry.register.assert_called_once_with(
+        refined_tool_artefact, version=expected_new_version
+    )
     assert orchestrator.tool_refined_total == 1
 
-@pytest.mark.asyncio
-async def test_refine_tool_metadata_not_found(orchestrator, mock_tool_registry, sample_tool_spec):
-    """Test refine_tool when original tool metadata is not found."""
-    mock_tool_registry.get_tool_metadata.return_value = None # Simulate not found
 
-    module_path = await orchestrator.refine_tool(sample_tool_spec["name"], "0.1.0", "feedback")
+@pytest.mark.asyncio
+async def test_refine_tool_metadata_not_found(
+    orchestrator, mock_tool_registry, sample_tool_spec
+):
+    """Test refine_tool when original tool metadata is not found."""
+    mock_tool_registry.get_tool_metadata.return_value = None  # Simulate not found
+
+    module_path = await orchestrator.refine_tool(
+        sample_tool_spec["name"], "0.1.0", "feedback"
+    )
 
     assert module_path is None
-    mock_tool_registry.get_tool_metadata.assert_called_once_with(sample_tool_spec["name"], "0.1.0")
+    mock_tool_registry.get_tool_metadata.assert_called_once_with(
+        sample_tool_spec["name"], "0.1.0"
+    )
     assert orchestrator.tool_refinement_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_refine_tool_spec_not_in_metadata(orchestrator, mock_tool_registry, sample_tool_spec, original_tool_metadata_fixture):
+async def test_refine_tool_spec_not_in_metadata(
+    orchestrator, mock_tool_registry, sample_tool_spec, original_tool_metadata_fixture
+):
     """Test refine_tool when original specification is not in metadata."""
     metadata_no_spec = original_tool_metadata_fixture.copy()
-    del metadata_no_spec['specification']
+    del metadata_no_spec["specification"]
     mock_tool_registry.get_tool_metadata.return_value = metadata_no_spec
 
-    module_path = await orchestrator.refine_tool(sample_tool_spec["name"], "0.1.0", "feedback")
+    module_path = await orchestrator.refine_tool(
+        sample_tool_spec["name"], "0.1.0", "feedback"
+    )
 
     assert module_path is None
     assert orchestrator.tool_refinement_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_refine_tool_designer_fails(orchestrator, mock_tool_registry, mock_tool_designer_agent, sample_tool_spec, original_tool_metadata_fixture):
+async def test_refine_tool_designer_fails(
+    orchestrator,
+    mock_tool_registry,
+    mock_tool_designer_agent,
+    sample_tool_spec,
+    original_tool_metadata_fixture,
+):
     """Test refine_tool when the designer agent fails to refine."""
     mock_tool_registry.get_tool_metadata.return_value = original_tool_metadata_fixture
-    mock_tool_designer_agent.refine_design.return_value = None # Simulate refinement failure
+    mock_tool_designer_agent.refine_design.return_value = (
+        None  # Simulate refinement failure
+    )
 
-    module_path = await orchestrator.refine_tool(sample_tool_spec["name"], "0.1.0", "feedback")
+    module_path = await orchestrator.refine_tool(
+        sample_tool_spec["name"], "0.1.0", "feedback"
+    )
 
     assert module_path is None
     mock_tool_designer_agent.refine_design.assert_called_once()
     mock_tool_registry.register.assert_not_called()
     assert orchestrator.tool_refinement_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_refine_tool_registry_fails(orchestrator, mock_tool_registry, mock_tool_designer_agent, sample_tool_spec, original_tool_metadata_fixture):
+async def test_refine_tool_registry_fails(
+    orchestrator,
+    mock_tool_registry,
+    mock_tool_designer_agent,
+    sample_tool_spec,
+    original_tool_metadata_fixture,
+):
     """Test refine_tool when registration of the refined tool fails."""
     mock_tool_registry.get_tool_metadata.return_value = original_tool_metadata_fixture
-    refined_tool_artefact = GeneratedTool(name="RefinedSample", description="d", code="c", specification=sample_tool_spec['specification'])
+    refined_tool_artefact = GeneratedTool(
+        name="RefinedSample",
+        description="d",
+        code="c",
+        specification=sample_tool_spec["specification"],
+    )
     mock_tool_designer_agent.refine_design.return_value = refined_tool_artefact
-    mock_tool_registry.register.return_value = None # Simulate registration failure
+    mock_tool_registry.register.return_value = None  # Simulate registration failure
 
-    module_path = await orchestrator.refine_tool(sample_tool_spec["name"], "0.1.0", "feedback")
+    module_path = await orchestrator.refine_tool(
+        sample_tool_spec["name"], "0.1.0", "feedback"
+    )
 
     assert module_path is None
     mock_tool_registry.register.assert_called_once()
     assert orchestrator.tool_refinement_failed_total == 1
 
+
 @pytest.mark.asyncio
-async def test_execute_plan_with_required_tool_success(orchestrator, mock_planning_engine, mock_sub_agent_manager, mock_tool_designer_agent, mock_tool_registry, sample_tool_spec):
+async def test_execute_plan_with_required_tool_success(
+    orchestrator,
+    mock_planning_engine,
+    mock_sub_agent_manager,
+    mock_tool_designer_agent,
+    mock_tool_registry,
+    sample_tool_spec,
+):
     """Test _execute_plan when a task requires a tool, and it's successfully designed."""
     task_id_with_tool = "task_requires_tool"
     plan = {
         "task_requirements": [
-            {"task_id": task_id_with_tool, "description": "Task needing a tool", "requires_tool": sample_tool_spec}
+            {
+                "task_id": task_id_with_tool,
+                "description": "Task needing a tool",
+                "requires_tool": sample_tool_spec,
+            }
         ],
         "execution_order": [task_id_with_tool],
         "dependencies": {},
     }
-    mock_planning_engine.analyze_tasks.return_value = plan # Used by orchestrator.run indirectly
-    
+    mock_planning_engine.analyze_tasks.return_value = (
+        plan  # Used by orchestrator.run indirectly
+    )
+
     # Setup for successful tool design
     fingerprint = "fp_for_required_tool"
-    generated_tool = GeneratedTool(name=sample_tool_spec['name'], description="d", code="c", specification=sample_tool_spec['specification'])
+    generated_tool = GeneratedTool(
+        name=sample_tool_spec["name"],
+        description="d",
+        code="c",
+        specification=sample_tool_spec["specification"],
+    )
     mock_tool_designer_agent.design_tool.return_value = generated_tool
     registered_path = f"/path/to/{sample_tool_spec['name']}/v0.1.0"
     mock_tool_registry.register.return_value = registered_path
-    
+
     # Mock orchestrator.decompose_spec to avoid its stub interfering and to control input to analyze_tasks
-    orchestrator.decompose_spec = MagicMock(return_value={"subtasks": [{"id": task_id_with_tool, "description": "..."}]})
+    orchestrator.decompose_spec = MagicMock(
+        return_value={"subtasks": [{"id": task_id_with_tool, "description": "..."}]}
+    )
     # Ensure _calculate_spec_fingerprint is properly mocked for design_and_register_tool call
-    patcher = patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint)
+    patcher = patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    )
     mock_fingerprint_calc = patcher.start()
 
-    results = await orchestrator.run({"name": "Test Spec with Tool Requirement"}) # Call top-level run
+    results = await orchestrator.run(
+        {"name": "Test Spec with Tool Requirement"}
+    )  # Call top-level run
     patcher.stop()
 
     # Assertions for tool design part
@@ -418,30 +593,49 @@ async def test_execute_plan_with_required_tool_success(orchestrator, mock_planni
     assert orchestrator.tool_generated_total == 1
 
     # Assertions for task execution part
-    mock_sub_agent_manager.get_or_create_agent.assert_called_once_with(plan["task_requirements"][0])
+    mock_sub_agent_manager.get_or_create_agent.assert_called_once_with(
+        plan["task_requirements"][0]
+    )
     mock_sub_agent_manager.mock_agent_instance.run.assert_called_once()
     assert task_id_with_tool in results
-    assert results[task_id_with_tool]["status"] != "failed" # Should not fail due to tool issue
+    assert (
+        results[task_id_with_tool]["status"] != "failed"
+    )  # Should not fail due to tool issue
+
 
 @pytest.mark.asyncio
-async def test_execute_plan_with_required_tool_design_fails(orchestrator, mock_planning_engine, mock_sub_agent_manager, mock_tool_designer_agent, sample_tool_spec):
+async def test_execute_plan_with_required_tool_design_fails(
+    orchestrator,
+    mock_planning_engine,
+    mock_sub_agent_manager,
+    mock_tool_designer_agent,
+    sample_tool_spec,
+):
     """Test _execute_plan when a task requires a tool, but its design fails."""
     task_id_with_tool = "task_requires_tool_fail"
     plan = {
         "task_requirements": [
-            {"task_id": task_id_with_tool, "description": "Task needing a tool that fails design", "requires_tool": sample_tool_spec}
+            {
+                "task_id": task_id_with_tool,
+                "description": "Task needing a tool that fails design",
+                "requires_tool": sample_tool_spec,
+            }
         ],
         "execution_order": [task_id_with_tool],
         "dependencies": {},
     }
     mock_planning_engine.analyze_tasks.return_value = plan
-    
+
     # Setup for tool design failure
     fingerprint = "fp_for_failed_tool"
-    mock_tool_designer_agent.design_tool.return_value = None # Simulate design failure
+    mock_tool_designer_agent.design_tool.return_value = None  # Simulate design failure
 
-    orchestrator.decompose_spec = MagicMock(return_value={"subtasks": [{"id": task_id_with_tool, "description": "..."}]})
-    patcher = patch.object(orchestrator, '_calculate_spec_fingerprint', return_value=fingerprint)
+    orchestrator.decompose_spec = MagicMock(
+        return_value={"subtasks": [{"id": task_id_with_tool, "description": "..."}]}
+    )
+    patcher = patch.object(
+        orchestrator, "_calculate_spec_fingerprint", return_value=fingerprint
+    )
     mock_fingerprint_calc = patcher.start()
 
     results = await orchestrator.run({"name": "Test Spec with Tool Design Failure"})
@@ -457,4 +651,7 @@ async def test_execute_plan_with_required_tool_design_fails(orchestrator, mock_p
     mock_sub_agent_manager.mock_agent_instance.run.assert_not_called()
     assert task_id_with_tool in results
     assert results[task_id_with_tool]["status"] == "failed"
-    assert f"Required tool '{sample_tool_spec['name']}' could not be designed or registered." in results[task_id_with_tool]["error"]
+    assert (
+        f"Required tool '{sample_tool_spec['name']}' could not be designed or registered."
+        in results[task_id_with_tool]["error"]
+    )
