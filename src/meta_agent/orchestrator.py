@@ -530,6 +530,11 @@ class MetaAgentOrchestrator:
                 logger.info(f"Executing task {task_id} using agent {sub_agent.name}...")
                 try:
                     sub_agent_output = await sub_agent.run(specification=task_req)
+                    if not isinstance(sub_agent_output, dict):
+                        sub_agent_output = {
+                            "output": sub_agent_output,
+                            "status": "completed",
+                        }
                     result_status = sub_agent_output.get("status", "unknown")
                     logger.info(
                         f"Task {task_id} completed by {sub_agent.name}. Result: {result_status}"

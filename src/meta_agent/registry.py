@@ -185,6 +185,14 @@ class ToolRegistry:
                 if spec and spec.loader:
                     spec.loader.exec_module(pkg)
 
+            # Ensure subpackage for this tool includes the new path
+            subpkg_name = f"{pkg_name}.{tool_name_sanitized}"
+            subpkg_path = str(self.tools_dir / tool_name_sanitized)
+            if subpkg_name in sys.modules:
+                subpkg = sys.modules[subpkg_name]
+                if hasattr(subpkg, "__path__") and subpkg_path not in subpkg.__path__:
+                    subpkg.__path__.append(subpkg_path)
+
             logger.info(f"[DIAGNOSTIC] Attempting to import: {module_full_path}")
             logger.info(f"[DIAGNOSTIC] Current sys.path: {sys.path}")
             tool_module = importlib.import_module(module_full_path)
