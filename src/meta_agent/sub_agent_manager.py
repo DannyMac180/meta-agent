@@ -79,6 +79,8 @@ class CoderAgent(Agent):
 
 class TesterAgent(Agent):
     """Agent specialized for testing tasks."""
+    __test__ = False  # Prevent pytest from collecting this as a test class
+
     def __init__(self):
         super().__init__(name="TesterAgent", tools=[])
 

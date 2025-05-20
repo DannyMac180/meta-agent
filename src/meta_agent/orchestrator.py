@@ -4,8 +4,7 @@ Integrates with OpenAI Agents SDK and provides interfaces for decomposing agent 
 """
 
 import logging
-from agents import Agent, Runner  # OpenAI Agents SDK
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import hashlib
 import json
 import time
@@ -104,7 +103,7 @@ class MetaAgentOrchestrator:
         tool_name = tool_spec.get("name", "Unnamed tool")
         log_extra_base = {"tool_name": tool_name, "version": version}
         logger.info(
-            f"Request received to design tool",
+            "Request received to design tool",
             extra={**log_extra_base, "event": "design_request"},
         )
 
@@ -113,7 +112,7 @@ class MetaAgentOrchestrator:
         if not fingerprint:
             duration_ms = (time.monotonic() - start_time_full) * 1000
             logger.error(
-                f"Could not calculate fingerprint. Skipping design.",
+                "Could not calculate fingerprint. Skipping design.",
                 extra={
                     **log_extra_base,
                     "event": "design_error",
@@ -139,8 +138,25 @@ class MetaAgentOrchestrator:
                     "success": True,
                 },
             )
-            # Optional: Verify the tool still exists in the registry? For now, assume cache is valid.
             return cached_module_path
+
+        # Check persistent manifest for cache
+        manifest_hit = self.tool_registry.find_by_fingerprint(tool_name, fingerprint)
+        if isinstance(manifest_hit, str) and manifest_hit:
+            duration_ms = (time.monotonic() - start_time_full) * 1000
+            self.tool_cached_hit_total += 1
+            self.spec_fingerprint_cache[fingerprint] = manifest_hit
+            logger.info(
+                f"Manifest cache hit for fingerprint '{fingerprint}'. Reusing registered tool: {manifest_hit}",
+                extra={
+                    **log_extra_base,
+                    "event": "design_cache_hit_manifest",
+                    "fingerprint": fingerprint,
+                    "duration_ms": duration_ms,
+                    "success": True,
+                },
+            )
+            return manifest_hit
 
         logger.info(
             f"Cache miss for fingerprint '{fingerprint}'. Proceeding with design.",
@@ -239,7 +255,7 @@ class MetaAgentOrchestrator:
             duration_ms = (time.monotonic() - start_time_full) * 1000
             self.tool_refinement_failed_total += 1
             logger.error(
-                f"Could not find metadata to refine.",
+                "Could not find metadata to refine.",
                 extra={
                     **log_extra_base,
                     "event": "refine_error",
@@ -257,7 +273,7 @@ class MetaAgentOrchestrator:
             duration_ms = (time.monotonic() - start_time_full) * 1000
             self.tool_refinement_failed_total += 1
             logger.error(
-                f"Original specification not found in metadata.",
+                "Original specification not found in metadata.",
                 extra={
                     **log_extra_base,
                     "event": "refine_error",
@@ -294,7 +310,7 @@ class MetaAgentOrchestrator:
                 duration_ms = (time.monotonic() - start_time_full) * 1000
                 self.tool_refinement_failed_total += 1
                 logger.error(
-                    f"Tool refinement failed.",
+                    "Tool refinement failed.",
                     extra={
                         **log_extra_base,
                         "event": "refine_error",
