@@ -82,3 +82,11 @@ Codex does not have access to the network.
 ## Repo Rules
 Check the `.windsurfrules` file for more information on how to use this repo, especially when working
 with task-master tasks.
+
+## Task management specific instructions
+This project is using task-master to manage tasks. The tasks are stored in the `tasks/` directory and
+are parsed using the `scripts/` directory. When I ask you to work on a task, check the task directory for the one to work on.
+
+For example, if I ask you to work on task 11, check the `tasks/task_011.txt` file for the task details.
+
+Subtask would be in the `tasks/task_011.txt` file like: ## 9. Implement Code Generation and Testing Capabilities [pending]
