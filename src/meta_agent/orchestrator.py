@@ -4,7 +4,9 @@ Integrates with OpenAI Agents SDK and provides interfaces for decomposing agent 
 """
 
 import logging
-from typing import Any, Dict, Optional
+import inspect
+from agents import Agent, Runner  # OpenAI Agents SDK
+from typing import Any, Dict, List, Optional
 import hashlib
 import json
 import time
@@ -170,7 +172,11 @@ class MetaAgentOrchestrator:
         # 2. Design the tool (cache miss path)
         try:
             start_time_design = time.monotonic()
-            generated_tool = await self.tool_designer_agent.design_tool(tool_spec)
+            design_call = self.tool_designer_agent.design_tool(tool_spec)
+            if inspect.isawaitable(design_call):
+                generated_tool = await design_call
+            else:
+                generated_tool = design_call
 
             if not generated_tool:
                 design_duration_ms = (time.monotonic() - start_time_design) * 1000
@@ -298,12 +304,13 @@ class MetaAgentOrchestrator:
         # 2. Call ToolDesignerAgent to refine the design
         try:
             start_time_refine = time.monotonic()
-            # Assumes tool_designer_agent.refine_design exists and is async
-            refined_tool_artefact: Optional[GeneratedTool] = (
-                await self.tool_designer_agent.refine_design(
-                    design_input_spec, feedback_notes
-                )
+            refine_call = self.tool_designer_agent.refine_design(
+                design_input_spec, feedback_notes
             )
+            if inspect.isawaitable(refine_call):
+                refined_tool_artefact = await refine_call
+            else:
+                refined_tool_artefact = refine_call
             refine_duration_ms = (time.monotonic() - start_time_refine) * 1000
 
             if not refined_tool_artefact:
