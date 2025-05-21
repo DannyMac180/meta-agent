@@ -1,20 +1,22 @@
 import importlib
 import json
 import logging
-import os
 import shutil
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from packaging.version import parse as parse_version
+from hashlib import sha256
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 GENERATED_TOOLS_BASE_DIR_NAME = "generated_tools"
 METADATA_FILE_NAME = "metadata.json"
 TOOL_CODE_FILE_NAME = "tool.py"
+MANIFEST_FILE_NAME = "registry.json"
 
 
 @dataclass
@@ -40,6 +42,25 @@ class ToolRegistry:
         self.tools_dir = self.base_dir / GENERATED_TOOLS_BASE_DIR_NAME
         self.tools_dir.mkdir(parents=True, exist_ok=True)
         (self.tools_dir / "__init__.py").touch(exist_ok=True)
+        self.manifest_path = self.tools_dir / MANIFEST_FILE_NAME
+        if not self.manifest_path.exists():
+            with open(self.manifest_path, "w", encoding="utf-8") as f:
+                json.dump({}, f)
+
+    def _load_manifest(self) -> Dict[str, Any]:
+        try:
+            with open(self.manifest_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (IOError, json.JSONDecodeError):
+            logger.warning("Failed to read registry manifest. Recreating.")
+            return {}
+
+    def _save_manifest(self, manifest: Dict[str, Any]) -> None:
+        try:
+            with open(self.manifest_path, "w", encoding="utf-8") as f:
+                json.dump(manifest, f, indent=2)
+        except IOError as e:
+            logger.error(f"Failed to write registry manifest: {e}")
 
     def _get_tool_version_dir(
         self, tool_name_sanitized: str, version_sanitized: str
@@ -49,10 +70,19 @@ class ToolRegistry:
     def _get_tool_package_dir(self, tool_name_sanitized: str) -> Path:
         return self.tools_dir / tool_name_sanitized
 
+    def find_by_fingerprint(self, tool_name: str, fingerprint: str) -> Optional[str]:
+        """Return module path if a version with the given fingerprint exists."""
+        tool_name_sanitized = tool_name.replace("-", "_").replace(" ", "_").lower()
+        manifest = self._load_manifest()
+        versions = manifest.get(tool_name_sanitized, {}).get("versions", {})
+        for version_data in versions.values():
+            if version_data.get("fingerprint") == fingerprint:
+                return version_data.get("module_path")
+        return None
+
     def register(self, tool: GeneratedTool, version: str = "0.1.0") -> Optional[str]:
         tool_name_sanitized = tool.name.replace("-", "_").replace(" ", "_").lower()
         version_sanitized = "v" + version.replace(".", "_")
-        tool_package_dir = self._get_tool_package_dir(tool_name_sanitized)
         tool_version_dir = self._get_tool_version_dir(
             tool_name_sanitized, version_sanitized
         )
@@ -75,6 +105,19 @@ class ToolRegistry:
                 f.write(tool.code)
             # Construct module path relative to tools_dir
             module_import_path = f"{GENERATED_TOOLS_BASE_DIR_NAME}.{tool_name_sanitized}.{version_sanitized}.tool"
+            # Compute fingerprint for caching using the same logic as the
+            # orchestrator. Include the name, description and full
+            # specification for stability across processes.
+            fingerprint_input = {
+                "name": tool.name,
+                "description": tool.description,
+                "specification": tool.specification,
+            }
+            fingerprint = sha256(
+                json.dumps(
+                    fingerprint_input, sort_keys=True, ensure_ascii=False
+                ).encode("utf-8")
+            ).hexdigest()[:16]
             metadata = {
                 "name": tool.name,
                 "original_name": tool.name,
@@ -88,6 +131,15 @@ class ToolRegistry:
             metadata_path = tool_version_dir / METADATA_FILE_NAME
             with open(metadata_path, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
+            # Update registry manifest
+            manifest = self._load_manifest()
+            entry = manifest.setdefault(tool_name_sanitized, {"versions": {}})
+            entry["versions"][version] = {
+                "module_path": module_import_path,
+                "fingerprint": fingerprint,
+                "created_at": datetime.utcnow().isoformat(),
+            }
+            self._save_manifest(manifest)
             logger.info(
                 f"Tool '{tool.name}' version '{version}' registered successfully at {tool_version_dir}"
             )
@@ -346,6 +398,14 @@ class ToolRegistry:
                     logger.info(
                         f"Unregistered tool '{tool_name}' version '{actual_version_str}'."
                     )
+                    manifest = self._load_manifest()
+                    if tool_name_sanitized in manifest:
+                        manifest[tool_name_sanitized]["versions"].pop(
+                            actual_version_str, None
+                        )
+                        if not manifest[tool_name_sanitized]["versions"]:
+                            manifest.pop(tool_name_sanitized, None)
+                        self._save_manifest(manifest)
                     remaining_items = [
                         item
                         for item in tool_package_dir.iterdir()
@@ -373,6 +433,10 @@ class ToolRegistry:
                 logger.info(
                     f"Unregistered all versions of tool '{tool_name}' by removing {tool_package_dir}."
                 )
+                manifest = self._load_manifest()
+                if tool_name_sanitized in manifest:
+                    manifest.pop(tool_name_sanitized, None)
+                    self._save_manifest(manifest)
                 return True
             except OSError as e:
                 logger.error(
