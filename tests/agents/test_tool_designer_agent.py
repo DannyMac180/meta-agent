@@ -169,5 +169,7 @@ def test_design_history_recorded():
     agent.design_tool(VALID_DICT_SPEC)
     history = agent.get_design_history()
     assert len(history) == 1
-    assert history[0]["spec"].name == VALID_DICT_SPEC["name"]
-    assert "steps" in history[0]["plan"]
+    record = history[0]
+    assert record.spec.name == VALID_DICT_SPEC["name"]
+    assert "steps" in record.plan
+    assert record.status == "generated"

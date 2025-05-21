@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Union, Dict, Any, Optional, List
+from dataclasses import dataclass
 
 # --- Jinja2 Import ---
 import jinja2
@@ -43,6 +44,15 @@ from meta_agent.generators.prompt_templates import PROMPT_TEMPLATES
 from meta_agent.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DesignRecord:
+    """Track a tool design session."""
+
+    spec: Any
+    plan: Dict[str, Any]
+    status: str = "created"
 
 
 class ToolDesignerAgent(Agent):  # Inherit from Agent
@@ -90,7 +100,7 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
         self.test_style = test_style
 
         # Basic state tracking for executed designs
-        self.design_history: List[Dict[str, Any]] = []
+        self.design_history: List[DesignRecord] = []
 
         # Determine template directory
         if template_dir is None:
@@ -123,7 +133,7 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             ],
         }
 
-    def get_design_history(self) -> List[Dict[str, Any]]:
+    def get_design_history(self) -> List[DesignRecord]:
         """Return the history of design plans executed by this agent."""
         return self.design_history
 
@@ -194,7 +204,9 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
 
             # 1.a. Create a simple design plan and record state
             plan = self._create_design_plan(parsed_spec)
-            self.design_history.append({"spec": parsed_spec, "plan": plan})
+            self.design_history.append(
+                DesignRecord(spec=parsed_spec, plan=plan, status="parsed")
+            )
 
             # 1.1. Map types to Python equivalents
             for param in parsed_spec.input_parameters:
@@ -223,6 +235,8 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
                 logger.info(
                     f"Successfully rendered template for tool: {parsed_spec.name}"
                 )
+                if self.design_history:
+                    self.design_history[-1].status = "generated"
                 return generated_code
             except Exception as e:
                 raise CodeGenerationError(f"Failed to render template: {e}")
@@ -277,7 +291,9 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             )
 
             plan = self._create_design_plan(parsed_spec)
-            self.design_history.append({"spec": parsed_spec, "plan": plan})
+            self.design_history.append(
+                DesignRecord(spec=parsed_spec, plan=plan, status="parsed")
+            )
 
             # 2. Generate code using LLM
             try:
@@ -288,6 +304,8 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
                 logger.info(
                     f"Successfully generated code with LLM for tool: {parsed_spec.name}"
                 )
+                if self.design_history:
+                    self.design_history[-1].status = "generated"
                 return generated_code
             except Exception as e:
                 logger.error(f"LLM code generation failed: {str(e)}", exc_info=True)
