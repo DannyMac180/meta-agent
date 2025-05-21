@@ -136,3 +136,18 @@ def test_design_tool_generation_error():
         with pytest.raises(CodeGenerationError) as excinfo:
             agent.design_tool(VALID_YAML_SPEC)
         assert "Failed to render template: Mocked rendering failure" in str(excinfo.value)
+
+@pytest.mark.asyncio
+def test_run_with_research(monkeypatch):
+    calls = []
+
+    class DummyResearch:
+        def research(self, name: str, purpose: str):
+            calls.append((name, purpose))
+            return ["info"]
+
+    agent = ToolDesignerAgent(research_manager=DummyResearch(), enable_research=True)
+    result = await agent.run(VALID_DICT_SPEC)
+    assert result['status'] == 'success'
+    assert calls == [(VALID_DICT_SPEC['name'], VALID_DICT_SPEC['purpose'])]
+
