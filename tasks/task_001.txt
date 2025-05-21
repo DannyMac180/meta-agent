@@ -42,7 +42,7 @@ Implementation steps:
 
 Testing approach:
 - Verify the project structure is correctly set up
- - Ensure package can be installed in development mode with `uv pip install -e .`
+- Ensure package can be installed in development mode with `pip install -e .`
 - Confirm Git repository is properly initialized
 
 ## 2. Implement SpecSchema Data Model [done]
