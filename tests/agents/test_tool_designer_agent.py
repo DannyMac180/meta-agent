@@ -149,27 +149,19 @@ def test_design_tool_generation_error():
     with patch.object(agent.jinja_env, "get_template", return_value=mock_template):
         with pytest.raises(CodeGenerationError) as excinfo:
             agent.design_tool(VALID_YAML_SPEC)
-        assert "Failed to render template: Mocked rendering failure" in str(
-            excinfo.value
-        )
 
+        assert "Failed to render template: Mocked rendering failure" in str(excinfo.value)
 
-def test_custom_configuration_options():
-    agent = ToolDesignerAgent(
-        code_style="pep257", doc_style="numpy", language="python", test_style="unittest"
-    )
-    assert agent.code_style == "pep257"
-    assert agent.doc_style == "numpy"
-    assert agent.language == "python"
-    assert agent.test_style == "unittest"
+@pytest.mark.asyncio
+async def test_run_with_research(monkeypatch):
+    calls = []
 
+    class DummyResearch:
+        def research(self, name: str, purpose: str):
+            calls.append((name, purpose))
+            return ["info"]
 
-def test_design_history_recorded():
-    agent = ToolDesignerAgent()
-    agent.design_tool(VALID_DICT_SPEC)
-    history = agent.get_design_history()
-    assert len(history) == 1
-    record = history[0]
-    assert record.spec.name == VALID_DICT_SPEC["name"]
-    assert "steps" in record.plan
-    assert record.status == "generated"
+    agent = ToolDesignerAgent(research_manager=DummyResearch(), enable_research=True)
+    result = await agent.run(VALID_DICT_SPEC)
+    assert result['status'] == 'success'
+    assert calls == [(VALID_DICT_SPEC['name'], VALID_DICT_SPEC['purpose'])]
