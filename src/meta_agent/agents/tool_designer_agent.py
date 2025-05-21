@@ -42,6 +42,7 @@ from meta_agent.generators.implementation_injector import ImplementationInjector
 from meta_agent.generators.fallback_manager import FallbackManager
 from meta_agent.generators.prompt_templates import PROMPT_TEMPLATES
 from meta_agent.services.llm_service import LLMService
+from meta_agent.research_manager import ToolResearchManager
 
 logger = logging.getLogger(__name__)
 
@@ -58,20 +59,16 @@ class DesignRecord:
 class ToolDesignerAgent(Agent):  # Inherit from Agent
     """Orchestrates the process of parsing a tool specification and generating code."""
 
-    def __init__(
-        self,
-        model_name: str = "o4-mini-high",
-        template_dir: Optional[str] = None,
-        template_name: str = "tool_template.py.j2",
-        llm_api_key: Optional[str] = None,
-        llm_model: str = "gpt-4",
-        examples_repository: Optional[Dict[str, Any]] = None,
-        *,
-        code_style: str = "pep8",
-        doc_style: str = "google",
-        language: str = "python",
-        test_style: str = "pytest",
-    ):
+    def __init__(self, 
+                 model_name: str = "o4-mini-high", 
+                 template_dir: Optional[str] = None,
+                 template_name: str = "tool_template.py.j2",
+                 llm_api_key: Optional[str] = None, 
+                 llm_model: str = "gpt-4", 
+                 examples_repository: Optional[Dict[str, Any]] = None,
+                 research_manager: Optional[ToolResearchManager] = None,
+                 enable_research: bool = False,
+                 ):
         """Initializes the Tool Designer Agent.
 
         Args:
@@ -92,6 +89,9 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
         self.llm_api_key = llm_api_key
         self.llm_model = llm_model
         self.examples_repository = examples_repository or {}
+        self.research_manager = None
+        if enable_research:
+            self.research_manager = research_manager or ToolResearchManager()
 
         # Configuration options
         self.code_style = code_style
@@ -341,15 +341,24 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
         spec_content = specification  # Assuming the dict *is* the spec for now
 
         # Check if we should use LLM-backed generation
-        use_llm = specification.get("use_llm", False)
+
+        use_llm = specification.get('use_llm', False)
 
         if not spec_content:
-            return {
-                "status": "error",
-                "error": "No specification provided to ToolDesignerAgent",
-            }
+            return {"status": "error", "error": "No specification provided to ToolDesignerAgent"}
 
         try:
+            # Parse once to support research step
+            parser = ToolSpecificationParser(spec_content)
+            if not parser.parse():
+                error_str = "; ".join(parser.get_errors())
+                return {"status": "error", "error": f"Invalid tool specification: {error_str}"}
+
+            parsed_spec = parser.get_specification()
+            if parsed_spec and self.research_manager:
+                snippets = self.research_manager.research(parsed_spec.name, parsed_spec.purpose)
+                logger.debug("Research snippets gathered: %s", snippets)
+
             # Generate Code
             if use_llm and self.llm_code_generator:
                 logger.info("Using LLM-backed code generation")
