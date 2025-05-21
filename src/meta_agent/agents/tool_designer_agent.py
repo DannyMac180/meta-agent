@@ -59,16 +59,17 @@ class DesignRecord:
 class ToolDesignerAgent(Agent):  # Inherit from Agent
     """Orchestrates the process of parsing a tool specification and generating code."""
 
-    def __init__(self, 
-                 model_name: str = "o4-mini-high", 
-                 template_dir: Optional[str] = None,
-                 template_name: str = "tool_template.py.j2",
-                 llm_api_key: Optional[str] = None, 
-                 llm_model: str = "gpt-4", 
-                 examples_repository: Optional[Dict[str, Any]] = None,
-                 research_manager: Optional[ToolResearchManager] = None,
-                 enable_research: bool = False,
-                 ):
+    def __init__(
+        self,
+        model_name: str = "o4-mini-high",
+        template_dir: Optional[str] = None,
+        template_name: str = "tool_template.py.j2",
+        llm_api_key: Optional[str] = None,
+        llm_model: str = "gpt-4",
+        examples_repository: Optional[Dict[str, Any]] = None,
+        research_manager: Optional[ToolResearchManager] = None,
+        enable_research: bool = False,
+    ):
         """Initializes the Tool Designer Agent.
 
         Args:
@@ -93,11 +94,13 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
         if enable_research:
             self.research_manager = research_manager or ToolResearchManager()
 
-        # Configuration options
-        self.code_style = code_style
-        self.doc_style = doc_style
-        self.language = language
-        self.test_style = test_style
+        # Configuration placeholders (unused currently)
+        # These attributes were previously used to control output style.
+        # They are kept for potential future extension but default to None.
+        self.code_style = None
+        self.doc_style = None
+        self.language = None
+        self.test_style = None
 
         # Basic state tracking for executed designs
         self.design_history: List[DesignRecord] = []
@@ -342,21 +345,29 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
 
         # Check if we should use LLM-backed generation
 
-        use_llm = specification.get('use_llm', False)
+        use_llm = specification.get("use_llm", False)
 
         if not spec_content:
-            return {"status": "error", "error": "No specification provided to ToolDesignerAgent"}
+            return {
+                "status": "error",
+                "error": "No specification provided to ToolDesignerAgent",
+            }
 
         try:
             # Parse once to support research step
             parser = ToolSpecificationParser(spec_content)
             if not parser.parse():
                 error_str = "; ".join(parser.get_errors())
-                return {"status": "error", "error": f"Invalid tool specification: {error_str}"}
+                return {
+                    "status": "error",
+                    "error": f"Invalid tool specification: {error_str}",
+                }
 
             parsed_spec = parser.get_specification()
             if parsed_spec and self.research_manager:
-                snippets = self.research_manager.research(parsed_spec.name, parsed_spec.purpose)
+                snippets = self.research_manager.research(
+                    parsed_spec.name, parsed_spec.purpose
+                )
                 logger.debug("Research snippets gathered: %s", snippets)
 
             # Generate Code
@@ -402,8 +413,7 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             base_code = self.design_tool(spec)
         except Exception:
             name = spec.get("name", "Tool")
-            base_code = (
-                f"""
+            base_code = f"""
 import logging
 logger_tool = logging.getLogger(__name__)
 
@@ -417,7 +427,6 @@ class {name}Tool:
 def get_tool_instance():
     return {name}Tool()
 """
-            )
         refined_code = base_code.replace(
             f"from {spec.get('name')}Tool!",
             f"from refined {spec.get('name')}Tool!",
