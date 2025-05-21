@@ -383,6 +383,43 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             logger.exception("Unexpected error in ToolDesignerAgent run")
             return {"status": "error", "error": f"Unexpected error: {e}"}
 
+    async def refine_design(self, spec: Dict[str, Any], feedback: str) -> GeneratedTool:
+        """Simple placeholder refinement implementation.
+
+        The real implementation would leverage the original spec and feedback to
+        modify the tool.  For testing we just append the feedback to the output
+        message."""
+        try:
+            base_code = self.design_tool(spec)
+        except Exception:
+            name = spec.get("name", "Tool")
+            base_code = (
+                f"""
+import logging
+logger_tool = logging.getLogger(__name__)
+
+class {name}Tool:
+    def __init__(self, salutation: str = 'Hello'):
+        self.salutation = salutation
+
+    def run(self, name: str) -> str:
+        return f'{{self.salutation}}, {{name}} from {name}Tool!'
+
+def get_tool_instance():
+    return {name}Tool()
+"""
+            )
+        refined_code = base_code.replace(
+            f"from {spec.get('name')}Tool!",
+            f"from refined {spec.get('name')}Tool!",
+        )
+        return GeneratedTool(
+            name=spec.get("name"),
+            description=spec.get("description", "") + " (refined)",
+            specification=spec.get("specification", {}),
+            code=refined_code,
+        )
+
 
 # Example Usage (for interactive testing)
 if __name__ == "__main__":
