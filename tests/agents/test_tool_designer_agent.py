@@ -153,7 +153,7 @@ def test_design_tool_generation_error():
         assert "Failed to render template: Mocked rendering failure" in str(excinfo.value)
 
 @pytest.mark.asyncio
-def test_run_with_research(monkeypatch):
+async def test_run_with_research(monkeypatch):
     calls = []
 
     class DummyResearch:
