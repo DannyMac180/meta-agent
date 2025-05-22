@@ -32,3 +32,8 @@ meta-agent = "meta_agent.cli.main:cli"
 [tool.coverage.run]
 source_pkgs = ["meta_agent", "tests"]
 branch = true
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: mark a test as an integration test."
+]

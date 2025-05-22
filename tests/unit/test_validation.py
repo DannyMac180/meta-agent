@@ -8,6 +8,7 @@ import tempfile
 import subprocess
 import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock, patch, mock_open
+import logging
 
 from meta_agent.validation import validate_generated_tool
 from meta_agent.models.generated_tool import GeneratedTool
@@ -126,7 +127,7 @@ class TestValidation:
 
     def test_validate_generated_tool_subprocess_timeout(self, mock_generated_tool, mock_subprocess_run):
         """Test validation with subprocess timeout."""
-        # Configure the mock to raise a timeout exception
+        # Configure the mock to raise TimeoutExpired using the correct fixture
         mock_subprocess_run.side_effect = subprocess.TimeoutExpired(cmd="pytest", timeout=30)
 
         # Call the function
@@ -139,13 +140,14 @@ class TestValidation:
         assert len(result.errors) > 0
         assert "Pytest validation timed out" in result.errors[0]
 
-    def test_validate_generated_tool_subprocess_exception(self, mock_generated_tool, mock_subprocess_run):
+    def test_validate_generated_tool_subprocess_exception(self, mock_generated_tool, mock_subprocess_run, caplog):
         """Test validation with subprocess exception."""
-        # Configure the mock to raise a general exception
+        # Configure the mock to raise a general exception using the correct fixture
         mock_subprocess_run.side_effect = Exception("Subprocess error")
 
-        # Call the function
-        result = validate_generated_tool(mock_generated_tool, "test_id")
+        with caplog.at_level(logging.ERROR, logger="meta_agent.validation"):
+            # Call the function
+            result = validate_generated_tool(mock_generated_tool, "test_id")
 
         # Check that the result is a failure due to exception
         assert isinstance(result, ValidationResult)
@@ -154,12 +156,18 @@ class TestValidation:
         assert len(result.errors) > 0
         assert "Subprocess execution failed" in result.errors[0]
 
+        # Check for expected log messages
+        assert len(caplog.records) >= 2
+        assert "Error running pytest subprocess for test_id: Subprocess error" in caplog.text
+        assert "Validation failed for test_id" in caplog.text
+        assert "Subprocess execution failed: Subprocess error" in caplog.text
+
     def test_validate_generated_tool_edge_case(self, mock_generated_tool, mock_subprocess_run):
         """Test validation with edge case tool ID."""
-        # Configure the mock for edge case
+        # Configure the mock for edge case using the correct fixture
         mock_subprocess_run.return_value.returncode = 0
 
-        # Call the function with an edge case ID
+        # Call the function
         result = validate_generated_tool(mock_generated_tool, "edge_case_test")
 
         # Check that coverage requirements are bypassed for edge cases
@@ -186,7 +194,7 @@ class TestValidation:
         mock_makedirs.assert_called_with(artefact_dir, exist_ok=True)
 
         # Check that files were written
-        assert mock_open.call_count == 3  # code, tests, and docs files
+        assert mock_open.call_count == 3
         mock_open.assert_any_call(os.path.join(artefact_dir, "tool.py"), "w")
         mock_open.assert_any_call(os.path.join(artefact_dir, "test_tool.py"), "w")
         mock_open.assert_any_call(os.path.join(artefact_dir, "docs.md"), "w")
