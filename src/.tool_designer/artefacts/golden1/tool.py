@@ -11,11 +11,11 @@ def add_numbers(
     """Adds two numbers together
 
     Args:
-        a (int): First number
-        b (int): Second number
+        a: First number (Required)
+        b: Second number (Required)
 
     Returns:
-        int: Description of the expected output.
+        int: int
     """
     logger.info(f"Running tool: add_numbers")
     # --- Tool Implementation Start ---

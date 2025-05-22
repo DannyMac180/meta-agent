@@ -11,11 +11,11 @@ def multiply(
     """Multiplies two integers
 
     Args:
-        a (int): First number
-        b (int): Second number
+        a: First number (Required)
+        b: Second number (Required)
 
     Returns:
-        int: Description of the expected output.
+        int: int
     """
     logger.info(f"Running tool: multiply")
     # --- Tool Implementation Start ---

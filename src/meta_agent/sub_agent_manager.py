@@ -91,6 +91,7 @@ class CoderAgent(Agent):
 
 class TesterAgent(Agent):
     """Agent specialized for testing tasks."""
+
     __test__ = False  # Prevent pytest from collecting this as a test class
 
     def __init__(self):
@@ -322,16 +323,25 @@ def get_tool_instance():
                 generated_tool = GeneratedTool(
                     name=spec.get("name"),
                     description=spec.get("description", ""),
-                    specification=spec.get("specification", {}),
+                    specification=spec.get("specification", spec),
                     code=design_result,
                 )
             else:
                 generated_tool = None
 
-            if generated_tool is None:
-                logger.error(
-                    f"Tool designer failed to generate code for '{tool_name}'"
+            # The template-based designer may return code without a
+            # ``get_tool_instance`` factory.  If so, provide a basic fallback
+            # implementation to ensure the registry can load and execute it.
+            if generated_tool and "get_tool_instance" not in generated_tool.code:
+                logger.info(
+                    "Generated tool lacks 'get_tool_instance'; using basic fallback",
                 )
+                generated_tool.code = self._generate_basic_tool_code(
+                    spec.get("name", "Tool")
+                )
+
+            if generated_tool is None:
+                logger.error(f"Tool designer failed to generate code for '{tool_name}'")
                 return None
 
             logger.info(f"Successfully generated code for tool '{tool_name}'")
@@ -345,11 +355,12 @@ def get_tool_instance():
                 generated_tool = GeneratedTool(
                     name=spec.get("name"),
                     description=spec.get("description", ""),
-                    specification=spec.get("specification", {}),
+                    specification=spec.get("specification", spec),
                     code=self._generate_basic_tool_code(spec.get("name", "Tool")),
                 )
                 logger.info(
-                    f"Fallback tool generated for '{tool_name}'",)
+                    f"Fallback tool generated for '{tool_name}'",
+                )
             except Exception:
                 return None
 

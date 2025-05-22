@@ -46,6 +46,12 @@ def validate_generated_tool(tool: GeneratedTool, tool_id: str = None) -> Validat
     try:
         # Get the current environment
         env = os.environ.copy()
+        
+        # Strip pytest-cov coordination variables from the environment
+        for var in ("COVERAGE_FILE", "COV_CORE_SOURCE",
+                    "COV_CORE_CONFIG", "COV_CORE_DATAFILE"):
+            env.pop(var, None)
+        
         # Prepend the artefact directory to PYTHONPATH
         # This ensures 'from tool import ...' works reliably for coverage tracking
         env['PYTHONPATH'] = artefact_dir + os.pathsep + env.get('PYTHONPATH', '')
