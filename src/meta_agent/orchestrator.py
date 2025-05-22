@@ -92,9 +92,7 @@ class MetaAgentOrchestrator:
             fingerprint_source_dict = {
                 "name": spec.get("name"),
                 "description": spec.get("description", ""),  # Default if not present
-                "specification": spec.get(
-                    "specification", {}
-                ),  # Default if not present (nested spec)
+                "specification": spec.get("specification", spec),
             }
             normalized_spec_json = json.dumps(
                 fingerprint_source_dict, sort_keys=True, ensure_ascii=False
@@ -132,7 +130,7 @@ def get_tool_instance():
         return GeneratedTool(
             name=name,
             description=description,
-            specification=spec.get("specification", {}),
+            specification=spec.get("specification", spec),
             code=code,
         )
 
@@ -227,7 +225,7 @@ def get_tool_instance():
                 generated_tool = GeneratedTool(
                     name=tool_spec.get("name"),
                     description=tool_spec.get("description", ""),
-                    specification=tool_spec.get("specification", {}),
+                    specification=tool_spec.get("specification", tool_spec),
                     code=design_result,
                 )
             else:
@@ -239,7 +237,7 @@ def get_tool_instance():
             # tool to load and execute.
             if generated_tool and "get_tool_instance" not in generated_tool.code:
                 logger.info(
-                    "Generated tool lacks 'get_tool_instance'; patching with basic fallback",
+                    "Generated tool lacks 'get_tool_instance'; using basic fallback",
                 )
                 generated_tool.code = self._basic_tool_from_spec(tool_spec).code
 

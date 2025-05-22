@@ -323,7 +323,7 @@ def get_tool_instance():
                 generated_tool = GeneratedTool(
                     name=spec.get("name"),
                     description=spec.get("description", ""),
-                    specification=spec.get("specification", {}),
+                    specification=spec.get("specification", spec),
                     code=design_result,
                 )
             else:
@@ -334,7 +334,7 @@ def get_tool_instance():
             # implementation to ensure the registry can load and execute it.
             if generated_tool and "get_tool_instance" not in generated_tool.code:
                 logger.info(
-                    "Generated tool lacks 'get_tool_instance'; patching with basic fallback",
+                    "Generated tool lacks 'get_tool_instance'; using basic fallback",
                 )
                 generated_tool.code = self._generate_basic_tool_code(
                     spec.get("name", "Tool")
@@ -355,7 +355,7 @@ def get_tool_instance():
                 generated_tool = GeneratedTool(
                     name=spec.get("name"),
                     description=spec.get("description", ""),
-                    specification=spec.get("specification", {}),
+                    specification=spec.get("specification", spec),
                     code=self._generate_basic_tool_code(spec.get("name", "Tool")),
                 )
                 logger.info(
