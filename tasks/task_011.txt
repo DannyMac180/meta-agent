@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Implement Tool Designer Sub-agent
-# Status: in-progress
+# Status: done
 # Dependencies: 3, 4
 # Priority: high
 # Description: Designs and generates code for tools required by the agent based on the specification
@@ -85,7 +85,7 @@ Testing approach:
 - Verify the data structures correctly represent tool specifications
 - Test the communication interface with mock messages
 
-## 5. Implement LLM-backed Code Generation for Tools [in-progress]
+## 5. Implement LLM-backed Code Generation for Tools [done]
 ### Dependencies: None
 ### Description: The core framework for LLM-backed code generation for tools is implemented (see LLMCodeGenerator and its components). Current focus for this task is to ensure LLMService correctly integrates with the intended LLM provider endpoints (e.g., standard OpenAI /v1/chat/completions vs. the currently implemented /v1/responses endpoint), including request/response handling and code extraction logic in _extract_code_from_response.
 ### Details:
@@ -183,7 +183,7 @@ Testing approach:
 - Test the integration of search results into the code generation process
 - Benchmark performance with and without web search integration
 
-## 9. Implement Code Generation and Testing Capabilities [pending]
+## 9. Implement Code Generation and Testing Capabilities [done]
 ### Dependencies: None
 ### Description: Develop the core code generation functionality with testing and validation capabilities to ensure the generated tools work as expected.
 ### Details:
