@@ -277,10 +277,10 @@ class ToolRegistry:
                 )
                 return tool_instance
             else:
-                logger.error(
-                    f"Tool class not found in module '{module_full_path}' for '{tool_name}'"
+                logger.warning(
+                    f"Tool class not found in module '{module_full_path}' for '{tool_name}'. Returning module instead."
                 )
-                return None
+                return tool_module
         except ImportError as e:
             logger.error(
                 f"Failed to import tool '{tool_name}' version '{actual_version_str}' from {module_full_path}: {e}"
