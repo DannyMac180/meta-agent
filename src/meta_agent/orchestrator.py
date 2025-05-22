@@ -239,9 +239,9 @@ def get_tool_instance():
             # tool to load and execute.
             if generated_tool and "get_tool_instance" not in generated_tool.code:
                 logger.info(
-                    "Generated tool lacks 'get_tool_instance'; using basic fallback",
+                    "Generated tool lacks 'get_tool_instance'; patching with basic fallback",
                 )
-                generated_tool = self._basic_tool_from_spec(tool_spec)
+                generated_tool.code = self._basic_tool_from_spec(tool_spec).code
 
             if not generated_tool:
                 design_duration_ms = (time.monotonic() - start_time_design) * 1000
