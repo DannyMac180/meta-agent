@@ -201,8 +201,9 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
         except (ValueError, CodeGenerationError):
             raise
         except Exception as e:
-            logger.exception("Unexpected error in design_tool")
-            raise CodeGenerationError(f"Unexpected error in design_tool: {e}")
+            logger.error(f"Unexpected error in design_tool: {e}")
+            # Chain the original exception to preserve context
+            raise CodeGenerationError(f"Unexpected error in design_tool: {e}") from e
 
     # --------------------------------------------------------------------- #
     # ---------------------  LLM-Backed Code Generation  ------------------- #

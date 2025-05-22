@@ -152,7 +152,7 @@ Testing approach:
 - Test specification parsing with various input formats
 - Verify the agent can process basic tool specifications
 
-## 8. Implement Web Search Integration for Tool Research [pending]
+## 8. Implement Web Search Integration for Tool Research [done]
 ### Dependencies: None
 ### Description: Add capabilities for the Tool Designer to leverage web search for researching APIs, code examples, and existing tools to improve code generation.
 ### Details:

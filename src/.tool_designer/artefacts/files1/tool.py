@@ -11,11 +11,11 @@ def file_search(
     """Searches files for a term
 
     Args:
-        term (str): Search term
-        path (str, optional): File path
+        term: Search term (Required)
+        path: File path (Optional)
 
     Returns:
-        list: Description of the expected output.
+        list: list
     """
     logger.info(f"Running tool: file_search")
     # --- Tool Implementation Start ---

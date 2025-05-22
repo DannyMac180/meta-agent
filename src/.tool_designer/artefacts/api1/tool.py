@@ -11,11 +11,11 @@ def get_weather(
     """Fetches current weather for a city
 
     Args:
-        city (str): City name
-        api_key (str): OpenWeatherMap API key
+        city: City name (Required)
+        api_key: OpenWeatherMap API key (Required)
 
     Returns:
-        dict: Description of the expected output.
+        dict: dict
     """
     logger.info(f"Running tool: get_weather")
     # --- Tool Implementation Start ---
