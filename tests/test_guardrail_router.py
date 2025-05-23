@@ -44,3 +44,50 @@ async def test_guardrails_called_in_order():
 
     assert res == "test:ok"
     assert order == ["in:test", "out:test:ok"]
+
+
+@pytest.mark.asyncio
+async def test_unknown_model_raises():
+    adapter = MockAdapter()
+    router = GuardrailModelRouter({"a": adapter}, default_model="a")
+    with pytest.raises(ValueError):
+        await router.invoke("hi", model="missing")
+
+
+def test_router_init_requires_adapters():
+    with pytest.raises(ValueError):
+        GuardrailModelRouter({}, default_model="a")
+
+
+def test_router_init_requires_valid_default():
+    with pytest.raises(ValueError):
+        GuardrailModelRouter({"a": MockAdapter()}, default_model="b")
+
+
+@pytest.mark.asyncio
+async def test_input_guardrail_exception_propagates():
+    adapter = MockAdapter()
+    router = GuardrailModelRouter({"a": adapter}, default_model="a")
+
+    async def bad_guard(_prompt: str):
+        raise RuntimeError("bad")
+
+    router.add_input_guardrail(bad_guard)
+
+    with pytest.raises(RuntimeError):
+        await router.invoke("x")
+    assert not adapter.prompts
+
+
+@pytest.mark.asyncio
+async def test_output_guardrail_exception_propagates():
+    adapter = MockAdapter()
+    router = GuardrailModelRouter({"a": adapter}, default_model="a")
+
+    async def bad_guard(_output: str):
+        raise RuntimeError("bad")
+
+    router.add_output_guardrail(bad_guard)
+
+    with pytest.raises(RuntimeError):
+        await router.invoke("x")

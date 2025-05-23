@@ -34,3 +34,30 @@ async def test_build_regex_guardrails_trigger():
 
     with pytest.raises(ValueError):
         await guard("this is bad")
+
+
+def test_guardrail_config_from_dict():
+    data = {"rules": [{"name": "pii", "pattern": "ssn"}]}
+    cfg = GuardrailConfig.from_dict(data)
+    assert len(cfg.rules) == 1
+    assert cfg.rules[0].name == "pii"
+
+
+@pytest.mark.asyncio
+async def test_build_regex_guardrails_multiple_rules():
+    cfg = GuardrailConfig(
+        rules=[
+            GuardrailRule(name="a", pattern="foo"),
+            GuardrailRule(name="b", pattern="bar"),
+        ]
+    )
+    guards = build_regex_guardrails(cfg)
+    assert len(guards) == 2
+
+    await guards[0]("nothing here")
+    await guards[1]("nothing here")
+
+    with pytest.raises(ValueError):
+        await guards[0]("foo")
+    with pytest.raises(ValueError):
+        await guards[1]("bar")
