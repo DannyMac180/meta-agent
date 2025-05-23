@@ -5,7 +5,7 @@
 # Priority: high
 # Description: Create the specialized sub-agent that generates validation logic and guardrails for the agent.
 # Details:
-1. Configure gpt-4o model integration
+1. Configure gpt-4.1 model integration
 2. Implement guardrail generation logic using Pydantic models
 3. Create test cases for guardrail validation
 4. Implement policy check generators
@@ -17,59 +17,45 @@
 Test with various guardrail specifications. Verify guardrails catch problematic inputs/outputs. Test against common evasion techniques.
 
 # Subtasks:
-## 1. Set up Guardrail Designer Sub-agent with Model Integration [pending]
+## 1. Design Model Integration Architecture [pending]
 ### Dependencies: None
-### Description: Create the base structure for the Guardrail Designer Sub-agent and integrate the gpt-4o model for guardrail generation capabilities.
+### Description: Define and implement the architecture for integrating the Guardrail Designer Sub-agent with the core AI model(s), ensuring modularity, scalability, and secure communication.
 ### Details:
-Implementation steps:
-1. Create a new GuardrailDesignerAgent class that inherits from the base Agent class
-2. Configure the connection to gpt-4o model with appropriate system prompts for guardrail design
-3. Implement the basic agent interface methods (initialize, process_request, generate_response)
-4. Create a configuration class to store guardrail designer settings
-5. Implement proper error handling for model API failures
-6. Set up logging for guardrail generation activities
+Technical requirements: Support for multiple LLMs, agent-based orchestration, secure API endpoints, and clear separation between guardrail logic and model inference. Potential challenges: Ensuring compatibility with different model APIs, minimizing latency, and maintaining security boundaries. Acceptance criteria: Architecture diagram, interface specifications, and a working prototype that routes requests through the guardrail layer before reaching the model.
 
-Testing approach:
-1. Create unit tests to verify model connection and basic prompt handling
-2. Test the agent initialization with various configuration parameters
-3. Mock the model responses to test error handling paths
-
-## 2. Implement Core Guardrail Generation Logic [pending]
+## 2. Implement Guardrail Generation Logic with Pydantic [pending]
 ### Dependencies: 5.1
-### Description: Develop the core logic for generating validation rules, Pydantic models, and regex patterns based on input specifications.
+### Description: Develop the core logic for generating and validating guardrail configurations using Pydantic models for type safety and schema enforcement.
 ### Details:
-Implementation steps:
-1. Create specialized methods for different types of guardrails (input validation, output validation, policy checking)
-2. Implement Pydantic model generation logic with type inference capabilities
-3. Build regex pattern generator for string validation
-4. Create a policy check generator that can produce validation logic for content policies
-5. Implement a guardrail template system for common validation patterns
-6. Design a structured output format for generated guardrails
-7. Add context-aware guardrail suggestion based on agent purpose
+Technical requirements: Define Pydantic schemas for guardrail rules (e.g., denied topics, content filters, PII redaction), support dynamic rule creation, and ensure validation of user-supplied configurations. Potential challenges: Handling complex nested rules, maintaining extensibility, and providing clear error messages. Acceptance criteria: Pydantic models with comprehensive validation, unit tests for schema correctness, and example configurations.
 
-Testing approach:
-1. Create test cases with various input scenarios to verify generated Pydantic models
-2. Test regex pattern generation with edge cases
-3. Verify policy check generators with simulated harmful inputs
-4. Validate that generated guardrails properly enforce the intended constraints
-
-## 3. Integrate with Agent SDK and Create Documentation [pending]
+## 3. Develop Comprehensive Test Cases [pending]
 ### Dependencies: 5.2
-### Description: Connect the Guardrail Designer to the Agents SDK guardrail system and generate comprehensive documentation for the implemented guardrails.
+### Description: Create a suite of automated tests covering all guardrail logic, including edge cases and failure scenarios.
 ### Details:
-Implementation steps:
-1. Create hooks into the Agents SDK guardrail system for seamless integration
-2. Implement a guardrail registration mechanism to activate generated guardrails
-3. Build a documentation generator that explains each implemented guardrail
-4. Create sample usage examples for different types of guardrails
-5. Implement test case generation for validating guardrails
-6. Add a guardrail visualization component for easier understanding
-7. Create a feedback mechanism to improve guardrail effectiveness
+Technical requirements: Unit tests for each guardrail component, integration tests for end-to-end flows, and mock data for sensitive scenarios. Potential challenges: Simulating adversarial inputs, ensuring test coverage for all policy branches, and maintaining test isolation. Acceptance criteria: >90% code coverage, passing tests for all critical paths, and CI integration.
 
-Testing approach:
-1. Integration tests with the full Agent SDK to verify guardrail activation
-2. Test documentation generation for accuracy and completeness
-3. Verify test case generation produces valid test scenarios
-4. End-to-end tests with various agents using the generated guardrails
-5. User acceptance testing for documentation clarity
+## 4. Implement Policy Check Mechanisms [pending]
+### Dependencies: 5.2
+### Description: Develop mechanisms to enforce policy checks at runtime, ensuring all model outputs comply with defined guardrails.
+### Details:
+Technical requirements: Real-time evaluation of outputs against policy rules, support for custom policy plugins, and logging of violations. Potential challenges: Balancing performance with thoroughness, supporting policy updates without downtime, and handling ambiguous cases. Acceptance criteria: Policy checks block or redact non-compliant outputs, logs are generated for violations, and policies can be updated dynamically.
+
+## 5. Create Regex Patterns for Content Filtering [pending]
+### Dependencies: 5.2
+### Description: Design and test robust regex patterns for detecting and filtering prohibited content, PII, and sensitive topics.
+### Details:
+Technical requirements: Regex patterns for various content types (e.g., emails, phone numbers, banned phrases), support for internationalization, and performance optimization. Potential challenges: Avoiding false positives/negatives, maintaining readability, and updating patterns as requirements evolve. Acceptance criteria: Regex patterns pass all test cases, are documented, and can be easily extended.
+
+## 6. Integrate with Existing SDKs and APIs [pending]
+### Dependencies: 5.1, 5.2, 5.4, 5.5
+### Description: Connect the Guardrail Designer Sub-agent with relevant SDKs and APIs for model inference, logging, and monitoring.
+### Details:
+Technical requirements: SDK integration for LLMs, logging frameworks, and monitoring tools; support for asynchronous operations; and error handling. Potential challenges: Managing SDK version compatibility, handling API rate limits, and ensuring secure credential management. Acceptance criteria: Successful end-to-end integration, error handling for all SDK calls, and monitoring hooks in place.
+
+## 7. Generate Comprehensive Documentation [pending]
+### Dependencies: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6
+### Description: Produce detailed documentation covering architecture, guardrail logic, API usage, configuration, and extension guidelines.
+### Details:
+Technical requirements: Architecture diagrams, code examples, API references, and troubleshooting guides. Potential challenges: Keeping documentation up to date with code changes, ensuring clarity for different audiences, and covering edge cases. Acceptance criteria: Documentation reviewed by stakeholders, published in an accessible format, and includes examples for all major features.
 
