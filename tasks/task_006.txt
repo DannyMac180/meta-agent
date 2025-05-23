@@ -15,3 +15,47 @@
 
 # Test Strategy:
 Test with both valid and intentionally broken agent code. Verify all issues are correctly detected and reported. Ensure sandbox security during execution.
+
+# Subtasks:
+## 1. Design Modular Architecture [pending]
+### Dependencies: None
+### Description: Define clear module boundaries for code execution, result collection, and reporting within the evaluation harness.
+### Details:
+Create an architectural diagram and documentation outlining the responsibilities and interfaces of each module.
+
+## 2. Implement Code Execution Module [pending]
+### Dependencies: 6.1
+### Description: Develop the module responsible for securely executing code within a sandboxed environment.
+### Details:
+Ensure the module can accept code snippets, execute them in isolation, and handle timeouts or resource limits.
+
+## 3. Implement Result Collection Module [pending]
+### Dependencies: 6.2
+### Description: Develop the module that gathers outputs, errors, and execution metadata from the code execution module.
+### Details:
+Design interfaces for collecting standard output, error logs, exit codes, and execution statistics.
+
+## 4. Implement Reporting Module [pending]
+### Dependencies: 6.3
+### Description: Develop the module that formats and presents results for users, supporting various output formats (e.g., JSON, HTML).
+### Details:
+Ensure the module can aggregate results, generate summaries, and provide detailed reports as needed.
+
+## 5. Integrate Detailed Logging [pending]
+### Dependencies: 6.2, 6.3, 6.4
+### Description: Add comprehensive logging to all modules, capturing key events, errors, and execution traces.
+### Details:
+Implement structured logging with configurable verbosity and log rotation policies.
+
+## 6. Add Security Checks for Sandbox Operations [pending]
+### Dependencies: 6.2, 6.5
+### Description: Implement security measures to prevent unauthorized access, resource abuse, and code injection within the sandbox.
+### Details:
+Include input validation, resource quotas, and monitoring for suspicious activity during code execution.
+
+## 7. System Integration and Testing [pending]
+### Dependencies: 6.4, 6.5, 6.6
+### Description: Integrate all modules and perform end-to-end testing to ensure correct operation, security, and reliability.
+### Details:
+Develop test cases covering normal operation, error handling, and security edge cases. Validate logging and reporting outputs.
+
