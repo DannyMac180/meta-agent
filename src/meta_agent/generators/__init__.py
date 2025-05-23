@@ -13,6 +13,12 @@ from .implementation_injector import ImplementationInjector
 from .fallback_manager import FallbackManager
 from .prompt_templates import PROMPT_TEMPLATES
 from .tool_code_generator import ToolCodeGenerator
+from .guardrail_generator import (
+    GuardrailAction,
+    GuardrailRule,
+    GuardrailConfig,
+    build_regex_guardrails,
+)
 
 __all__ = [
     # LLM-backed code generation components
@@ -25,5 +31,9 @@ __all__ = [
     "PROMPT_TEMPLATES",
     
     # Existing code generators
-    "ToolCodeGenerator"
+    "ToolCodeGenerator",
+    "GuardrailAction",
+    "GuardrailRule",
+    "GuardrailConfig",
+    "build_regex_guardrails",
 ]
