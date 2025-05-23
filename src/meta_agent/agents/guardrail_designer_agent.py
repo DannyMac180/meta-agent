@@ -30,7 +30,7 @@ class GuardrailDesignerAgent(AgentBase):
         model_router: Optional[GuardrailModelRouter] = None,
         *,
         api_key: Optional[str] = None,
-        default_model: str = "gpt-4o",
+        default_model: str = "gpt-4o-mini",
     ) -> None:
         super().__init__(name="GuardrailDesignerAgent", tools=[])
 
@@ -38,9 +38,13 @@ class GuardrailDesignerAgent(AgentBase):
             service = LLMService(api_key=api_key, model=default_model)
             adapter = LLMModelAdapter(service)
             model_router = GuardrailModelRouter({default_model: adapter}, default_model)
+            self.default_model = default_model
+        else:
+            # Use the router's default model to ensure compatibility
+            self.default_model = model_router.default_model
+
         self.model_router = model_router
-        self.default_model = default_model
-        logger.info("GuardrailDesignerAgent initialized with model %s", default_model)
+        logger.info("GuardrailDesignerAgent initialized with model %s", self.default_model)
 
     async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
         prompt = specification.get("prompt") or specification.get("description", "")
