@@ -19,21 +19,22 @@ from .guardrail_generator import (
     GuardrailConfig,
     build_regex_guardrails,
 )
+from .regex_patterns import build_default_regex_config
 
 __all__ = [
     # LLM-backed code generation components
     "LLMCodeGenerator",
-    "PromptBuilder", 
+    "PromptBuilder",
     "ContextBuilder",
     "CodeValidator",
     "ImplementationInjector",
     "FallbackManager",
     "PROMPT_TEMPLATES",
-    
     # Existing code generators
     "ToolCodeGenerator",
     "GuardrailAction",
     "GuardrailRule",
     "GuardrailConfig",
     "build_regex_guardrails",
+    "build_default_regex_config",
 ]
