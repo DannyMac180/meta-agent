@@ -21,7 +21,6 @@ async def test_agent_routes_prompt_through_router():
     assert result["status"] == "success"
     assert result["output"] == "hello:guarded"
 
-
 def test_agent_inherits_from_agents():
     router = GuardrailModelRouter({"gpt": DummyAdapter()}, default_model="gpt")
     agent = GuardrailDesignerAgent(model_router=router)
