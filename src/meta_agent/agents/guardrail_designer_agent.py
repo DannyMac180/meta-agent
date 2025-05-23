@@ -6,14 +6,21 @@ import logging
 from typing import Any, Dict, Optional
 
 
-class AgentBase:
-    """Minimal base class used when the Agents SDK is unavailable."""
+try:
+    from agents import Agent
+except Exception:  # pragma: no cover - fallback for missing SDK
 
-    def __init__(self, name: str | None = None, *_, **__):
-        self.name = name or "StubAgent"
+    class Agent:
+        """Minimal stand-in when the Agents SDK is unavailable."""
 
-    async def run(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
-        return {"status": "error", "error": "agents SDK unavailable"}
+        def __init__(
+            self, name: str | None = None, tools: list[Any] | None = None
+        ) -> None:
+            self.name = name or "StubAgent"
+            self.tools = tools or []
+
+        async def run(self, *_: Any, **__: Any) -> Dict[str, Any]:
+            return {"status": "error", "error": "agents SDK unavailable"}
 
 
 from meta_agent.services.guardrail_router import GuardrailModelRouter, LLMModelAdapter
@@ -22,7 +29,7 @@ from meta_agent.services.llm_service import LLMService
 logger = logging.getLogger(__name__)
 
 
-class GuardrailDesignerAgent(AgentBase):
+class GuardrailDesignerAgent(Agent):
     """Generates guardrail code using configurable model backends."""
 
     def __init__(
@@ -44,7 +51,9 @@ class GuardrailDesignerAgent(AgentBase):
             self.default_model = model_router.default_model
 
         self.model_router = model_router
-        logger.info("GuardrailDesignerAgent initialized with model %s", self.default_model)
+        logger.info(
+            "GuardrailDesignerAgent initialized with model %s", self.default_model
+        )
 
     async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
         prompt = specification.get("prompt") or specification.get("description", "")
