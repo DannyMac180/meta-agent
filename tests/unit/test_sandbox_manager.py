@@ -160,3 +160,42 @@ def test_security_opt_with_seccomp(monkeypatch, tmp_path):
     opts = kwargs["security_opt"]
     assert any(str(opt).startswith("seccomp=") for opt in opts)
     container.remove.assert_called_with(force=True)
+
+
+def test_invalid_command(monkeypatch, tmp_path):
+    fake_client = MagicMock()
+    fake_client.ping.return_value = None
+    monkeypatch.setattr(sm.docker, "from_env", lambda: fake_client)
+    manager = SandboxManager()
+    code_dir = tmp_path / "code"
+    code_dir.mkdir()
+    with pytest.raises(ValueError):
+        manager.run_code_in_sandbox(code_dir, ["python; rm -rf /"])
+
+
+def test_invalid_resources(monkeypatch, tmp_path):
+    fake_client = MagicMock()
+    fake_client.ping.return_value = None
+    monkeypatch.setattr(sm.docker, "from_env", lambda: fake_client)
+    manager = SandboxManager()
+    code_dir = tmp_path / "code"
+    code_dir.mkdir()
+    with pytest.raises(ValueError):
+        manager.run_code_in_sandbox(code_dir, ["python"], cpu_shares=-1)
+
+
+def test_suspicious_output_logs(monkeypatch, tmp_path, caplog):
+    fake_client = MagicMock()
+    fake_client.ping.return_value = None
+    container = MagicMock()
+    container.wait.return_value = {"StatusCode": 0}
+    container.logs.side_effect = [b"Traceback error", b""]
+    fake_client.containers.run.return_value = container
+
+    monkeypatch.setattr(sm.docker, "from_env", lambda: fake_client)
+    manager = SandboxManager()
+    code_dir = tmp_path / "code"
+    code_dir.mkdir()
+    with caplog.at_level("WARNING", logger="meta_agent.sandbox.sandbox_manager"):
+        manager.run_code_in_sandbox(code_dir, ["python"])
+    assert any("Suspicious output" in r.getMessage() for r in caplog.records)

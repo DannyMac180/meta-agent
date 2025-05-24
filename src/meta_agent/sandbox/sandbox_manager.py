@@ -15,6 +15,8 @@ DEFAULT_IMAGE_NAME = "meta-agent-sandbox:latest"
 DEFAULT_TIMEOUT_SECONDS = 60
 DEFAULT_MEM_LIMIT = "256m"
 DEFAULT_CPU_SHARES = 512  # Relative weight, 1024 is default
+MAX_CPU_SHARES = 2048
+SUSPICIOUS_PATTERNS = ["traceback", "permission denied", "segmentation fault"]
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,29 @@ class SandboxManager:
             self.seccomp_profile = None
             # Optionally raise an error if seccomp is critical
             # raise ValueError("Invalid seccomp profile JSON") from e
+
+    def _validate_inputs(
+        self,
+        code_directory: Path,
+        command: list[str],
+        mem_limit: str,
+        cpu_shares: int,
+    ) -> None:
+        """Validate inputs and resource limits for sandbox execution."""
+        if not code_directory.is_dir():
+            raise FileNotFoundError(f"Code directory not found: {code_directory}")
+
+        if not command or any(
+            not isinstance(c, str) or any(x in c for x in [";", "&", "|", "`", "\n"])
+            for c in command
+        ):
+            raise ValueError("Invalid command passed to sandbox")
+
+        if cpu_shares <= 0 or cpu_shares > MAX_CPU_SHARES:
+            raise ValueError("cpu_shares out of allowed range")
+
+        if mem_limit[-1].lower() not in {"m", "g"} or not mem_limit[:-1].isdigit():
+            raise ValueError("mem_limit must be like '256m' or '1g'")
 
     def run_code_in_sandbox(
         self,
@@ -166,6 +191,10 @@ class SandboxManager:
             stderr = container.logs(stdout=False, stderr=True).decode(
                 "utf-8", errors="replace"
             )
+
+            lower_output = f"{stdout}\n{stderr}".lower()
+            if any(pat in lower_output for pat in SUSPICIOUS_PATTERNS):
+                logger.warning("Suspicious output detected during sandbox run")
 
             logger.info("Sandbox execution finished with exit code: %s", exit_code)
             return exit_code, stdout, stderr
