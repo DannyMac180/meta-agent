@@ -3,7 +3,7 @@ Unit tests for the ContextBuilder class.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from meta_agent.generators.context_builder import ContextBuilder
 

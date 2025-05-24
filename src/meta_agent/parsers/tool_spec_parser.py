@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_valida
 from typing import Any, Dict, List, Optional, Union
 
 
-from pydantic import Field
 
 class ToolParameter(BaseModel):
     """

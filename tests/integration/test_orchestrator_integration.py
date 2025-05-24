@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from meta_agent.orchestrator import MetaAgentOrchestrator
 from meta_agent.planning_engine import PlanningEngine
-from meta_agent.sub_agent_manager import SubAgentManager, CoderAgent, TesterAgent, ReviewerAgent # Import agents for type checking if needed
+from meta_agent.sub_agent_manager import SubAgentManager # Import agents for type checking if needed
 
 
 @pytest.mark.asyncio

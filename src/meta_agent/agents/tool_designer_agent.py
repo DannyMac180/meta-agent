@@ -158,7 +158,7 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             logger.warning(
                 f"Failed to initialize LLM components: {e}. LLM-backed generation disabled."
             )
-        except Exception as e:
+        except Exception:
             self.llm_service = None
             self.llm_code_generator = None
             logger.error("Unexpected error initializing LLM components", exc_info=True)

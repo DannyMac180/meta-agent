@@ -6,8 +6,7 @@ strategies for handling code generation failures.
 """
 
 import logging
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from ..models.validation_result import ValidationResult
 
@@ -342,7 +341,7 @@ class FallbackManager:
         param_names = [param.get('name', f'param{i}') for i, param in enumerate(input_params)]
         
         # Create a simple implementation
-        params_list = ", ".join(param_names)
+        ", ".join(param_names)
         params_with_types = ", ".join([f"{name}: Any" for name in param_names])
         
         simple_impl = f"""
@@ -467,8 +466,8 @@ def execute({params_with_types}) -> Dict[str, Any]:
         # Get input parameters
         input_params = getattr(tool_specification, 'input_params', [])
         param_names = [param.get('name', f'param{i}') for i, param in enumerate(input_params)]
-        params_list = ", ".join(param_names)
-        params_with_types = ", ".join([f"{name}: Any" for name in param_names])
+        ", ".join(param_names)
+        ", ".join([f"{name}: Any" for name in param_names])
         
         # Check for API caller tools
         api_keywords = ['api', 'http', 'request', 'fetch', 'endpoint', 'rest']

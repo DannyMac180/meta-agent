@@ -1,4 +1,3 @@
-import pytest
 from meta_agent.utils.logging import setup_logging
 
 def test_setup_logging_stream(capfd):

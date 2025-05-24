@@ -1,7 +1,5 @@
-import tempfile
 import subprocess
 import os
-import shutil
 import uuid
 import logging
 import xml.etree.ElementTree as ET

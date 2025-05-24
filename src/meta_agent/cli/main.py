@@ -46,14 +46,10 @@ async def generate(spec_file: Path | None, spec_text: str | None):
         sys.exit(1)
 
     spec: SpecSchema | None = None
-    raw_spec_data: dict | str | None = None
 
     try:
         if spec_file:
             click.echo(f"Reading specification from file: {spec_file}")
-            raw_spec_data = (
-                spec_file  # Keep path for now, parsing happens in SpecSchema
-            )
             if spec_file.suffix.lower() == ".json":
                 spec = SpecSchema.from_json(spec_file)
             elif spec_file.suffix.lower() in [".yaml", ".yml"]:
@@ -68,7 +64,6 @@ async def generate(spec_file: Path | None, spec_text: str | None):
 
         elif spec_text:
             click.echo("Processing specification from text input...")
-            raw_spec_data = spec_text
             # Attempt structured parse first (e.g., if user pastes JSON/YAML)
             try:
                 # Try JSON
@@ -219,7 +214,7 @@ async def create_tool(spec_file: Path, use_llm: bool, version: str):
 
         if module_path:
             click.echo(
-                click.style(f"\n✓ Tool created successfully!", fg="green", bold=True)
+                click.style("\n✓ Tool created successfully!", fg="green", bold=True)
             )
             click.echo(f"Module path: {module_path}")
             click.echo(

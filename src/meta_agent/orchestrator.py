@@ -5,8 +5,7 @@ Integrates with OpenAI Agents SDK and provides interfaces for decomposing agent 
 
 import logging
 import inspect
-from agents import Agent, Runner  # OpenAI Agents SDK
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import hashlib
 import json
 import time

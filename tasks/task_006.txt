@@ -27,7 +27,7 @@ Create an architectural diagram and documentation outlining the responsibilities
 ### Dependencies: 6.1
 ### Description: Develop the module responsible for securely executing code within a sandboxed environment.
 ### Details:
-Ensure the module can accept code snippets, execute them in isolation, and handle timeouts or resource limits.
+Ensure the module can accept code snippets, execute them in isolation, and handle timeouts or resource limits. Refer to the evaluation_harness_architecture.md for more details.
 
 ## 3. Implement Result Collection Module [pending]
 ### Dependencies: 6.2

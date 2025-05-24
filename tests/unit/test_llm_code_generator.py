@@ -1,6 +1,5 @@
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from meta_agent.generators.llm_code_generator import LLMCodeGenerator
 from meta_agent.models.validation_result import ValidationResult
@@ -129,7 +128,7 @@ class TestLLMCodeGenerator:
         
         # Assert
         mock_dependencies["fallback_manager"].handle_exception.assert_called_once()
-        assert mock_dependencies["fallback_manager"].handle_exception.call_args[0][0].__class__ == Exception
+        assert isinstance(mock_dependencies["fallback_manager"].handle_exception.call_args[0][0], Exception)
         assert str(mock_dependencies["fallback_manager"].handle_exception.call_args[0][0]) == "API error"
         assert mock_dependencies["fallback_manager"].handle_exception.call_args[0][1] == tool_specification
         assert result == mock_dependencies["fallback_manager"].handle_exception.return_value

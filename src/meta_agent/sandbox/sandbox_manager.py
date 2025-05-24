@@ -2,7 +2,7 @@ import docker
 import os
 import json
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Tuple
 
 # Get the directory containing this file
 _current_dir = Path(__file__).parent.resolve()
@@ -194,13 +194,13 @@ print(f'Numpy version: {np.__version__}')
             timeout=10 # Shorter timeout for test
         )
 
-        print(f"\n--- Results ---")
+        print("\n--- Results ---")
         print(f"Exit Code: {exit_c}")
-        print(f"\nStdout:")
+        print("\nStdout:")
         print(out)
-        print(f"\nStderr:")
+        print("\nStderr:")
         print(err)
-        print(f"---------------")
+        print("---------------")
         
         # Clean up dummy code
         # script_path.unlink()

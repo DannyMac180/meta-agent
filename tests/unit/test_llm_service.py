@@ -3,11 +3,8 @@ Unit tests for the LLMService class.
 """
 
 import pytest
-import json
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch, AsyncMock
 
-import aiohttp
 from meta_agent.services.llm_service import LLMService
 
 

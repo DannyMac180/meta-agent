@@ -1,5 +1,4 @@
 import logging
-from typing import Any # Add other necessary imports based on spec
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ def confusing_types(
     Returns:
         list: Description of the expected output.
     """
-    logger.info(f"Running tool: confusing_types")
+    logger.info("Running tool: confusing_types")
     # --- Tool Implementation Start ---
     # TODO: Implement the core logic for the confusing_types tool.
     # Use the input parameters: count

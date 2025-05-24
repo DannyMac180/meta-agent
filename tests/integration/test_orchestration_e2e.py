@@ -1,9 +1,8 @@
 import os
-import tempfile
 import pytest
 from meta_agent.state_manager import StateManager
 from meta_agent.template_engine import TemplateEngine, validate_agent_code
-from meta_agent.sub_agent_manager import BaseAgent, CoderAgent, TesterAgent
+from meta_agent.sub_agent_manager import CoderAgent, TesterAgent
 
 # Simulate a full orchestration run
 @pytest.mark.integration

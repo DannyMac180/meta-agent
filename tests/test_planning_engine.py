@@ -3,7 +3,6 @@ Unit tests for the PlanningEngine.
 """
 
 import pytest
-import logging
 
 # Make sure the src directory is importable
 import sys

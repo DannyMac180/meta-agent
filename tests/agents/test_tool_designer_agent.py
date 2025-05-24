@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import jinja2
 from meta_agent.agents.tool_designer_agent import ToolDesignerAgent, CodeGenerationError
 
 # --- Test Fixtures ---
@@ -173,7 +172,7 @@ async def test_run_with_research(monkeypatch):
             calls.append((name, purpose))
             return ["info"]
 
-    agent = ToolDesignerAgent() 
+    ToolDesignerAgent() 
     # This test will likely fail or need significant rework as the research functionality
     # it's trying to test has been removed from ToolDesignerAgent.
     # For now, just making it instantiable to pass collection.

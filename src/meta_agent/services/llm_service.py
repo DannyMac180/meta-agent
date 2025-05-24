@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 import aiohttp

@@ -1,4 +1,3 @@
-import sys, types
 
 # Always define the stub class directly
 class WebSearchTool:  # pragma: no cover – stub for CI
