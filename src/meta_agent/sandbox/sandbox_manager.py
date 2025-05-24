@@ -72,9 +72,6 @@ class SandboxManager:
         cpu_shares: int,
     ) -> None:
         """Validate inputs and resource limits for sandbox execution."""
-
-
-
         if not code_directory.is_dir():
             raise FileNotFoundError(f"Code directory not found: {code_directory}")
 
