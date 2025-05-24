@@ -1,0 +1,30 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+from meta_agent.sandbox.sandbox_manager import SandboxManager
+
+
+@dataclass
+class ExecutionResult:
+    """Result of running tests inside the sandbox."""
+
+    exit_code: int
+    stdout: str
+    stderr: str
+
+
+class ExecutionModule:
+    """Run pytest for generated code inside a Docker sandbox."""
+
+    def __init__(self, sandbox_manager: Optional[SandboxManager] = None) -> None:
+        self.sandbox_manager = sandbox_manager or SandboxManager()
+
+    def run_tests(self, path: Path, timeout: int = 60) -> ExecutionResult:
+        """Execute tests located at ``path`` inside the sandbox."""
+        exit_code, stdout, stderr = self.sandbox_manager.run_code_in_sandbox(
+            code_directory=path,
+            command=["pytest", "-vv"],
+            timeout=timeout,
+        )
+        return ExecutionResult(exit_code=exit_code, stdout=stdout, stderr=stderr)
