@@ -1,2 +1,2 @@
-exclude = ["AGENTS.md"]
+exclude = ["AGENTS.md", "src/.tool_designer/**"]
 force-exclude = true
