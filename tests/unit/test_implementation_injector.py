@@ -15,7 +15,9 @@ class TestImplementationInjector:
     def template_engine(self):
         """Fixture for a mock template engine."""
         engine = MagicMock()
-        engine.render.return_value = "def complete_tool():\n    # Template code\n    return implementation()"
+        template_mock = MagicMock()
+        template_mock.render.return_value = "def complete_tool():\\n    # Template code\\n    return implementation()"
+        engine.get_template.return_value = template_mock
         return engine
 
     @pytest.fixture
@@ -42,40 +44,44 @@ class TestImplementationInjector:
 
     def test_inject_success(self, injector, template_engine, tool_spec):
         """Test successful injection of implementation code."""
-        generated_code = "def implementation():\n    return 'Hello, World!'"
+        generated_code = "def implementation():\\n    return 'Hello, World!'"
 
         # Call the method
         result = injector.inject(generated_code, tool_spec)
 
-        # Check that the template engine was called with the correct parameters
-        template_engine.render.assert_called_once()
-        args, kwargs = template_engine.render.call_args
-        assert args[0] == "tool_template.j2"  # Default template
-
-        # The template_data is passed directly, not as a named parameter
-        assert len(args) >= 2
-        template_data = args[1] if len(args) >= 2 else kwargs.get("template_data", {})
+        # Check that the template engine was called correctly
+        template_engine.get_template.assert_called_once_with("tool_template.j2")
+        
+        # Get the template mock and check it was called to render
+        template_mock = template_engine.get_template.return_value
+        template_mock.render.assert_called_once()
+        
+        # Get the render call args to check template_data
+        args, kwargs = template_mock.render.call_args
+        template_data = args[0] if args else kwargs
         assert "implementation" in template_data
         assert template_data["implementation"] == generated_code
         assert template_data["name"] == tool_spec.name
 
         # Check the result
-        assert result == "def complete_tool():\n    # Template code\n    return implementation()"
+        assert result == "def complete_tool():\\n    # Template code\\n    return implementation()"
 
     def test_inject_with_custom_template(self, injector, template_engine, tool_spec):
         """Test injection with a custom template."""
-        generated_code = "def implementation():\n    return 'Hello, World!'"
+        generated_code = "def implementation():\\n    return 'Hello, World!'"
 
         # Call the method with a custom template
         result = injector.inject_with_custom_template(generated_code, tool_spec, "custom_template.py.j2")
 
         # Check that the template engine was called with the custom template
-        template_engine.render.assert_called_once()
-        args, kwargs = template_engine.render.call_args
-        assert args[0] == "custom_template.py.j2"
+        template_engine.get_template.assert_called_once_with("custom_template.py.j2")
+        
+        # Get the template mock and check it was called to render
+        template_mock = template_engine.get_template.return_value
+        template_mock.render.assert_called_once()
 
         # Check the result
-        assert result == "def complete_tool():\n    # Template code\n    return implementation()"
+        assert result == "def complete_tool():\\n    # Template code\\n    return implementation()"
 
     def test_inject_empty_code(self, injector, tool_spec):
         """Test injection with empty generated code."""
@@ -88,10 +94,10 @@ class TestImplementationInjector:
 
     def test_inject_template_error(self, injector, template_engine, tool_spec):
         """Test injection with template rendering error."""
-        generated_code = "def implementation():\n    return 'Hello, World!'"
+        generated_code = "def implementation():\\n    return 'Hello, World!'"
 
         # Configure the template engine to raise an exception
-        template_engine.render.side_effect = Exception("Template rendering failed")
+        template_engine.get_template.side_effect = Exception("Template rendering failed")
 
         # Call the method and expect an exception
         with pytest.raises(RuntimeError) as excinfo:
@@ -103,10 +109,10 @@ class TestImplementationInjector:
 
     def test_inject_with_custom_template_error(self, injector, template_engine, tool_spec):
         """Test injection with custom template rendering error."""
-        generated_code = "def implementation():\n    return 'Hello, World!'"
+        generated_code = "def implementation():\\n    return 'Hello, World!'"
 
         # Configure the template engine to raise an exception
-        template_engine.render.side_effect = Exception("Template rendering failed")
+        template_engine.get_template.side_effect = Exception("Template rendering failed")
 
         # Call the method and expect an exception
         with pytest.raises(RuntimeError) as excinfo:

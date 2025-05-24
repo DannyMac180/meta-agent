@@ -237,8 +237,31 @@ async def test_reviewer_agent_run():
 # --- ToolDesignerAgent Tests ---
 
 @pytest.mark.asyncio
-async def test_tool_designer_generate_tool_websearch():
+async def test_tool_designer_generate_tool_websearch(monkeypatch):
     """Test ToolDesignerAgent.design_tool_with_llm for WebSearchTool."""
+    # Mock the LLM service to return valid code instead of relying on external APIs
+    from meta_agent.services.llm_service import LLMService
+    
+    async def mock_generate_code(self, prompt, context=None):
+        # Return valid Python code that should pass validation
+        return """
+def web_search(query: str) -> list:
+    \"\"\"Search the web for the given query.\"\"\"
+    import requests
+    # Mock implementation
+    if not query:
+        raise ValueError("Query cannot be empty")
+    
+    # Simulated web search results
+    results = [
+        {"title": "Result 1", "url": "https://example.com/1", "description": "Description 1"},
+        {"title": "Result 2", "url": "https://example.com/2", "description": "Description 2"}
+    ]
+    return results
+"""
+    
+    monkeypatch.setattr(LLMService, "generate_code", mock_generate_code)
+    
     agent = ToolDesignerAgent()
     # Proper specification format
     spec_search = {

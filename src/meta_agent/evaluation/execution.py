@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from meta_agent.sandbox.sandbox_manager import SandboxManager
+from meta_agent.sandbox.sandbox_manager import SandboxManager, SandboxExecutionError
 
 
 @dataclass

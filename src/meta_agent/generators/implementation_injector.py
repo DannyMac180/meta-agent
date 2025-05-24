@@ -66,7 +66,8 @@ class ImplementationInjector:
         try:
             # Render the template with the data
             self.logger.debug("Rendering tool template")
-            complete_tool_code = self.template_engine.render("tool_template.j2", template_data)
+            template = self.template_engine.get_template("tool_template.j2")
+            complete_tool_code = template.render(template_data)
             
             self.logger.info("Implementation injected successfully")
             return complete_tool_code
@@ -116,7 +117,8 @@ class ImplementationInjector:
         try:
             # Render the custom template with the data
             self.logger.debug(f"Rendering custom template: {template_name}")
-            complete_tool_code = self.template_engine.render(template_name, template_data)
+            template = self.template_engine.get_template(template_name)
+            complete_tool_code = template.render(template_data)
             
             self.logger.info("Implementation injected successfully with custom template")
             return complete_tool_code
