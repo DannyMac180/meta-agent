@@ -28,7 +28,7 @@ class ResultCollectionModule:
     def execute_and_collect(self, path: Path, timeout: int = 60) -> CollectionResult:
         """Run tests via the execution module and gather outputs."""
         start = time.perf_counter()
-        result = self.execution_module.run_tests(path, timeout)
+        result = self.execution_module.run_tests(path, timeout=timeout)
         end = time.perf_counter()
         return CollectionResult(
             exit_code=result.exit_code,
