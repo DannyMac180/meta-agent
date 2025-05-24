@@ -17,19 +17,19 @@
 Test with both valid and intentionally broken agent code. Verify all issues are correctly detected and reported. Ensure sandbox security during execution.
 
 # Subtasks:
-## 1. Design Modular Architecture [pending]
+## 1. Design Modular Architecture [done]
 ### Dependencies: None
 ### Description: Define clear module boundaries for code execution, result collection, and reporting within the evaluation harness.
 ### Details:
 Create an architectural diagram and documentation outlining the responsibilities and interfaces of each module.
 
-## 2. Implement Code Execution Module [pending]
+## 2. Implement Code Execution Module [done]
 ### Dependencies: 6.1
 ### Description: Develop the module responsible for securely executing code within a sandboxed environment.
 ### Details:
-Ensure the module can accept code snippets, execute them in isolation, and handle timeouts or resource limits. Refer to the evaluation_harness_architecture.md for more details.
+Ensure the module can accept code snippets, execute them in isolation, and handle timeouts or resource limits.
 
-## 3. Implement Result Collection Module [pending]
+## 3. Implement Result Collection Module [done]
 ### Dependencies: 6.2
 ### Description: Develop the module that gathers outputs, errors, and execution metadata from the code execution module.
 ### Details:
