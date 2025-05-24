@@ -6,9 +6,8 @@ of generating tool implementation code using Large Language Models (LLMs).
 """
 
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
-from ..models.validation_result import ValidationResult
 
 
 class LLMCodeGenerator:

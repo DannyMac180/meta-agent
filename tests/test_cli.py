@@ -1,7 +1,6 @@
 import pytest
 import json
 import yaml
-from pathlib import Path
 from click.testing import CliRunner
 
 from meta_agent.cli.main import cli

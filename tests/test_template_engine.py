@@ -1,6 +1,4 @@
-import pytest
 from meta_agent.template_engine import TemplateEngine, validate_agent_code
-import tempfile
 import os
 
 def test_assemble_and_validate_default():

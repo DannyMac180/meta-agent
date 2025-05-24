@@ -1,7 +1,6 @@
 import pytest
 import json
 import yaml
-from pathlib import Path
 from pydantic import ValidationError
 
 from meta_agent.models.spec_schema import SpecSchema

@@ -11,7 +11,7 @@ from unittest.mock import patch, AsyncMock
 from meta_agent.orchestrator import MetaAgentOrchestrator
 from meta_agent.planning_engine import PlanningEngine
 from meta_agent.sub_agent_manager import SubAgentManager
-from meta_agent.registry import ToolRegistry, GeneratedTool
+from meta_agent.registry import ToolRegistry
 from meta_agent.tool_designer import ToolDesignerAgent
 
 
@@ -66,9 +66,9 @@ def components(tool_registry, mock_sandbox_manager):
     sub_agent_manager = SubAgentManager()
     tool_designer_agent = ToolDesignerAgent()
 
-    # Patch the SandboxManager constructor to return our mock
+    # Patch the SandboxManager - it might be imported conditionally
     with patch(
-        "meta_agent.sub_agent_manager.SandboxManager", return_value=mock_sandbox_manager
+        "meta_agent.sandbox.sandbox_manager.SandboxManager", return_value=mock_sandbox_manager
     ):
         yield {
             "planning_engine": planning_engine,

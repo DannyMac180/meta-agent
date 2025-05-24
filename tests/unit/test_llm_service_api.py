@@ -3,8 +3,7 @@ Unit tests for the LLMService _call_llm_api method.
 """
 
 import pytest
-import json
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch, AsyncMock
 
 import aiohttp
 import asyncio
@@ -90,7 +89,7 @@ class TestLLMServiceAPI:
                 "tool_purpose": "Test function",
                 "constraints": ["No side effects"],
             }
-            result = await service._call_llm_api("Generate a test function", context)
+            await service._call_llm_api("Generate a test function", context)
 
             # Check the payload
             args, kwargs = mock_session.post.call_args

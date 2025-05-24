@@ -6,7 +6,7 @@ from enum import Enum
 import re
 from typing import Awaitable, Callable, List
 
-from pydantic import BaseModel, Field, field_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator
 
 
 class GuardrailAction(str, Enum):

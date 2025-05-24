@@ -6,7 +6,6 @@ import logging
 import inspect
 from typing import Dict, Any, Optional, Type
 import tempfile
-import os
 from pathlib import Path
 
 try:
@@ -14,7 +13,7 @@ try:
 except (ImportError, AttributeError):
     logging.warning("Hosted tools unavailable: patching stubs into 'agents' package.")
 
-    import sys, types, agents as _agents_pkg  # type: ignore
+    import agents as _agents_pkg  # type: ignore
 
     class _StubHostedTool:  # pylint: disable=too-few-public-methods
         """Minimal stand‑in when WebSearchTool / FileSearchTool aren't shipped.
@@ -31,27 +30,16 @@ except (ImportError, AttributeError):
     FileSearchTool = _StubHostedTool()  # type: ignore
     _agents_pkg.WebSearchTool = WebSearchTool  # type: ignore
     _agents_pkg.FileSearchTool = FileSearchTool  # type: ignore
-    from agents import Agent, Tool, Runner
+    from agents import Agent
 
 from meta_agent.models.generated_tool import GeneratedTool
-from meta_agent.template_engine import TemplateEngine
 from meta_agent.generators.code_validator import CodeValidator
-from meta_agent.sandbox.sandbox_manager import SandboxManager
-from meta_agent.models.validation_result import ValidationResult
-import ast
-import subprocess
-import tempfile
-import os
-import json
-import re
 import time
 
 logger = logging.getLogger(__name__)
 
 # --- Imports for Agent Logic ---
-from agents import Agent, Tool, Runner, RunConfig
-from agents.run import RunResult
-from agents import function_tool  # Added for decorator
+from agents import Agent
 
 # --- Logging Setup ---
 import logging
@@ -413,7 +401,7 @@ def get_tool_instance():
 
                     # Create a test script that imports and uses the tool
                     test_script_path = temp_dir_path / "test_tool.py"
-                    test_script = f"""
+                    test_script = """
 import tool
 import logging
 
@@ -424,10 +412,10 @@ try:
     tool_instance = tool.get_tool_instance()
     # Try to call the run method with a test value
     result = tool_instance.run("test_input")
-    print(f"Tool execution successful. Result: {{result}}")
+    print(f"Tool execution successful. Result: {result}")
     exit(0)
 except Exception as e:
-    print(f"Tool execution failed: {{e}}")
+    print(f"Tool execution failed: {e}")
     exit(1)
 """
                     with open(test_script_path, "w") as f:

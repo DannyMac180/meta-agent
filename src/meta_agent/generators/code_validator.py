@@ -8,7 +8,7 @@ for syntax errors, security issues, and compliance with tool specifications.
 import ast
 import logging
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Set
 
 from ..models.validation_result import ValidationResult
 

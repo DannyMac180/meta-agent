@@ -1,6 +1,5 @@
 import pytest
 import json
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import meta_agent.sandbox.sandbox_manager as sm

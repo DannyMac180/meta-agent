@@ -1,6 +1,4 @@
 
-import sys
-import time
 import numpy as np # Test dependency
 
 print('Hello from sandbox!')

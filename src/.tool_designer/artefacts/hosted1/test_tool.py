@@ -1,5 +1,4 @@
 from tool import search_web, WebSearchTool
-import pytest
 
 def test_search_web():
     test_tool_instance = WebSearchTool()

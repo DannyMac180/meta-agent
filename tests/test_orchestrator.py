@@ -4,10 +4,9 @@ Unit tests for the MetaAgentOrchestrator.
 
 import pytest
 import logging
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 
 from src.meta_agent.orchestrator import MetaAgentOrchestrator
-from src.meta_agent.models.spec_schema import SpecSchema 
 from src.meta_agent.planning_engine import PlanningEngine 
 from src.meta_agent.sub_agent_manager import SubAgentManager 
 

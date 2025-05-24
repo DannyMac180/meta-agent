@@ -3,7 +3,7 @@ Unit tests for the ImplementationInjector class.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from meta_agent.generators.implementation_injector import ImplementationInjector
 

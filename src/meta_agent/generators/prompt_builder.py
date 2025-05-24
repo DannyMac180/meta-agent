@@ -6,7 +6,7 @@ for LLMs to generate tool implementation code based on specifications.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class PromptBuilder:

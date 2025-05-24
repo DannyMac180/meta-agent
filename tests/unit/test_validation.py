@@ -4,9 +4,7 @@ Unit tests for the validation module.
 
 import os
 import pytest
-import tempfile
 import subprocess
-import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock, patch, mock_open
 import logging
 

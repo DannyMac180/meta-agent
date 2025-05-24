@@ -6,7 +6,7 @@ generated implementation code into tool templates.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ImplementationInjector:

@@ -1,6 +1,4 @@
 import pytest
-import asyncio
-import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from meta_agent.generators.llm_code_generator import LLMCodeGenerator
@@ -9,8 +7,6 @@ from meta_agent.generators.context_builder import ContextBuilder
 from meta_agent.generators.code_validator import CodeValidator
 from meta_agent.generators.implementation_injector import ImplementationInjector
 from meta_agent.generators.fallback_manager import FallbackManager
-from meta_agent.generators.prompt_templates import PROMPT_TEMPLATES
-from meta_agent.services.llm_service import LLMService
 from meta_agent.models.validation_result import ValidationResult
 
 
