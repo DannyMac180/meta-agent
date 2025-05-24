@@ -1,18 +1,21 @@
 import asyncio
-import inspect
 import pytest
-
 
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers", "asyncio: mark a test as running with asyncio"
+        "markers", "asyncio: mark test as running in an event loop"
     )
 
 
-@pytest.hookimpl(tryfirst=True)
 def pytest_pyfunc_call(pyfuncitem):
-    test_func = pyfuncitem.obj
-    if inspect.iscoroutinefunction(test_func):
-        asyncio.run(test_func(**pyfuncitem.funcargs))
+    testfunc = pyfuncitem.obj
+    if asyncio.iscoroutinefunction(testfunc):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(pyfuncitem.obj(**pyfuncitem.funcargs))
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
         return True
     return None

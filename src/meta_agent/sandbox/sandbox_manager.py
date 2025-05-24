@@ -72,8 +72,6 @@ class SandboxManager:
         cpu_shares: int,
     ) -> None:
         """Validate inputs and resource limits for sandbox execution."""
-        if not code_directory.is_dir():
-            raise FileNotFoundError(f"Code directory not found: {code_directory}")
 
         if not command or any(
             not isinstance(c, str) or any(x in c for x in [";", "&", "|", "`", "\n"])
@@ -115,6 +113,7 @@ class SandboxManager:
             SandboxExecutionError: If there's an error running the container or execution times out.
             FileNotFoundError: If the code_directory doesn't exist.
         """
+        # Validate inputs before launching the container
         self._validate_inputs(
             code_directory=code_directory,
             command=command,
