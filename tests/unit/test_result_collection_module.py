@@ -37,3 +37,14 @@ def test_execute_and_collect_propagates_error(monkeypatch, tmp_path):
     module = ResultCollectionModule(fake_exec)
     with pytest.raises(rc_mod.SandboxExecutionError):
         module.execute_and_collect(tmp_path)
+
+
+def test_execute_and_collect_logs(monkeypatch, tmp_path, caplog):
+    fake_exec = MagicMock()
+    fake_exec.run_tests.return_value = ExecutionResult(0, "out", "err")
+    module = ResultCollectionModule(fake_exec)
+    with caplog.at_level("INFO", logger="meta_agent.evaluation.result_collection"):
+        module.execute_and_collect(tmp_path)
+    assert any(
+        "Executing and collecting results" in r.getMessage() for r in caplog.records
+    )

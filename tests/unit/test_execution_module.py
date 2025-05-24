@@ -38,3 +38,12 @@ def test_run_tests_propagates_error(monkeypatch, tmp_path):
     module = ExecutionModule(fake_manager)
     with pytest.raises(exec_mod.SandboxExecutionError):
         module.run_tests(tmp_path)
+
+
+def test_run_tests_logs(monkeypatch, tmp_path, caplog):
+    fake_manager = MagicMock()
+    fake_manager.run_code_in_sandbox.return_value = (0, "out", "err")
+    module = ExecutionModule(fake_manager)
+    with caplog.at_level("INFO", logger="meta_agent.evaluation.execution"):
+        module.run_tests(tmp_path)
+    assert any("Running tests in" in rec.getMessage() for rec in caplog.records)
