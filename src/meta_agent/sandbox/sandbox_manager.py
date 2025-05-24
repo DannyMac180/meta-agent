@@ -115,8 +115,12 @@ class SandboxManager:
             SandboxExecutionError: If there's an error running the container or execution times out.
             FileNotFoundError: If the code_directory doesn't exist.
         """
-        if not code_directory.is_dir():
-            raise FileNotFoundError(f"Code directory not found: {code_directory}")
+        self._validate_inputs(
+            code_directory=code_directory,
+            command=command,
+            mem_limit=mem_limit,
+            cpu_shares=cpu_shares,
+        )
 
         container_name = f"meta-agent-sandbox-run-{os.urandom(4).hex()}"
 
