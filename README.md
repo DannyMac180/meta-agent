@@ -33,7 +33,7 @@ Generate production-ready agents in minutes, with built-in validation, sandboxin
 *   **Agent planner (Meta Agent):** Decomposes the specification, orchestrates sub-agents, and assembles the final artifact. It acts as the central logic hub, enforcing consistency and versioning.
 *   **Tool Designer sub-agent:** Generates runnable Python code for each required tool and its unit tests, ensuring tools are functional from day one.
 *   **Guardrail Designer sub-agent:** Creates validation logic (Pydantic, regex, policy checks) and guardrail tests, embedding safety and compliance early to prevent bad outputs. See [docs/guardrail_designer_guide.md](docs/guardrail_designer_guide.md) for details.
-*   **Automated evaluation harness:** Compiles generated code, executes unit tests, and surfaces results, guaranteeing that the agent "actually runs."
+*   **Automated evaluation harness:** Compiles generated code, executes unit tests, and surfaces results, guaranteeing that the agent "actually runs." See [docs/evaluation_harness_architecture.md](docs/evaluation_harness_architecture.md) for the design.
 *   **Artifact bundle & dependency lock:** Outputs `agent.py`, `tests/`, `requirements.txt`, and an optional diagram. This allows for one-command install and run, ensuring reproducible builds.
 *   **Cost & trace telemetry:** Logs token usage, latency, and spend per generation, helping to manage cloud costs and aid optimization.
 
