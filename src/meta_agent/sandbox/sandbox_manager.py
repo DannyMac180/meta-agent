@@ -73,6 +73,9 @@ class SandboxManager:
     ) -> None:
         """Validate inputs and resource limits for sandbox execution."""
 
+        if not code_directory.exists():
+            raise FileNotFoundError(f"Code directory not found: {code_directory}")
+
         if not command or any(
             not isinstance(c, str) or any(x in c for x in [";", "&", "|", "`", "\n"])
             for c in command
@@ -202,14 +205,20 @@ class SandboxManager:
             logger.info("Sandbox execution finished with exit code: %s", exit_code)
             return exit_code, stdout, stderr
 
+        except docker.errors.APIError as e:
+            msg = str(e).lower()
+            if "not found" in msg or "no image" in msg:
+                logger.error("Docker image '%s' not found.", image_name)
+                raise SandboxExecutionError(
+                    f"Sandbox image '{image_name}' not found. Please build it first."
+                ) from e
+            logger.error("Error running Docker container: %s", e)
+            raise SandboxExecutionError(f"Failed to run sandbox container: {e}") from e
         except docker.errors.ImageNotFound:
             logger.error("Docker image '%s' not found.", image_name)
             raise SandboxExecutionError(
                 f"Sandbox image '{image_name}' not found. Please build it first."
             )
-        except docker.errors.APIError as e:
-            logger.error("Error running Docker container: %s", e)
-            raise SandboxExecutionError(f"Failed to run sandbox container: {e}") from e
         finally:
             # Ensure container is removed after execution
             if container:
