@@ -5,6 +5,8 @@ import html
 import json
 from typing import Iterable, List
 
+import logging
+
 from meta_agent.evaluation.result_collection import CollectionResult
 
 
@@ -22,8 +24,12 @@ class SummaryReport:
 class ReportingModule:
     """Format :class:`CollectionResult` objects for display."""
 
+    def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
+
     def summarize(self, result: CollectionResult) -> SummaryReport:
         """Create a :class:`SummaryReport` from a collection result."""
+        self.logger.debug("Summarizing result with exit code %s", result.exit_code)
         return SummaryReport(
             exit_code=result.exit_code,
             passed=result.exit_code == 0,
@@ -34,7 +40,9 @@ class ReportingModule:
 
     def aggregate(self, results: Iterable[CollectionResult]) -> List[SummaryReport]:
         """Summarize multiple results."""
-        return [self.summarize(r) for r in results]
+        result_list = list(results)
+        self.logger.debug("Aggregating %d results", len(result_list))
+        return [self.summarize(r) for r in result_list]
 
     def to_text(self, report: SummaryReport) -> str:
         """Return a human‑readable text report."""
@@ -64,8 +72,11 @@ class ReportingModule:
             "</body></html>"
         )
 
-    def generate_report(self, result: CollectionResult, output_format: str = "text") -> str:
+    def generate_report(
+        self, result: CollectionResult, output_format: str = "text"
+    ) -> str:
         """Generate a formatted report for a result."""
+        self.logger.info("Generating %s report", output_format)
         summary = self.summarize(result)
         if output_format == "json":
             return self.to_json(summary)
