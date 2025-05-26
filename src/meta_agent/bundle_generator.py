@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Mapping, Sequence, Optional, Any
 
 from .models import BundleMetadata
+from .git_utils import GitManager
 from .__about__ import __version__
 
 
@@ -32,6 +33,9 @@ class BundleGenerator:
         templates: Optional[Mapping[str, str]] = None,
         metadata_fields: Optional[Mapping[str, Any]] = None,
         custom_metadata: Optional[Mapping[str, Any]] = None,
+        *,
+        init_git: bool = False,
+        git_remote: Optional[str] = None,
     ) -> BundleMetadata:
         """Generate bundle files and return metadata."""
 
@@ -73,7 +77,27 @@ class BundleGenerator:
         metadata.custom["checksums"] = checksums
         with open(self.bundle_dir / "bundle.json", "w", encoding="utf-8") as f:
             dump_json = (
-                metadata.model_dump_json() if hasattr(metadata, "model_dump_json") else metadata.json()
+                metadata.model_dump_json()  # type: ignore[attr-defined]
+                if hasattr(metadata, "model_dump_json")
+                else metadata.json()  # type: ignore[attr-defined]
             )
             json.dump(json.loads(dump_json), f, indent=2)
+
+        if init_git or git_remote:
+            git = GitManager(self.bundle_dir)
+            git.init()
+            commit_sha = git.commit_all()
+            metadata.custom["git_commit"] = commit_sha
+            if git_remote:
+                git.add_remote("origin", git_remote)
+                git.push("origin", "main")
+            # update bundle.json with git info
+            with open(self.bundle_dir / "bundle.json", "w", encoding="utf-8") as f:
+                dump_json = (
+                    metadata.model_dump_json()  # type: ignore[attr-defined]
+                    if hasattr(metadata, "model_dump_json")
+                    else metadata.json()  # type: ignore[attr-defined]
+                )
+                json.dump(json.loads(dump_json), f, indent=2)
+
         return metadata
