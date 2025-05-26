@@ -22,7 +22,8 @@ Additional files may be placed under `tests/`, `guardrails/` or `traces/` but th
 The `bundle.json` file describes the bundle. The schema is versioned so that new
 fields can be introduced without breaking existing tooling. The `BundleGenerator`
 allows callers to inject additional metadata fields when creating a bundle, which
-will be included in this file.
+will be included in this file. The `meta_agent_version` field is populated from
+the running package version unless you supply a value using `metadata_fields`.
 
 ```json
 {

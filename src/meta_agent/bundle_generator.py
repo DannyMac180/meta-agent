@@ -63,12 +63,17 @@ class BundleGenerator:
         for rel, content in (templates or {}).items():
             checksums[str(rel)] = self._write_file(rel, content)
 
-        metadata_fields = metadata_fields or {}
+        metadata_fields = dict(metadata_fields or {})
         custom_metadata = custom_metadata or {}
 
-        metadata = BundleMetadata(meta_agent_version=__version__, **metadata_fields)
+        version = metadata_fields.pop("meta_agent_version", __version__)
+        metadata = BundleMetadata(meta_agent_version=version, **metadata_fields)
+
         metadata.custom.update(custom_metadata)
         metadata.custom["checksums"] = checksums
         with open(self.bundle_dir / "bundle.json", "w", encoding="utf-8") as f:
-            json.dump(json.loads(metadata.model_dump_json()), f, indent=2)
+            dump_json = (
+                metadata.model_dump_json() if hasattr(metadata, "model_dump_json") else metadata.json()
+            )
+            json.dump(json.loads(dump_json), f, indent=2)
         return metadata
