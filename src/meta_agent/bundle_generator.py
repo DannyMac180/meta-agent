@@ -68,6 +68,7 @@ class BundleGenerator:
 
         version = metadata_fields.pop("meta_agent_version", __version__)
         metadata = BundleMetadata(meta_agent_version=version, **metadata_fields)
+
         metadata.custom.update(custom_metadata)
         metadata.custom["checksums"] = checksums
         with open(self.bundle_dir / "bundle.json", "w", encoding="utf-8") as f:
