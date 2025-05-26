@@ -1,6 +1,7 @@
 import json
 import hashlib
 from pathlib import Path
+import subprocess
 
 from meta_agent.bundle_generator import BundleGenerator
 from meta_agent.models import BUNDLE_SCHEMA_VERSION
@@ -56,3 +57,25 @@ def test_bundle_generator_custom_metadata(tmp_path: Path) -> None:
     assert data["meta_agent_version"] == "1.2.3"
     assert data["extra"] == "field"
     assert data["custom"]["tag"] == "example"
+
+
+def test_bundle_generator_git(tmp_path: Path) -> None:
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", str(remote)], check=True)
+
+    repo = tmp_path / "repo"
+    gen = BundleGenerator(repo)
+    gen.generate(agent_code="print('x')", init_git=True, git_remote=str(remote))
+
+    assert (repo / ".git").exists()
+    commit = subprocess.check_output(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+    ).strip()
+    with open(repo / "bundle.json", encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["custom"]["git_commit"] == commit
+
+    log = subprocess.check_output(
+        ["git", "-C", str(remote), "log", "--oneline"], text=True
+    )
+    assert commit[:7] in log
