@@ -21,7 +21,7 @@ class DependencyManager:
                 part = classifier.split("::")[-1].strip()
                 return part.removesuffix("License").strip()
         return ""
-
+      
     def _collect_recursive(
         self,
         package: str,
@@ -44,6 +44,7 @@ class DependencyManager:
         version = dist.version
         pinned[name] = version
         licenses[name] = self._extract_license(dist)
+
         if include_hashes and hashes is not None:
             # Use hash of RECORD contents if available, else hash of version
             record = dist.read_text("RECORD")
