@@ -45,9 +45,17 @@ def test_bundle_validator_unpinned_requirement(tmp_path: Path) -> None:
 
 def test_bundle_validator_test_failure(tmp_path: Path) -> None:
     bundle_dir = create_sample_bundle(tmp_path)
-    (bundle_dir / "tests" / "test_main.py").write_text(
-        "def test_fail():\n    assert False"
-    )
+    failing_test = bundle_dir / "tests" / "test_main.py"
+    failing_test.write_text("def test_fail():\n    assert False")
+    # update checksum so validation reaches test execution
+    import hashlib
+    import json
+
+    bundle_file = bundle_dir / "bundle.json"
+    data = json.loads(bundle_file.read_text())
+    digest = hashlib.sha256(failing_test.read_bytes()).hexdigest()
+    data["custom"]["checksums"]["tests/test_main.py"] = digest
+    bundle_file.write_text(json.dumps(data))
     validator = BundleValidator(bundle_dir)
     result = validator.validate()
     assert result.success is False
