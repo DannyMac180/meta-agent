@@ -62,3 +62,22 @@ class GitManager:
 
     def push(self, remote: str = "origin", branch: str = "main") -> None:
         self._run("push", remote, f"HEAD:{branch}")
+        # If the remote is a local path, set its HEAD to the pushed branch so
+        # commands like ``git log`` default to the new branch.
+        remote_url = self._run("remote", "get-url", remote).stdout.strip()
+        remote_path = Path(remote_url)
+        if remote_path.exists():
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(remote_path),
+                    "symbolic-ref",
+                    "HEAD",
+                    f"refs/heads/{branch}",
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
