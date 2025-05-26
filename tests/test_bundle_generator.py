@@ -8,7 +8,7 @@ from meta_agent.models import BUNDLE_SCHEMA_VERSION
 
 def test_bundle_generator_creates_files(tmp_path: Path) -> None:
     gen = BundleGenerator(tmp_path)
-    metadata = gen.generate(
+    gen.generate(
         agent_code="print('agent')",
         tests={"test_sample.py": "def test_sample():\n    assert True"},
         requirements=["foo==1.0"],
@@ -40,3 +40,19 @@ def test_bundle_generator_templates(tmp_path: Path) -> None:
     assert (tmp_path / "extra.txt").exists()
     with open(tmp_path / "extra.txt", encoding="utf-8") as f:
         assert f.read() == "hello"
+
+
+def test_bundle_generator_custom_metadata(tmp_path: Path) -> None:
+    gen = BundleGenerator(tmp_path)
+    gen.generate(
+        agent_code="print('agent')",
+        metadata_fields={"meta_agent_version": "1.2.3", "extra": "field"},
+        custom_metadata={"tag": "example"},
+    )
+
+    with open(tmp_path / "bundle.json", encoding="utf-8") as f:
+        data = json.load(f)
+
+    assert data["meta_agent_version"] == "1.2.3"
+    assert data["extra"] == "field"
+    assert data["custom"]["tag"] == "example"

@@ -19,8 +19,11 @@ Additional files may be placed under `tests/`, `guardrails/` or `traces/` but th
 
 ## Metadata Schema
 
-The `bundle.json` file describes the bundle.  The schema is versioned so that new
-fields can be introduced without breaking existing tooling.
+The `bundle.json` file describes the bundle. The schema is versioned so that new
+fields can be introduced without breaking existing tooling. The `BundleGenerator`
+allows callers to inject additional metadata fields when creating a bundle, which
+will be included in this file. The `meta_agent_version` field is populated from
+the running package version unless you supply a value using `metadata_fields`.
 
 ```json
 {
@@ -35,8 +38,11 @@ fields can be introduced without breaking existing tooling.
 - `created_at` — ISO‑8601 timestamp of when the bundle was generated.
 - `meta_agent_version` — version of Meta Agent that produced the bundle.
 - `custom` — arbitrary key/value pairs for extensibility. Unknown top-level fields
-  are allowed and preserved.
+  are allowed and preserved. Use `custom_metadata` when invoking `BundleGenerator`
+  to populate this section.
 
 Custom fields may also be added at the top level by future components. Tools
 reading the metadata should ignore unrecognised fields while still enforcing the
 presence of `schema_version`.
+You can supply additional top-level keys using the `metadata_fields` argument
+when generating a bundle.

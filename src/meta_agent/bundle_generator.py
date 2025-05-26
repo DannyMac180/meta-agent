@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
-from typing import Mapping, Sequence, Optional
+from typing import Mapping, Sequence, Optional, Any
 
 from .models import BundleMetadata
 from .__about__ import __version__
@@ -30,6 +30,8 @@ class BundleGenerator:
         readme: str = "",
         guardrails_manifest: str = "",
         templates: Optional[Mapping[str, str]] = None,
+        metadata_fields: Optional[Mapping[str, Any]] = None,
+        custom_metadata: Optional[Mapping[str, Any]] = None,
     ) -> BundleMetadata:
         """Generate bundle files and return metadata."""
 
@@ -44,7 +46,9 @@ class BundleGenerator:
             checksums[f"tests/{name}"] = self._write_file(Path("tests") / name, content)
 
         req_content = "\n".join(requirements or [])
-        checksums["requirements.txt"] = self._write_file("requirements.txt", req_content)
+        checksums["requirements.txt"] = self._write_file(
+            "requirements.txt", req_content
+        )
 
         checksums["README.md"] = self._write_file("README.md", readme)
 
@@ -59,8 +63,17 @@ class BundleGenerator:
         for rel, content in (templates or {}).items():
             checksums[str(rel)] = self._write_file(rel, content)
 
-        metadata = BundleMetadata(meta_agent_version=__version__)
+        metadata_fields = dict(metadata_fields or {})
+        custom_metadata = custom_metadata or {}
+
+        version = metadata_fields.pop("meta_agent_version", __version__)
+        metadata = BundleMetadata(meta_agent_version=version, **metadata_fields)
+
+        metadata.custom.update(custom_metadata)
         metadata.custom["checksums"] = checksums
         with open(self.bundle_dir / "bundle.json", "w", encoding="utf-8") as f:
-            json.dump(json.loads(metadata.model_dump_json()), f, indent=2)
+            dump_json = (
+                metadata.model_dump_json() if hasattr(metadata, "model_dump_json") else metadata.json()
+            )
+            json.dump(json.loads(dump_json), f, indent=2)
         return metadata
