@@ -2,6 +2,7 @@ import docker
 import os
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Tuple
 
@@ -53,13 +54,14 @@ class SandboxManager:
                 "Successfully loaded seccomp profile from %s", _seccomp_profile_path
             )
         except FileNotFoundError:
-            logger.warning(
-                "Seccomp profile not found at %s. Running without seccomp.",
-                _seccomp_profile_path,
-            )
+            msg = f"Seccomp profile not found at {_seccomp_profile_path}. Running without seccomp."
+            print(msg, file=sys.stderr)
+            logger.warning(msg)
             self.seccomp_profile = None
         except json.JSONDecodeError as e:
-            logger.error("Error decoding seccomp profile JSON: %s", e)
+            msg = f"Error decoding seccomp profile JSON: {e}"
+            print(msg, file=sys.stderr)
+            logger.error(msg)
             self.seccomp_profile = None
             # Optionally raise an error if seccomp is critical
             # raise ValueError("Invalid seccomp profile JSON") from e
@@ -74,7 +76,9 @@ class SandboxManager:
         """Validate inputs and resource limits for sandbox execution."""
 
         if not code_directory.exists():
-            raise FileNotFoundError(f"Code directory not found: {code_directory}")
+            raise SandboxExecutionError(
+                f"Failed to run sandbox container: code directory not found: {code_directory}"
+            )
 
         if not command or any(
             not isinstance(c, str) or any(x in c for x in [";", "&", "|", "`", "\n"])
@@ -180,11 +184,11 @@ class SandboxManager:
                 # Ensure container is stopped and removed on timeout
                 try:
                     container.stop(timeout=5)
-                except docker.errors.APIError as stop_err:
+                except Exception as stop_err:
                     logger.warning("Error stopping timed-out container: %s", stop_err)
                 try:
                     container.remove(force=True)
-                except docker.errors.APIError as remove_err:
+                except Exception as remove_err:
                     logger.warning("Error removing timed-out container: %s", remove_err)
                 raise SandboxExecutionError(
                     f"Execution timed out after {timeout} seconds"
@@ -205,32 +209,23 @@ class SandboxManager:
             logger.info("Sandbox execution finished with exit code: %s", exit_code)
             return exit_code, stdout, stderr
 
-        except docker.errors.APIError as e:
+        except Exception as e:
             msg = str(e).lower()
-            if "not found" in msg or "no image" in msg:
+            if "image" in msg and ("not found" in msg or "no image" in msg):
                 logger.error("Docker image '%s' not found.", image_name)
                 raise SandboxExecutionError(
                     f"Sandbox image '{image_name}' not found. Please build it first."
                 ) from e
             logger.error("Error running Docker container: %s", e)
             raise SandboxExecutionError(f"Failed to run sandbox container: {e}") from e
-        except docker.errors.ImageNotFound:
-            logger.error("Docker image '%s' not found.", image_name)
-            raise SandboxExecutionError(
-                f"Sandbox image '{image_name}' not found. Please build it first."
-            )
         finally:
             # Ensure container is removed after execution
             if container:
                 try:
                     container.remove(force=True)  # Force remove in case it's stuck
                     logger.info("Removed container: %s", container_name)
-                except docker.errors.NotFound:
-                    pass  # Container already removed (e.g., on timeout)
-                except docker.errors.APIError as e:
-                    logger.warning(
-                        "Could not remove container %s: %s", container_name, e
-                    )
+                except Exception:
+                    pass  # Container already removed or failed to remove
 
 
 # Example Usage (for testing):
