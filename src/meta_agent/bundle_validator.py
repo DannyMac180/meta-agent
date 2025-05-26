@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
+
 import py_compile
 import subprocess
 from pathlib import Path
@@ -53,14 +53,11 @@ class BundleValidator:
             errors.append(f"agent.py failed to compile: {exc.msg}")
 
     def _run_tests(self, errors: List[str]) -> None:
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(self.bundle_dir)
         result = subprocess.run(
-            ["pytest", "tests", "-c", "/dev/null", "-x"],
+            ["pytest", "-x"],
             cwd=self.bundle_dir,
             capture_output=True,
             text=True,
-            env=env,
         )
         if result.returncode != 0:
             errors.append("tests failed")
