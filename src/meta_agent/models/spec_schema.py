@@ -1,4 +1,5 @@
 import json
+import os
 import yaml
 from pathlib import Path
 
@@ -56,8 +57,15 @@ class SpecSchema(BaseModel):
         """Creates a SpecSchema instance from a JSON string or file path."""
         data: Dict[str, Any]
         try:
-            if isinstance(json_input, Path) or Path(json_input).is_file():
-                file_path = Path(json_input)
+            file_path: Path | None = None
+            if isinstance(json_input, (str, Path)):
+                try:
+                    if os.path.isfile(str(json_input)):
+                        file_path = Path(json_input)
+                except OSError:
+                    file_path = None
+
+            if file_path:
                 if not file_path.exists():
                     raise FileNotFoundError(f"JSON file not found: {file_path}")
                 with file_path.open("r", encoding="utf-8") as f:
@@ -78,8 +86,15 @@ class SpecSchema(BaseModel):
         """Creates a SpecSchema instance from a YAML string or file path."""
         data: Dict[str, Any]
         try:
-            if isinstance(yaml_input, Path) or Path(yaml_input).is_file():
-                file_path = Path(yaml_input)
+            file_path: Path | None = None
+            if isinstance(yaml_input, (str, Path)):
+                try:
+                    if os.path.isfile(str(yaml_input)):
+                        file_path = Path(yaml_input)
+                except OSError:
+                    file_path = None
+
+            if file_path:
                 if not file_path.exists():
                     raise FileNotFoundError(f"YAML file not found: {file_path}")
                 with file_path.open("r", encoding="utf-8") as f:
