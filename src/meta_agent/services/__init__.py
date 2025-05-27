@@ -7,5 +7,13 @@ and provide functionality to other components of the meta_agent system.
 
 from .llm_service import LLMService
 from .guardrail_router import GuardrailModelRouter, ModelAdapter, LLMModelAdapter
+from .telemetry_client import TelemetryAPIClient, EndpointConfig
 
-__all__ = ["LLMService", "GuardrailModelRouter", "ModelAdapter", "LLMModelAdapter"]
+__all__ = [
+    "LLMService",
+    "GuardrailModelRouter",
+    "ModelAdapter",
+    "LLMModelAdapter",
+    "TelemetryAPIClient",
+    "EndpointConfig",
+]
