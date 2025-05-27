@@ -17,6 +17,7 @@ from meta_agent.planning_engine import PlanningEngine
 from meta_agent.sub_agent_manager import SubAgentManager
 from meta_agent.registry import ToolRegistry
 from meta_agent.tool_designer import ToolDesignerAgent
+from meta_agent.telemetry import TelemetryCollector
 
 # TODO: Import logging setup from utils
 
@@ -46,6 +47,7 @@ async def generate(spec_file: Path | None, spec_text: str | None):
         sys.exit(1)
 
     spec: SpecSchema | None = None
+    telemetry = TelemetryCollector()
 
     try:
         if spec_file:
@@ -111,9 +113,12 @@ async def generate(spec_file: Path | None, spec_text: str | None):
             click.echo("\nStarting agent generation orchestration...")
             # Convert Pydantic model to dict for the orchestrator
             spec_dict = spec.model_dump(exclude_unset=True)
+            telemetry.start_timer()
             results = await orchestrator.run(specification=spec_dict)
+            telemetry.stop_timer()
             click.echo("\nOrchestration finished.")
             click.echo(f"Results: {json.dumps(results, indent=2)}")
+            click.echo(telemetry.summary_line())
 
         else:
             # This case should ideally not be reached due to prior checks/errors
