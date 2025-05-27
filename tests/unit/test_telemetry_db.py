@@ -1,6 +1,6 @@
 import json
 import gzip
-from pathlib import Path
+
 from meta_agent.telemetry_db import TelemetryDB
 from meta_agent.telemetry import TelemetryCollector
 

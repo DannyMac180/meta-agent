@@ -45,3 +45,9 @@ class Response:
 
     async def text(self):
         return ""
+
+
+class ClientError(Exception):
+    """Placeholder for aiohttp.ClientError used in tests."""
+
+    pass

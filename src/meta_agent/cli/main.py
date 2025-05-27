@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env file
-
 import click
 import sys
 import yaml
@@ -20,6 +18,8 @@ from meta_agent.tool_designer import ToolDesignerAgent
 from meta_agent.telemetry import TelemetryCollector
 from meta_agent.telemetry_db import TelemetryDB
 import tempfile
+
+load_dotenv()  # Load environment variables from .env file
 
 # TODO: Import logging setup from utils
 
