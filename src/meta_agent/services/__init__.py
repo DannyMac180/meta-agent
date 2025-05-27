@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - fallback when optional deps missing
 
 from .telemetry_client import TelemetryAPIClient, EndpointConfig
 from meta_agent.telemetry import TelemetryCollector
+from meta_agent.telemetry_db import TelemetryDB
 
 __all__ = [
     "LLMService",
@@ -26,4 +27,5 @@ __all__ = [
     "TelemetryAPIClient",
     "EndpointConfig",
     "TelemetryCollector",
+    "TelemetryDB",
 ]

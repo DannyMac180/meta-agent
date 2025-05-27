@@ -1,6 +1,13 @@
-import time
+from __future__ import annotations
+
 import logging
-from typing import Dict, Optional
+import time
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Optional
+
+
+from .telemetry_db import TelemetryDB
 
 
 class TelemetryCollector:
@@ -13,7 +20,31 @@ class TelemetryCollector:
         "default": 0.01,
     }
 
-    def __init__(self, cost_cap: float = 0.5) -> None:
+    class Severity(str, Enum):
+        INFO = "info"
+        WARNING = "warning"
+        ERROR = "error"
+        CRITICAL = "critical"
+
+    class Category(str, Enum):
+        COST_CONTROL = "cost_control"
+        GUARDRAIL = "guardrail"
+        EXECUTION = "execution"
+        INTERNAL = "internal"
+
+    @dataclass
+    class Event:
+        category: "TelemetryCollector.Category"
+        severity: "TelemetryCollector.Severity"
+        message: str
+
+    def __init__(
+        self,
+        cost_cap: float = 0.5,
+        *,
+        db: TelemetryDB | None = None,
+        include_sensitive: bool = True,
+    ) -> None:
         self.cost_cap = cost_cap
         self.token_count = 0
         self.cost = 0.0
@@ -21,6 +52,30 @@ class TelemetryCollector:
         self.latency = 0.0
         self._start: Optional[float] = None
         self.logger = logging.getLogger(__name__)
+        self.db = db
+        self.include_sensitive = include_sensitive
+        self.events: List[TelemetryCollector.Event] = []
+
+    def record_event(
+        self,
+        category: "TelemetryCollector.Category",
+        message: str,
+        severity: "TelemetryCollector.Severity" = Severity.ERROR,
+    ) -> None:
+        """Record an informational or error event."""
+        self.events.append(
+            TelemetryCollector.Event(
+                category=category,
+                severity=severity,
+                message=message,
+            )
+        )
+        log = self.logger.info
+        if severity in (self.Severity.ERROR, self.Severity.CRITICAL):
+            log = self.logger.error
+        elif severity is self.Severity.WARNING:
+            log = self.logger.warning
+        log(message)
 
     # --- Timing -----------------------------------------------------
     def start_timer(self) -> None:
@@ -32,24 +87,63 @@ class TelemetryCollector:
         if self._start is not None:
             self.latency += time.perf_counter() - self._start
             self._start = None
+        if self.db:
+            self.db.record(
+                self.token_count,
+                self.cost,
+                self.latency,
+                self.guardrail_hits,
+            )
 
     # --- Usage ------------------------------------------------------
-    def add_usage(self, prompt_tokens: int, response_tokens: int, model: str = "default") -> None:
+    def add_usage(
+        self, prompt_tokens: int, response_tokens: int, model: str = "default"
+    ) -> None:
         """Record token usage and update cost."""
         tokens = prompt_tokens + response_tokens
         self.token_count += tokens
         rate = self.COST_TABLE.get(model, self.COST_TABLE["default"])
         self.cost += rate * tokens / 1000.0
-        if self.cost >= self.cost_cap:
-            self.logger.warning("Cost cap exceeded: $%.2f >= $%.2f", self.cost, self.cost_cap)
+        ratio = self.cost / self.cost_cap if self.cost_cap > 0 else 0
+        eps = 1e-6
+        if ratio >= 1.0 - eps:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                f"Cost cap exceeded: ${self.cost:.2f} >= ${self.cost_cap:.2f}",
+                severity=self.Severity.CRITICAL,
+            )
             raise RuntimeError("cost cap exceeded")
+        elif ratio >= 0.9 - eps:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                "90% of cost cap reached",
+                severity=self.Severity.ERROR,
+            )
+        elif ratio >= 0.75 - eps:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                "75% of cost cap reached",
+                severity=self.Severity.WARNING,
+            )
+
+    def increment_guardrail_hits(self) -> None:
+        """Increment guardrail hit counter and record an event."""
+        self.guardrail_hits += 1
+        self.record_event(
+            self.Category.GUARDRAIL,
+            "guardrail violation",
+            severity=self.Severity.WARNING,
+        )
 
     # --- Summary ----------------------------------------------------
     def summary_line(self) -> str:
         """Return a one-line summary of collected metrics."""
+        cost = f"${self.cost:.2f}" if self.include_sensitive else "<redacted>"
+        tokens = str(self.token_count) if self.include_sensitive else "<redacted>"
         return (
-            f"Telemetry: cost=${self.cost:.2f} "
-            f"tokens={self.token_count} "
+            "Telemetry: "
+            f"cost={cost} "
+            f"tokens={tokens} "
             f"latency={self.latency:.2f}s "
             f"guardrails={self.guardrail_hits}"
         )
