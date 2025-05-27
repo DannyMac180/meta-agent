@@ -46,3 +46,35 @@ reading the metadata should ignore unrecognised fields while still enforcing the
 presence of `schema_version`.
 You can supply additional top-level keys using the `metadata_fields` argument
 when generating a bundle.
+
+## Bundle API
+
+Use the :class:`meta_agent.bundle.Bundle` helper to load and introspect bundles.
+It parses ``bundle.json`` and provides convenience methods to list files and
+access metadata.
+
+```python
+from meta_agent import Bundle
+
+bundle = Bundle("path/to/bundle")
+print(bundle.metadata.meta_agent_version)
+print(bundle.list_files())
+```
+
+## Extensibility Hooks
+
+``BundleGenerator.generate`` accepts optional ``pre_hook`` and ``post_hook``
+callables. The pre hook runs before any files are created; the post hook runs
+after ``bundle.json`` is written and Git operations complete. Hooks receive the
+bundle directory path, and the post hook also receives the loaded
+``BundleMetadata`` object.
+
+```python
+def add_marker(path: Path) -> None:
+    (path / "MARKER").write_text("generated")
+
+def report(path: Path, meta: BundleMetadata) -> None:
+    print("created", meta.meta_agent_version)
+
+gen.generate(agent_code="print('x')", pre_hook=add_marker, post_hook=report)
+```

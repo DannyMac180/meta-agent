@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
-from typing import Mapping, Sequence, Optional, Any
+from typing import Mapping, Sequence, Optional, Any, Callable
 
 from .models import BundleMetadata
 from .git_utils import GitManager
@@ -36,8 +36,13 @@ class BundleGenerator:
         *,
         init_git: bool = False,
         git_remote: Optional[str] = None,
+        pre_hook: Optional[Callable[[Path], None]] = None,
+        post_hook: Optional[Callable[[Path, BundleMetadata], None]] = None,
     ) -> BundleMetadata:
         """Generate bundle files and return metadata."""
+
+        if pre_hook:
+            pre_hook(self.bundle_dir)
 
         checksums: dict[str, str] = {}
 
@@ -99,5 +104,8 @@ class BundleGenerator:
                     else metadata.json()  # type: ignore[attr-defined]
                 )
                 json.dump(json.loads(dump_json), f, indent=2)
+
+        if post_hook:
+            post_hook(self.bundle_dir, metadata)
 
         return metadata
