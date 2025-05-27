@@ -5,7 +5,7 @@ from meta_agent.services.telemetry_client import TelemetryAPIClient, EndpointCon
 
 
 @pytest.fixture
-async def telemetry_client():
+def telemetry_client():
     with patch("aiohttp.ClientSession") as mock_session:
         response = AsyncMock()
         response.status = 200
@@ -14,10 +14,7 @@ async def telemetry_client():
         cm.__aenter__.return_value = response
         mock_session.return_value.post.return_value = cm
         client = TelemetryAPIClient({"trace": EndpointConfig("http://example.com")})
-        try:
-            yield client
-        finally:
-            await client.close()
+        yield client
 
 
 @pytest.mark.asyncio
