@@ -29,3 +29,7 @@ class Response:
 
     async def text(self):
         return ""
+
+
+class ClientError(Exception):
+    """Placeholder aiohttp ClientError."""
