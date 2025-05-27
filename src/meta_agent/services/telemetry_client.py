@@ -7,36 +7,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-try:  # pragma: no cover - optional dependency
-    import aiohttp
-except Exception:  # pragma: no cover - fallback when aiohttp isn't installed
-
-    class _DummyResponse:
-        async def json(self) -> dict:
-            raise NotImplementedError("aiohttp is required for network access")
-
-    class ClientSession:  # type: ignore[name-defined]
-        def __init__(self, *_, **__):
-            pass
-
-        async def post(self, *_args, **_kwargs):
-            raise NotImplementedError("aiohttp is required for network access")
-
-        async def close(self) -> None:
-            pass
-
-    class TCPConnector:  # type: ignore[name-defined]
-        def __init__(self, *_, **__):
-            pass
-
-    aiohttp = type(
-        "aiohttp",
-        (),
-        {
-            "ClientSession": ClientSession,
-            "TCPConnector": TCPConnector,
-        },
-    )()
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -105,13 +76,9 @@ class TelemetryAPIClient:
 
     async def close(self) -> None:
         """Close the underlying HTTP session."""
-        close_fn = getattr(self._session, "close", None)
-        if close_fn is None:
-            return
-        if asyncio.iscoroutinefunction(close_fn):
-            await close_fn()
-        else:
-            close_fn()
+      
+        await self._session.close()
+
 
     # --- Runner integration -------------------------------------------------
 
