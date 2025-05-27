@@ -35,6 +35,7 @@ def test_generate_records_telemetry(tmp_path, sample_json_file, monkeypatch):
     import tempfile
 
     tempfile.tempdir = str(tmp_path)
+
     result = runner.invoke(
         cli, ["--no-sensitive-logs", "generate", "--spec-file", str(sample_json_file)]
     )
