@@ -76,7 +76,9 @@ class TelemetryAPIClient:
 
     async def close(self) -> None:
         """Close the underlying HTTP session."""
+      
         await self._session.close()
+
 
     # --- Runner integration -------------------------------------------------
 

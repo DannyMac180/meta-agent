@@ -12,8 +12,36 @@ import os
 import re
 from typing import Any, Dict, Optional
 
-from dotenv import load_dotenv
-import aiohttp
+try:  # pragma: no cover - optional dependency
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - fallback when python-dotenv isn't installed
+
+    def load_dotenv(*_args, **_kwargs) -> None:
+        """Fallback no-op for environments without python-dotenv."""
+        return None
+
+
+try:  # pragma: no cover - optional dependency
+    import aiohttp
+except Exception:  # pragma: no cover - fallback when aiohttp isn't installed
+
+    class AiohttpPlaceholder:
+        """Minimal placeholder mimicking aiohttp's client session."""
+
+        class ClientSession:  # type: ignore[name-defined]
+            def __init__(self, *_, **__):
+                pass
+
+            async def post(self, *_args, **_kwargs):  # pragma: no cover - network
+                raise NotImplementedError("aiohttp is required for network access")
+
+            async def close(self) -> None:
+                pass
+
+        class ClientError(Exception):
+            pass
+
+    aiohttp = AiohttpPlaceholder()
 import backoff
 
 load_dotenv()
