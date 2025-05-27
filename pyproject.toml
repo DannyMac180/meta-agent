@@ -37,3 +37,14 @@ branch = true
 markers = [
     "integration: mark a test as an integration test."
 ]
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    src/\.tool_designer
+    |generated_tools
+    |temp_sandbox_test_code
+    |\.venv
+)/
+'''
