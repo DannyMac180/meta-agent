@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import time
 import logging
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
 
-
-from .telemetry_db import TelemetryDB
 
 from .telemetry_db import TelemetryDB
 
@@ -21,6 +19,24 @@ class TelemetryCollector:
         "gpt-4o": 0.03,
         "default": 0.01,
     }
+
+    class Severity(str, Enum):
+        INFO = "info"
+        WARNING = "warning"
+        ERROR = "error"
+        CRITICAL = "critical"
+
+    class Category(str, Enum):
+        COST_CONTROL = "cost_control"
+        GUARDRAIL = "guardrail"
+        EXECUTION = "execution"
+        INTERNAL = "internal"
+
+    @dataclass
+    class Event:
+        category: "TelemetryCollector.Category"
+        severity: "TelemetryCollector.Severity"
+        message: str
 
     def __init__(
         self,
@@ -38,6 +54,28 @@ class TelemetryCollector:
         self.logger = logging.getLogger(__name__)
         self.db = db
         self.include_sensitive = include_sensitive
+        self.events: List[TelemetryCollector.Event] = []
+
+    def record_event(
+        self,
+        category: "TelemetryCollector.Category",
+        message: str,
+        severity: "TelemetryCollector.Severity" = Severity.ERROR,
+    ) -> None:
+        """Record an informational or error event."""
+        self.events.append(
+            TelemetryCollector.Event(
+                category=category,
+                severity=severity,
+                message=message,
+            )
+        )
+        log = self.logger.info
+        if severity in (self.Severity.ERROR, self.Severity.CRITICAL):
+            log = self.logger.error
+        elif severity is self.Severity.WARNING:
+            log = self.logger.warning
+        log(message)
 
     # --- Timing -----------------------------------------------------
     def start_timer(self) -> None:
@@ -66,18 +104,22 @@ class TelemetryCollector:
         self.token_count += tokens
         rate = self.COST_TABLE.get(model, self.COST_TABLE["default"])
         self.cost += rate * tokens / 1000.0
-        if self.cost >= self.cost_cap:
-            self.logger.warning(
-                "Cost cap exceeded: $%.2f >= $%.2f", self.cost, self.cost_cap
+        ratio = self.cost / self.cost_cap if self.cost_cap > 0 else 0
+        eps = 1e-6
+        if ratio >= 1.0 - eps:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                f"Cost cap exceeded: ${self.cost:.2f} >= ${self.cost_cap:.2f}",
+                severity=self.Severity.CRITICAL,
             )
             raise RuntimeError("cost cap exceeded")
-        elif ratio >= 0.9 - eps and self.cost_cap > 0:
+        elif ratio >= 0.9 - eps:
             self.record_event(
                 self.Category.COST_CONTROL,
                 "90% of cost cap reached",
                 severity=self.Severity.ERROR,
             )
-        elif ratio >= 0.75 - eps and self.cost_cap > 0:
+        elif ratio >= 0.75 - eps:
             self.record_event(
                 self.Category.COST_CONTROL,
                 "75% of cost cap reached",

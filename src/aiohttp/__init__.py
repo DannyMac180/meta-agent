@@ -47,6 +47,3 @@ class Response:
         return ""
 
 
-class ClientError(Exception):
-    """Placeholder aiohttp ClientError."""
-
