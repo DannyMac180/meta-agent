@@ -47,11 +47,15 @@ class TelemetryAPIClient:
         *,
         rate_limit: int = 5,
         timeout: int = 10,
+        retries: int = 3,
+        backoff: float = 0.5,
     ) -> None:
         if not endpoints:
             raise ValueError("At least one endpoint must be configured")
         self.endpoints = endpoints
         self.timeout = timeout
+        self.retries = retries
+        self.backoff = backoff
         self._sem = asyncio.Semaphore(rate_limit)
         self._session = aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(limit=None)
@@ -62,17 +66,36 @@ class TelemetryAPIClient:
         if name not in self.endpoints:
             raise ValueError(f"Unknown endpoint '{name}'")
         cfg = self.endpoints[name]
-        async with self._sem:
-            async with self._session.post(
-                cfg.url,
-                json=payload,
-                headers=cfg.headers,
-                timeout=self.timeout,
-            ) as resp:
-                if resp.status != 200:
-                    text = await resp.text()
-                    raise ValueError(f"API error: {resp.status} - {text}")
-                return await resp.json()
+        attempt = 0
+        while True:
+            try:
+                async with self._sem:
+                    async with self._session.post(
+                        cfg.url,
+                        json=payload,
+                        headers=cfg.headers,
+                        timeout=self.timeout,
+                    ) as resp:
+                        if resp.status >= 500:
+                            text = await resp.text()
+                            raise aiohttp.ClientResponseError(
+                                request_info=resp.request_info,
+                                history=resp.history,
+                                status=resp.status,
+                                message=text,
+                                headers=resp.headers,
+                            )
+                        if resp.status != 200:
+                            text = await resp.text()
+                            raise ValueError(f"API error: {resp.status} - {text}")
+                        return await resp.json()
+            except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+                attempt += 1
+                if attempt > self.retries:
+                    logger.error("Telemetry send failed after retries: %s", exc)
+                    raise
+                logger.warning("Retrying telemetry send (%s/%s)", attempt, self.retries)
+                await asyncio.sleep(self.backoff * attempt)
 
     async def close(self) -> None:
         """Close the underlying HTTP session."""

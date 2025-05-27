@@ -21,6 +21,22 @@ class TCPConnector:
         pass
 
 
+class ClientError(Exception):
+    """Base error class matching aiohttp's API."""
+
+
+class ClientResponseError(ClientError):
+    """Error raised for 5xx responses."""
+
+    def __init__(self, *args, **kwargs):
+        self.request_info = kwargs.get("request_info")
+        self.history = kwargs.get("history")
+        self.status = kwargs.get("status")
+        self.message = kwargs.get("message")
+        self.headers = kwargs.get("headers")
+        super().__init__(self.message)
+
+
 class Response:
     status = 200
 
