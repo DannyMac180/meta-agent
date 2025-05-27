@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import time
 import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
+
 
 
 class TelemetryCollector:
@@ -70,9 +73,18 @@ class TelemetryCollector:
         if self._start is not None:
             self.latency += time.perf_counter() - self._start
             self._start = None
+        if self.db:
+            self.db.record(
+                self.token_count,
+                self.cost,
+                self.latency,
+                self.guardrail_hits,
+            )
 
     # --- Usage ------------------------------------------------------
-    def add_usage(self, prompt_tokens: int, response_tokens: int, model: str = "default") -> None:
+    def add_usage(
+        self, prompt_tokens: int, response_tokens: int, model: str = "default"
+    ) -> None:
         """Record token usage and update cost."""
         tokens = prompt_tokens + response_tokens
         self.token_count += tokens
@@ -112,9 +124,12 @@ class TelemetryCollector:
     # --- Summary ----------------------------------------------------
     def summary_line(self) -> str:
         """Return a one-line summary of collected metrics."""
+        cost = f"${self.cost:.2f}" if self.include_sensitive else "<redacted>"
+        tokens = str(self.token_count) if self.include_sensitive else "<redacted>"
         return (
-            f"Telemetry: cost=${self.cost:.2f} "
-            f"tokens={self.token_count} "
+            "Telemetry: "
+            f"cost={cost} "
+            f"tokens={tokens} "
             f"latency={self.latency:.2f}s "
             f"guardrails={self.guardrail_hits}"
         )
