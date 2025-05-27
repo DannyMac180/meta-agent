@@ -5,7 +5,6 @@ from typing import Optional
 
 import logging
 
-from .execution import ExecutionModule
 from .result_collection import ResultCollectionModule, CollectionResult
 from .reporting import ReportingModule
 

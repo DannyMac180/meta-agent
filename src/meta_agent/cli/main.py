@@ -307,5 +307,40 @@ def tool_command_wrapper(action, spec_file, use_llm, version):
         click.echo("Tool deletion is not implemented yet.")
 
 
+@cli.command(name="dashboard")
+@click.option(
+    "--db-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=Path(tempfile.gettempdir()) / "meta_agent_telemetry.db",
+    show_default=True,
+    help="Path to the telemetry database file.",
+)
+def dashboard(db_path: Path) -> None:
+    """Display a simple telemetry dashboard."""
+    db = TelemetryDB(db_path)
+    records = db.fetch_all()
+    if not records:
+        click.echo("No telemetry data found.")
+        db.close()
+        return
+
+    click.echo("Telemetry Dashboard:")
+    header = (
+        f"{'Timestamp':<20} {'Tokens':>6} {'Cost':>7} {'Latency':>8} {'Guardrails':>10}"
+    )
+    click.echo(header)
+    for row in records:
+        ts = row["timestamp"][:19]
+        line = (
+            f"{ts:<20} "
+            f"{row['tokens']:>6} "
+            f"${row['cost']:.2f} "
+            f"{row['latency']:>8.2f} "
+            f"{row['guardrail_hits']:>10}"
+        )
+        click.echo(line)
+    db.close()
+
+
 if __name__ == "__main__":
     cli()
