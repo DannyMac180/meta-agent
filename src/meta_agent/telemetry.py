@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import time
 import logging
-from typing import Dict, Optional
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Optional
+
 
 from .telemetry_db import TelemetryDB
 
@@ -24,6 +27,7 @@ class TelemetryCollector:
         db: TelemetryDB | None = None,
         include_sensitive: bool = True,
     ) -> None:
+
         self.cost_cap = cost_cap
         self.token_count = 0
         self.cost = 0.0
@@ -33,6 +37,7 @@ class TelemetryCollector:
         self.logger = logging.getLogger(__name__)
         self.db = db
         self.include_sensitive = include_sensitive
+
 
     # --- Timing -----------------------------------------------------
     def start_timer(self) -> None:
@@ -64,8 +69,30 @@ class TelemetryCollector:
         if self.cost >= self.cost_cap:
             self.logger.warning(
                 "Cost cap exceeded: $%.2f >= $%.2f", self.cost, self.cost_cap
+
             )
             raise RuntimeError("cost cap exceeded")
+        elif ratio >= 0.9 - eps and self.cost_cap > 0:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                "90% of cost cap reached",
+                severity=self.Severity.ERROR,
+            )
+        elif ratio >= 0.75 - eps and self.cost_cap > 0:
+            self.record_event(
+                self.Category.COST_CONTROL,
+                "75% of cost cap reached",
+                severity=self.Severity.WARNING,
+            )
+
+    def increment_guardrail_hits(self) -> None:
+        """Increment guardrail hit counter and record an event."""
+        self.guardrail_hits += 1
+        self.record_event(
+            self.Category.GUARDRAIL,
+            "guardrail violation",
+            severity=self.Severity.WARNING,
+        )
 
     # --- Summary ----------------------------------------------------
     def summary_line(self) -> str:
