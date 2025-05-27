@@ -1,6 +1,5 @@
 import json
 import gzip
-
 from meta_agent.telemetry_db import TelemetryDB
 from meta_agent.telemetry import TelemetryCollector
 

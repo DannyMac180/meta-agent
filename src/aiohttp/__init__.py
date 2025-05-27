@@ -48,6 +48,5 @@ class Response:
 
 
 class ClientError(Exception):
-    """Placeholder for aiohttp.ClientError used in tests."""
+    """Placeholder aiohttp ClientError."""
 
-    pass

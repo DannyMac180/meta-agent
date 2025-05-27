@@ -9,6 +9,8 @@ from typing import Dict, List, Optional
 
 from .telemetry_db import TelemetryDB
 
+from .telemetry_db import TelemetryDB
+
 
 class TelemetryCollector:
     """Collect basic usage metrics for a generation run."""
@@ -27,7 +29,6 @@ class TelemetryCollector:
         db: TelemetryDB | None = None,
         include_sensitive: bool = True,
     ) -> None:
-
         self.cost_cap = cost_cap
         self.token_count = 0
         self.cost = 0.0
@@ -37,7 +38,6 @@ class TelemetryCollector:
         self.logger = logging.getLogger(__name__)
         self.db = db
         self.include_sensitive = include_sensitive
-
 
     # --- Timing -----------------------------------------------------
     def start_timer(self) -> None:
@@ -69,7 +69,6 @@ class TelemetryCollector:
         if self.cost >= self.cost_cap:
             self.logger.warning(
                 "Cost cap exceeded: $%.2f >= $%.2f", self.cost, self.cost_cap
-
             )
             raise RuntimeError("cost cap exceeded")
         elif ratio >= 0.9 - eps and self.cost_cap > 0:

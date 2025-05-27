@@ -1,4 +1,10 @@
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except Exception:  # pragma: no cover - fallback when python-dotenv is missing
+
+    def load_dotenv(*_args, **_kwargs) -> None:
+        return None
+
 
 import click
 import sys

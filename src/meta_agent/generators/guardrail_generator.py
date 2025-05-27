@@ -1,12 +1,15 @@
-from __future__ import annotations
-
 """Guardrail generation utilities using Pydantic models."""
+
+from __future__ import annotations
 
 from enum import Enum
 import re
 from typing import Awaitable, Callable, List
 
-from pydantic import BaseModel, Field, field_validator
+try:
+    from pydantic import BaseModel, Field, field_validator
+except ImportError:  # pragma: no cover - pydantic v1 fallback
+    from pydantic import BaseModel, Field, validator as field_validator
 
 
 class GuardrailAction(str, Enum):
@@ -69,4 +72,3 @@ def build_regex_guardrails(
 
         guards.append(guard)
     return guards
-

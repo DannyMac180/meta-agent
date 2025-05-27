@@ -1,8 +1,20 @@
 import json
 import yaml
-from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_validator
-from typing import Any, Dict, List, Optional, Union
 
+try:
+    from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_validator
+
+    _HAS_V2 = True
+except ImportError:  # pragma: no cover - pydantic v1 fallback
+    from pydantic import BaseModel, Field, ValidationError, validator as field_validator
+
+    _HAS_V2 = False
+
+    class ConfigDict(dict):
+        pass
+
+
+from typing import Any, Dict, List, Optional, Union
 
 
 class ToolParameter(BaseModel):
@@ -15,7 +27,14 @@ class ToolParameter(BaseModel):
         description (Optional[str]): A human-readable description of the parameter.
         required (bool): Whether the parameter is required (default: True).
     """
-    model_config = ConfigDict(populate_by_name=True)
+
+    if _HAS_V2:
+        model_config = ConfigDict(populate_by_name=True)
+    else:
+
+        class Config:
+            allow_population_by_field_name = True
+
     name: str
     type_: str = Field(alias="type")
     description: Optional[str] = None
@@ -32,27 +51,30 @@ class ToolSpecification(BaseModel):
         input_parameters (List[ToolParameter]): The list of input parameters required by the tool.
         output_format (str): The expected output type or format.
     """
+
     name: str
     purpose: str
     input_parameters: List[ToolParameter] = Field(default_factory=list)
     output_format: str
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def name_must_be_valid_identifier(cls, v: str) -> str:
         """Validate that the tool name is a valid Python identifier."""
         if not v.isidentifier():
-            raise ValueError('Tool name must be a valid Python identifier')
+            raise ValueError("Tool name must be a valid Python identifier")
         return v
 
-    @field_validator('input_parameters')
+    @field_validator("input_parameters")
     @classmethod
     def parameters_must_be_valid(cls, v: List[ToolParameter]) -> List[ToolParameter]:
         """Validate parameter names are valid identifiers and unique."""
         seen_names = set()
         for param in v:
             if not param.name.isidentifier():
-                raise ValueError(f'Parameter name "{param.name}" must be a valid Python identifier')
+                raise ValueError(
+                    f'Parameter name "{param.name}" must be a valid Python identifier'
+                )
             if param.name in seen_names:
                 raise ValueError(f'Duplicate parameter name "{param.name}" found')
             seen_names.add(param.name)
@@ -90,13 +112,19 @@ class ToolSpecificationParser:
                     try:
                         data = yaml.safe_load(self.raw_specification)
                         if data is None or not isinstance(data, dict):
-                            self.errors.append("YAML specification did not parse into a dictionary.")
+                            self.errors.append(
+                                "YAML specification did not parse into a dictionary."
+                            )
                             return False
                     except yaml.YAMLError as e:
-                        self.errors.append(f"Failed to parse specification as JSON or YAML: {e}")
+                        self.errors.append(
+                            f"Failed to parse specification as JSON or YAML: {e}"
+                        )
                         return False
             else:
-                self.errors.append("Specification must be a string (JSON/YAML) or a dictionary.")
+                self.errors.append(
+                    "Specification must be a string (JSON/YAML) or a dictionary."
+                )
                 return False
 
             if data is None:
@@ -110,17 +138,26 @@ class ToolSpecificationParser:
         except ValidationError as e:
             # Format validation errors to match the expected error messages in tests
             for err in e.errors():
-                loc_parts = [str(part) for part in err['loc']]
+                loc_parts = [str(part) for part in err["loc"]]
                 field_name = loc_parts[0] if loc_parts else "unknown"
-                error_msg = err['msg']
+                error_msg = err["msg"]
 
                 # Special handling for specific validation errors to match test expectations
                 if field_name == "name" and "valid Python identifier" in error_msg:
-                    self.errors.append("name: Tool name must be a valid Python identifier")
-                elif field_name == "input_parameters" and "Duplicate parameter name" in error_msg:
+                    self.errors.append(
+                        "name: Tool name must be a valid Python identifier"
+                    )
+                elif (
+                    field_name == "input_parameters"
+                    and "Duplicate parameter name" in error_msg
+                ):
                     # Extract the parameter name from the error message
-                    param_name = error_msg.split('"')[1] if '"' in error_msg else "unknown"
-                    self.errors.append(f"input_parameters: Duplicate parameter name \"{param_name}\" found")
+                    param_name = (
+                        error_msg.split('"')[1] if '"' in error_msg else "unknown"
+                    )
+                    self.errors.append(
+                        f'input_parameters: Duplicate parameter name "{param_name}" found'
+                    )
                 else:
                     # Default formatting for other errors
                     self.errors.append(f"{'.'.join(loc_parts)}: {error_msg}")
@@ -128,6 +165,7 @@ class ToolSpecificationParser:
             return False
         except Exception as e:
             import logging
+
             logging.exception("Unexpected error during ToolSpecification parsing")
             self.errors.append(f"An unexpected error occurred during parsing: {e}")
             return False
