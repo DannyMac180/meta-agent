@@ -88,7 +88,6 @@ class BundleValidator:
         self._validate_checksums(metadata, errors)
         self._validate_requirements(errors)
         self._validate_agent(errors)
-
         self._run_tests(errors)
 
         success = not errors
