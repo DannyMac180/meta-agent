@@ -2,6 +2,8 @@
 Defines the SubAgentManager class responsible for creating and managing specialized sub-agents.
 """
 
+# ruff: noqa: E402,F401
+
 import logging
 import inspect
 from typing import Dict, Any, Optional, Type

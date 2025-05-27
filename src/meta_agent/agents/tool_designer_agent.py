@@ -1,3 +1,4 @@
+# ruff: noqa: E402,F401
 import logging
 import os
 from typing import Union, Dict, Any, Optional, List
@@ -235,9 +236,7 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             raise
         except Exception as e:
             logger.exception("Unexpected error in design_tool_with_llm")
-            raise CodeGenerationError(
-                f"Unexpected error in design_tool_with_llm: {e}"
-            )
+            raise CodeGenerationError(f"Unexpected error in design_tool_with_llm: {e}")
 
     # --------------------------------------------------------------------- #
     # ----------------------------  Agent Run  ---------------------------- #
