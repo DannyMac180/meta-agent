@@ -92,6 +92,8 @@ def test_cli_generate_spec_file_json(runner, sample_json_file):
     assert "Orchestration finished." in result.output
     # Optionally, check for status: success in the final JSON output
     assert '"status": "simulated_success"' in result.output
+    assert "Telemetry:" in result.output
+    assert "Telemetry:" in result.output
 
 def test_cli_generate_spec_file_yaml(runner, sample_yaml_file):
     """Test successful generation using a YAML spec file."""

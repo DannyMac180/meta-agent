@@ -16,6 +16,7 @@ except Exception:  # pragma: no cover - fallback when optional deps missing
     GuardrailModelRouter = ModelAdapter = LLMModelAdapter = None  # type: ignore[misc]
 
 from .telemetry_client import TelemetryAPIClient, EndpointConfig
+from meta_agent.telemetry import TelemetryCollector
 
 __all__ = [
     "LLMService",
@@ -24,4 +25,5 @@ __all__ = [
     "LLMModelAdapter",
     "TelemetryAPIClient",
     "EndpointConfig",
+    "TelemetryCollector",
 ]
