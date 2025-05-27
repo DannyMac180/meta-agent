@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env file
-
 import click
 import sys
 import yaml
@@ -18,13 +16,25 @@ from meta_agent.sub_agent_manager import SubAgentManager
 from meta_agent.registry import ToolRegistry
 from meta_agent.tool_designer import ToolDesignerAgent
 from meta_agent.telemetry import TelemetryCollector
+from meta_agent.telemetry_db import TelemetryDB
+import tempfile
+
+load_dotenv()  # Load environment variables from .env file
 
 # TODO: Import logging setup from utils
 
 
 @click.group()
-def cli():
+@click.option(
+    "--no-sensitive-logs",
+    is_flag=True,
+    help="Exclude sensitive data from traces and telemetry.",
+)
+@click.pass_context
+def cli(ctx: click.Context, no_sensitive_logs: bool) -> None:
     """Meta-Agent: A tool to generate AI agent code from specifications."""
+    ctx.ensure_object(dict)
+    ctx.obj["include_sensitive"] = not no_sensitive_logs
     # TODO: Configure logging
     pass
 
@@ -47,7 +57,12 @@ async def generate(spec_file: Path | None, spec_text: str | None):
         sys.exit(1)
 
     spec: SpecSchema | None = None
-    telemetry = TelemetryCollector()
+    include_sensitive: bool = click.get_current_context().obj.get(
+        "include_sensitive", True
+    )
+    db_path = Path(tempfile.gettempdir()) / "meta_agent_telemetry.db"
+    db = TelemetryDB(db_path)
+    telemetry = TelemetryCollector(db=db, include_sensitive=include_sensitive)
 
     try:
         if spec_file:
@@ -119,6 +134,7 @@ async def generate(spec_file: Path | None, spec_text: str | None):
             click.echo("\nOrchestration finished.")
             click.echo(f"Results: {json.dumps(results, indent=2)}")
             click.echo(telemetry.summary_line())
+            db.close()
 
         else:
             # This case should ideally not be reached due to prior checks/errors
