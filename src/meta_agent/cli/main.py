@@ -338,7 +338,52 @@ def dashboard(db_path: Path) -> None:
             f"{row['latency']:>8.2f} "
             f"{row['guardrail_hits']:>10}"
         )
-        click.echo(line)
+    click.echo(line)
+    db.close()
+
+
+@cli.command(name="export")
+@click.option(
+    "--db-path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=Path(tempfile.gettempdir()) / "meta_agent_telemetry.db",
+    show_default=True,
+    help="Path to the telemetry database file.",
+)
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["json", "csv", "pdf"]),
+    default="json",
+    show_default=True,
+    help="Export format",
+)
+@click.option(
+    "--output", "output_path", type=click.Path(dir_okay=False, path_type=Path)
+)
+@click.option("--start", type=str, help="Start timestamp (ISO format)")
+@click.option("--end", type=str, help="End timestamp (ISO format)")
+@click.option("--metric", "metrics", multiple=True, help="Metric to include")
+def export_command(
+    db_path: Path,
+    fmt: str,
+    output_path: Path | None,
+    start: str | None,
+    end: str | None,
+    metrics: tuple[str, ...],
+) -> None:
+    """Export telemetry data from the database."""
+    db = TelemetryDB(db_path)
+    if output_path is None:
+        suffix = "json" if fmt == "json" else "csv" if fmt == "csv" else fmt
+        output_path = Path(f"telemetry_export.{suffix}")
+    if fmt == "json":
+        db.export_json(output_path, start=start, end=end, metrics=metrics or None)
+    elif fmt == "csv":
+        db.export_csv(output_path, start=start, end=end, metrics=metrics or None)
+    else:
+        db.export(output_path, fmt=fmt, start=start, end=end, metrics=metrics or None)
+    click.echo(f"Exported telemetry to {output_path}")
     db.close()
 
 

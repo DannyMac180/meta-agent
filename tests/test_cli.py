@@ -232,3 +232,49 @@ def test_cli_dashboard_with_data(runner, tmp_path):
     assert "Telemetry Dashboard:" in result.output
     assert "5" in result.output
     assert "$0.10" in result.output
+
+
+def test_cli_export_json(runner, tmp_path):
+    db_path = tmp_path / "tele.db"
+    db = TelemetryDB(db_path)
+    db.record(5, 0.1, 0.2, 1)
+    db.close()
+    out = tmp_path / "export.json"
+    result = runner.invoke(
+        cli,
+        [
+            "export",
+            "--db-path",
+            str(db_path),
+            "--output",
+            str(out),
+            "--format",
+            "json",
+        ],
+    )
+    assert result.exit_code == 0
+    assert out.exists()
+
+
+def test_cli_export_csv(runner, tmp_path):
+    db_path = tmp_path / "tele.db"
+    db = TelemetryDB(db_path)
+    db.record(5, 0.1, 0.2, 1)
+    db.close()
+    out = tmp_path / "export.csv"
+    result = runner.invoke(
+        cli,
+        [
+            "export",
+            "--db-path",
+            str(db_path),
+            "--output",
+            str(out),
+            "--format",
+            "csv",
+            "--metric",
+            "tokens",
+        ],
+    )
+    assert result.exit_code == 0
+    assert out.exists()
