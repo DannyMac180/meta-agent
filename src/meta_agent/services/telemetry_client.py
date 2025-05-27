@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-import aiohttp
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +52,14 @@ class TelemetryAPIClient:
     ) -> None:
         if not endpoints:
             raise ValueError("At least one endpoint must be configured")
+        self.aiohttp = importlib.import_module("aiohttp")
         self.endpoints = endpoints
         self.timeout = timeout
         self.retries = retries
         self.backoff = backoff
         self._sem = asyncio.Semaphore(rate_limit)
-        self._session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(limit=None)
+        self._session = self.aiohttp.ClientSession(
+            connector=self.aiohttp.TCPConnector(limit=None)
         )
 
     async def send(self, name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,7 +79,7 @@ class TelemetryAPIClient:
                     ) as resp:
                         if resp.status >= 500:
                             text = await resp.text()
-                            raise aiohttp.ClientResponseError(
+                            raise self.aiohttp.ClientResponseError(
                                 request_info=resp.request_info,
                                 history=resp.history,
                                 status=resp.status,
@@ -89,7 +90,7 @@ class TelemetryAPIClient:
                             text = await resp.text()
                             raise ValueError(f"API error: {resp.status} - {text}")
                         return await resp.json()
-            except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+            except (self.aiohttp.ClientError, asyncio.TimeoutError) as exc:
                 attempt += 1
                 if attempt > self.retries:
                     logger.error("Telemetry send failed after retries: %s", exc)
@@ -99,9 +100,8 @@ class TelemetryAPIClient:
 
     async def close(self) -> None:
         """Close the underlying HTTP session."""
-      
-        await self._session.close()
 
+        await self._session.close()
 
     # --- Runner integration -------------------------------------------------
 

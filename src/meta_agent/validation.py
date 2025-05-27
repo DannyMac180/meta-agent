@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import uuid
 import logging
+import sys
 import xml.etree.ElementTree as ET
 from typing import List
 from .models.validation_result import ValidationResult
@@ -67,6 +68,8 @@ def validate_generated_tool(
 
         # Run pytest in artefact_dir with coverage for all files and disable warnings
         pytest_command = [
+            sys.executable,
+            "-m",
             "pytest",
             "--maxfail=1",
             "--disable-warnings",
