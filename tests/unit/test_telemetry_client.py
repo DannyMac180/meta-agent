@@ -1,4 +1,5 @@
 import pytest
+import aiohttp
 from unittest.mock import AsyncMock, patch
 
 from meta_agent.services.telemetry_client import TelemetryAPIClient, EndpointConfig
@@ -31,7 +32,7 @@ async def test_send_http_error():
         mock_session.return_value.post.return_value = cm
         mock_session.return_value.close = AsyncMock()
         client = TelemetryAPIClient({"trace": EndpointConfig("http://example.com")})
-        with pytest.raises(ValueError):
+        with pytest.raises(aiohttp.ClientResponseError):
             await client.send("trace", {"d": 1})
         await client.close()
 
