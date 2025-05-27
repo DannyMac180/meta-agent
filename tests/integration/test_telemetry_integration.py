@@ -31,6 +31,11 @@ def sample_json_file(tmp_path, valid_spec_dict):
 def test_generate_records_telemetry(tmp_path, sample_json_file, monkeypatch):
     runner = CliRunner()
     monkeypatch.setenv("TMPDIR", str(tmp_path))
+    # tempfile caches the temp directory on first use; reset so our TMPDIR takes effect
+    import tempfile
+
+    tempfile.tempdir = str(tmp_path)
+
     result = runner.invoke(
         cli, ["--no-sensitive-logs", "generate", "--spec-file", str(sample_json_file)]
     )
