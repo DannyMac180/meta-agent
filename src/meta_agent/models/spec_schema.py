@@ -58,14 +58,17 @@ class SpecSchema(BaseModel):
         data: Dict[str, Any]
         try:
             file_path: Path | None = None
-            if isinstance(json_input, (str, Path)):
+            if isinstance(json_input, Path):
+                file_path = json_input
+            elif isinstance(json_input, str):
                 try:
-                    if os.path.isfile(str(json_input)):
-                        file_path = Path(json_input)
+                    possible_path = Path(json_input)
+                    if possible_path.is_file() or possible_path.exists():
+                        file_path = possible_path
                 except OSError:
                     file_path = None
 
-            if file_path:
+            if file_path is not None:
                 if not file_path.exists():
                     raise FileNotFoundError(f"JSON file not found: {file_path}")
                 with file_path.open("r", encoding="utf-8") as f:
@@ -87,14 +90,17 @@ class SpecSchema(BaseModel):
         data: Dict[str, Any]
         try:
             file_path: Path | None = None
-            if isinstance(yaml_input, (str, Path)):
+            if isinstance(yaml_input, Path):
+                file_path = yaml_input
+            elif isinstance(yaml_input, str):
                 try:
-                    if os.path.isfile(str(yaml_input)):
-                        file_path = Path(yaml_input)
+                    possible_path = Path(yaml_input)
+                    if possible_path.is_file() or possible_path.exists():
+                        file_path = possible_path
                 except OSError:
                     file_path = None
 
-            if file_path:
+            if file_path is not None:
                 if not file_path.exists():
                     raise FileNotFoundError(f"YAML file not found: {file_path}")
                 with file_path.open("r", encoding="utf-8") as f:
