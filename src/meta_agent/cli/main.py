@@ -133,7 +133,10 @@ async def generate(spec_file: Path | None, spec_text: str | None):
             # Run the orchestration
             click.echo("\nStarting agent generation orchestration...")
             # Convert Pydantic model to dict for the orchestrator
-            spec_dict = spec.model_dump(exclude_unset=True)
+            if hasattr(spec, "model_dump"):
+                spec_dict = spec.model_dump(exclude_unset=True)
+            else:  # pragma: no cover - pydantic v1 fallback
+                spec_dict = spec.dict(exclude_unset=True)
             telemetry.start_timer()
             results = await orchestrator.run(specification=spec_dict)
             telemetry.stop_timer()
