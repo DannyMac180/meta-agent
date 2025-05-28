@@ -26,6 +26,16 @@ def test_summary_line():
     assert "tokens=0" in line
 
 
+def test_summary_line_custom_metrics():
+    t = TelemetryCollector()
+    t.start_timer()
+    t.stop_timer()
+    line = t.summary_line(["latency"])
+    assert "Telemetry:" in line
+    assert "latency=" in line
+    assert "cost=" not in line
+
+
 def test_cost_cap_threshold_events(caplog):
     t = TelemetryCollector(cost_cap=0.02)
     with caplog.at_level(logging.INFO):
