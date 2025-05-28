@@ -18,6 +18,7 @@ from .template_schema import (
     TemplateComplexity,
     TemplateMetadata,
 )
+from .template_registry import TemplateRegistry
 
 # Expose `patch` globally for tests that forget to import it.
 try:
@@ -39,4 +40,5 @@ __all__ = [
     "TemplateCategory",
     "TemplateComplexity",
     "TemplateMetadata",
+    "TemplateRegistry",
 ]
