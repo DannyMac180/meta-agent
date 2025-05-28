@@ -106,7 +106,19 @@ def test_cli_generate_spec_file_json(runner, sample_json_file):
     # Optionally, check for status: success in the final JSON output
     assert '"status": "simulated_success"' in result.output
     assert "Telemetry:" in result.output
+    assert "cost=" in result.output
+    assert "tokens=" in result.output
+
+
+def test_cli_generate_custom_metrics(runner, sample_json_file):
+    result = runner.invoke(
+        cli,
+        ["generate", "--spec-file", str(sample_json_file), "--metric", "latency"],
+    )
+    assert result.exit_code == 0
     assert "Telemetry:" in result.output
+    assert "latency=" in result.output
+    assert "cost=" not in result.output
 
 
 def test_cli_generate_spec_file_yaml(runner, sample_yaml_file):

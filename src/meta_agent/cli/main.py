@@ -51,7 +51,16 @@ def cli(ctx: click.Context, no_sensitive_logs: bool) -> None:
     help="Path to the specification file (JSON or YAML).",
 )
 @click.option("--spec-text", type=str, help="Specification provided as a text string.")
-async def generate(spec_file: Path | None, spec_text: str | None):
+@click.option(
+    "--metric",
+    "metrics",
+    multiple=True,
+    type=click.Choice(["cost", "tokens", "latency", "guardrails"]),
+    help="Metric to show in the summary line (repeatable).",
+)
+async def generate(
+    spec_file: Path | None, spec_text: str | None, metrics: tuple[str, ...]
+):
     """Generate agent code based on a specification."""
     if not spec_file and not spec_text:
         click.echo("Error: Please provide either --spec-file or --spec-text.", err=True)
@@ -142,7 +151,7 @@ async def generate(spec_file: Path | None, spec_text: str | None):
             telemetry.stop_timer()
             click.echo("\nOrchestration finished.")
             click.echo(f"Results: {json.dumps(results, indent=2)}")
-            click.echo(telemetry.summary_line())
+            click.echo(telemetry.summary_line(list(metrics)))
             db.close()
 
         else:
@@ -172,13 +181,20 @@ async def generate(spec_file: Path | None, spec_text: str | None):
     help="Path to the specification file (JSON or YAML).",
 )
 @click.option("--spec-text", type=str, help="Specification provided as a text string.")
-def generate_command_wrapper(spec_file, spec_text):
+@click.option(
+    "--metric",
+    "metrics",
+    multiple=True,
+    type=click.Choice(["cost", "tokens", "latency", "guardrails"]),
+    help="Metric to show in the summary line (repeatable).",
+)
+def generate_command_wrapper(spec_file, spec_text, metrics):
     """Synchronous wrapper for the async ``generate`` command."""
     root_logger = logging.getLogger()
     saved_handlers = root_logger.handlers[:]
     root_logger.handlers = []
     try:
-        asyncio.run(generate(spec_file, spec_text))
+        asyncio.run(generate(spec_file, spec_text, metrics))
     finally:
         root_logger.handlers = saved_handlers
 
