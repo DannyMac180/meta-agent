@@ -136,14 +136,31 @@ class TelemetryCollector:
         )
 
     # --- Summary ----------------------------------------------------
-    def summary_line(self) -> str:
-        """Return a one-line summary of collected metrics."""
-        cost = f"${self.cost:.2f}" if self.include_sensitive else "<redacted>"
-        tokens = str(self.token_count) if self.include_sensitive else "<redacted>"
-        return (
-            "Telemetry: "
-            f"cost={cost} "
-            f"tokens={tokens} "
-            f"latency={self.latency:.2f}s "
-            f"guardrails={self.guardrail_hits}"
-        )
+    def summary_line(self, metrics: Optional[List[str]] | None = None) -> str:
+        """Return a one-line summary of selected metrics.
+
+        Parameters
+        ----------
+        metrics:
+            Iterable of metric names to include. Supported values are
+            ``"cost"``, ``"tokens"``, ``"latency"`` and ``"guardrails"``.
+            When ``None`` all metrics are displayed.
+        """
+
+        metrics = metrics or ["cost", "tokens", "latency", "guardrails"]
+        parts: List[str] = []
+        for m in metrics:
+            if m == "cost":
+                cost = f"${self.cost:.2f}" if self.include_sensitive else "<redacted>"
+                parts.append(f"cost={cost}")
+            elif m == "tokens":
+                tokens = (
+                    str(self.token_count) if self.include_sensitive else "<redacted>"
+                )
+                parts.append(f"tokens={tokens}")
+            elif m == "latency":
+                parts.append(f"latency={self.latency:.2f}s")
+            elif m == "guardrails":
+                parts.append(f"guardrails={self.guardrail_hits}")
+        joined = " ".join(parts)
+        return f"Telemetry: {joined}" if joined else "Telemetry:"
