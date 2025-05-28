@@ -54,3 +54,13 @@ def test_record_event():
     ev = t.events[0]
     assert ev.category == TelemetryCollector.Category.EXECUTION
     assert ev.severity == TelemetryCollector.Severity.ERROR
+
+
+def test_guardrail_event():
+    t = TelemetryCollector()
+    t.increment_guardrail_hits()
+    assert t.guardrail_hits == 1
+    assert len(t.events) == 1
+    ev = t.events[0]
+    assert ev.category == TelemetryCollector.Category.GUARDRAIL
+    assert ev.severity == TelemetryCollector.Severity.WARNING
