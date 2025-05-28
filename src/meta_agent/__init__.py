@@ -13,6 +13,11 @@ from __future__ import annotations
 import builtins
 
 from .bundle import Bundle
+from .template_schema import (
+    TemplateCategory,
+    TemplateComplexity,
+    TemplateMetadata,
+)
 
 # Expose `patch` globally for tests that forget to import it.
 try:
@@ -29,4 +34,9 @@ except Exception:  # pragma: no cover
     # on it and something went wrong here.
     pass
 
-__all__ = ["Bundle"]
+__all__ = [
+    "Bundle",
+    "TemplateCategory",
+    "TemplateComplexity",
+    "TemplateMetadata",
+]

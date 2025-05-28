@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Cost and Trace Telemetry
-# Status: pending
+# Status: done
 # Dependencies: 3, 4, 5
 # Priority: medium
 # Description: Add systems to track token usage, latency, and costs associated with agent generation.
@@ -21,19 +21,19 @@
 Verify accuracy of token counting and cost calculations. Test cost caps by creating specifications that would exceed limits. Ensure telemetry data is correctly stored and retrievable. Implement fault-injection tests for cost caps/latency and stub external APIs in CI. Verify PII redaction works correctly with the `--no-sensitive-logs` flag.
 
 # Subtasks:
-## 1. API Integration Framework [pending]
+## 1. API Integration Framework [done]
 ### Dependencies: None
 ### Description: Establish the core framework for integrating with external telemetry APIs
 ### Details:
 Design and implement a flexible API client that can connect to multiple telemetry sources. Include authentication mechanisms, rate limiting handling, and connection pooling. Document all API endpoints and required parameters. Leverage the Agents SDK tracing stack by hooking into `Runner.run` and utilizing SDK span data rather than duplicating functionality. Implement an adapter layer for potential future integration with third-party observability tools.
 
-## 2. Data Collection Pipeline [pending]
+## 2. Data Collection Pipeline [done]
 ### Dependencies: 8.1
 ### Description: Create a robust pipeline for collecting and processing telemetry data
 ### Details:
 Implement data collectors for various metrics (performance, usage, errors). Set up appropriate scheduling for data collection. Include data validation, normalization, and transformation processes. Ensure proper handling of different data formats. Prioritize basic cost counting and cap enforcement to provide safety rails for subsequent development phases. Implement immediate CLI feedback after each generation with a one-line summary of key metrics (token spend, latency, guard-rail hits) as per PRD's value proposition.
 
-## 3. Error Handling System [pending]
+## 3. Error Handling System [done]
 ### Dependencies: 8.1, 8.2
 ### Description: Develop comprehensive error handling for telemetry operations
 ### Details:
@@ -45,19 +45,19 @@ The error handling system should extend beyond internal telemetry errors to capt
 Implement enforcement of cost caps with a configurable default threshold of $0.50 per run as specified in the PRD constraints. The system should provide graduated warnings as usage approaches the cap (e.g., at 75%, 90%) and automatically terminate processing when the threshold is reached to prevent cost overruns. Develop a mechanism to log these cost-related events within the error classification system, categorizing them as cost control events rather than errors. This cost cap enforcement functionality should be prioritized for early implementation to ensure effective cost control measures are in place from the initial deployment of the telemetry system.
 </info added on 2025-05-27T11:31:45.722Z>
 
-## 4. Historical Data Management [pending]
+## 4. Historical Data Management [done]
 ### Dependencies: 8.2
 ### Description: Design and implement storage and management of historical telemetry data
 ### Details:
 Create database schema for efficient storage of time-series data. Implement data retention policies and archiving strategies. Develop data compression techniques for long-term storage. Include data integrity verification mechanisms. Start with a local SQLite file for telemetry data storage as the initial implementation. Implement a unified `--no-sensitive-logs` flag for PII redaction across both SDK traces and custom telemetry to ensure security compliance.
 
-## 5. Dashboard Creation [pending]
+## 5. Dashboard Creation [done]
 ### Dependencies: 8.2, 8.4
 ### Description: Build interactive dashboards for visualizing telemetry data
 ### Details:
 Design UI layouts for different telemetry metrics. Implement data visualization components (charts, graphs, tables). Create filtering and time-range selection controls. Add real-time updating capabilities and user customization options. Ensure telemetry features (token spend, latency, guard-rail hits) are surfaced in the CLI (and eventually VS Code) as per PRD's value proposition. Focus on CLI-based dashboard initially with plans to extend to VS Code integration later.
 
-## 6. Export Functionality [pending]
+## 6. Export Functionality [done]
 ### Dependencies: 8.4, 8.5
 ### Description: Develop features for exporting telemetry data in various formats
 ### Details:
@@ -66,19 +66,19 @@ Implement export options for CSV, JSON, and PDF formats. Create scheduled export
 Implement a CLI-driven export mechanism as the primary interface for exporting telemetry data. Structure JSON exports to align with Meta Agent's artifact bundle format, enabling telemetry data to be seamlessly packaged and distributed alongside generated agents. While JSON should be the main format for bundling purposes, also implement CSV export for quick analysis scenarios. Design the export system to support selective data export based on time ranges and specific metrics. Ensure the export functionality can handle large datasets with appropriate compression techniques.
 </info added on 2025-05-27T11:26:07.000Z>
 
-## 7. Integration Testing and Documentation [pending]
+## 7. Integration Testing and Documentation [done]
 ### Dependencies: 8.3, 8.5, 8.6
 ### Description: Perform comprehensive testing and create documentation for the telemetry system
 ### Details:
 Conduct integration tests across all components. Verify data accuracy and consistency. Create user documentation for dashboard and export features. Develop technical documentation for API integration and error handling protocols. Perform load testing to ensure system stability under high data volumes. Implement fault-injection tests for cost caps/latency and stub external APIs in CI to ensure robust error handling and system behavior under various conditions.
 
-## 8. PRD Alignment and Early Implementation [pending]
+## 8. PRD Alignment and Early Implementation [done]
 ### Dependencies: 8.1, 8.2
 ### Description: Ensure telemetry features align with PRD requirements and prioritize safety features
 ### Details:
 Review PRD value proposition to ensure all required telemetry features (token spend, latency, guard-rail hits) are properly implemented and surfaced in the CLI. Prioritize implementation of basic cost counting and cap enforcement early in the development cycle to provide safety rails for subsequent phases. Create a development roadmap that clearly outlines the progression from CLI-based telemetry to eventual VS Code integration.
 
-## 9. Developer Feedback Loop Implementation [pending]
+## 9. Developer Feedback Loop Implementation [done]
 ### Dependencies: 8.2, 8.3
 ### Description: Create immediate feedback mechanisms for developers after each generation
 ### Details:
