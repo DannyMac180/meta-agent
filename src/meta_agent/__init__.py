@@ -21,6 +21,7 @@ from .template_schema import (
 from .template_registry import TemplateRegistry
 from .template_creator import TemplateCreator, validate_template
 from .template_mixer import TemplateMixer
+from .template_validator import TemplateValidator, TemplateTestCase
 
 # Expose `patch` globally for tests that forget to import it.
 try:
@@ -46,4 +47,6 @@ __all__ = [
     "TemplateCreator",
     "validate_template",
     "TemplateMixer",
+    "TemplateValidator",
+    "TemplateTestCase",
 ]

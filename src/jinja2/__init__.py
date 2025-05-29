@@ -2,6 +2,12 @@ import os
 from typing import Any, Callable, Dict, List
 
 
+class TemplateSyntaxError(Exception):
+    """Simple exception used for template parsing errors."""
+
+    pass
+
+
 class Template:
     def __init__(
         self, text: str, name: str = "", globals: Dict[str, Any] | None = None
@@ -16,7 +22,10 @@ class Template:
             return _render_tool_template(kwargs.get("spec"), map_type)
         if self.name.endswith("agent_default.j2"):
             return _render_agent_default(kwargs)
-        return self.text
+        text = self.text
+        for key, value in kwargs.items():
+            text = text.replace(f"{{{{ {key} }}}}", str(value))
+        return text
 
 
 def _render_tool_template(
@@ -117,17 +126,54 @@ class FileSystemLoader:
             return f.read()
 
 
+class BaseLoader:
+    """Base class for loaders."""
+
+    def get_source(self, environment: Any, template: str) -> str:
+        raise TemplateNotFound(template)
+
+
+class TemplateNotFound(Exception):
+    """Raised when a template cannot be located."""
+
+
 def select_autoescape(*_args: Any, **_kwargs: Any) -> bool:
     return False
 
 
+class meta:
+    @staticmethod
+    def find_undeclared_variables(source: str) -> set[str]:
+        """Very naive variable extraction used for tests."""
+        import re
+
+        return set(re.findall(r"{{\s*(\w+)\s*}}", source))
+
+
 class Environment:
     def __init__(
-        self, loader: FileSystemLoader, autoescape: Any = None, **_kwargs: Any
+        self, loader: FileSystemLoader | None = None, autoescape: Any = None, **_kwargs: Any
     ) -> None:
-        self.loader = loader
+        self.loader = loader or FileSystemLoader(".")
         self.globals: Dict[str, Any] = {}
 
     def get_template(self, name: str) -> Template:
         text = self.loader.get_source(self, name)
         return Template(text, name, globals=self.globals)
+
+    def parse(self, source: str) -> None:
+        """Naive validation that braces are balanced."""
+        if source.count("{{") != source.count("}}"):  # pragma: no cover - simple
+            raise TemplateSyntaxError("unbalanced variable braces")
+        if source.count("{%") != source.count("%}"):
+            raise TemplateSyntaxError("unbalanced block braces")
+        if "{% for" in source and "endfor" not in source:
+            raise TemplateSyntaxError("for block not closed")
+        if "{% if" in source and "endif" not in source:
+            raise TemplateSyntaxError("if block not closed")
+        return source
+
+    def from_string(self, source: str) -> Template:
+        """Create a template from a string after validation."""
+        self.parse(source)
+        return Template(source, globals=self.globals)
