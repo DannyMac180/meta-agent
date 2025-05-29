@@ -22,6 +22,7 @@ from .template_registry import TemplateRegistry
 from .template_creator import TemplateCreator, validate_template
 from .template_mixer import TemplateMixer
 from .template_validator import TemplateValidator, TemplateTestCase
+from .template_sharing import TemplateSharingManager
 
 # Expose `patch` globally for tests that forget to import it.
 try:
@@ -49,4 +50,5 @@ __all__ = [
     "TemplateMixer",
     "TemplateValidator",
     "TemplateTestCase",
+    "TemplateSharingManager",
 ]
