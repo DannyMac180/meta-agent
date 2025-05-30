@@ -149,8 +149,11 @@ class FileSystemLoader:
 
     def get_source(self, _environment: Any, template: str) -> str:
         path = os.path.join(self.searchpath, template)
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError as e:
+            raise TemplateNotFound(template) from e
 
 
 class BaseLoader:
