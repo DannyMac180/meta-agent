@@ -16,4 +16,5 @@ def pytest_configure(config):  # pragma: no cover - register fixture
     def mocker():
         return MockerFixture()
 
-    config.pluginmanager.register(sys.modules[__name__])
+    if not config.pluginmanager.hasplugin("pytest_mock"):
+        config.pluginmanager.register(sys.modules[__name__])
