@@ -6,6 +6,7 @@ Large Language Model (LLM) APIs for code generation.
 """
 
 import asyncio
+import inspect
 import json
 import logging
 import os
@@ -193,13 +194,20 @@ class LLMService:
         # Make the API call
         session = aiohttp.ClientSession()
         try:
-            # Fixed: Using async with directly instead of await + async with
-            async with session.post(
+            response_ctx_or_coro = session.post(
                 self.api_base,
                 headers=headers,
                 json=payload,
                 timeout=self.timeout,
-            ) as response:
+            )
+
+            response_ctx = (
+                await response_ctx_or_coro
+                if inspect.isawaitable(response_ctx_or_coro)
+                else response_ctx_or_coro
+            )
+
+            async with response_ctx as response:
                 if response.status != 200:
                     error_text = await response.text()
                     self.logger.error(f"API error: {response.status} - {error_text}")
