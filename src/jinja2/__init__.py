@@ -23,6 +23,33 @@ class Template:
         if self.name.endswith("agent_default.j2"):
             return _render_agent_default(kwargs)
         text = self.text
+
+        if "{% extends" in text:
+            import re
+
+            match = re.search(r"{% extends '([^']+)' %}", text)
+            if match:
+                base_name = match.group(1)
+                base_template = self.globals["env"].get_template(base_name)
+                base_text = base_template.text
+                base_block = re.search(
+                    r"{% block (\w+) %}(.*?){% endblock %}", base_text, re.S
+                )
+                child_block = re.search(
+                    r"{% block (\w+) %}(.*?){% endblock %}", text, re.S
+                )
+                if (
+                    base_block
+                    and child_block
+                    and base_block.group(1) == child_block.group(1)
+                ):
+                    child_content = child_block.group(2).replace(
+                        "{{ super() }}", base_block.group(2)
+                    )
+                    text = base_text.replace(base_block.group(0), child_content)
+                else:
+                    text = base_text
+
         for key, value in kwargs.items():
             text = text.replace(f"{{{{ {key} }}}}", str(value))
         return text
@@ -75,7 +102,7 @@ def _render_tool_template(
         f"        {map_type(spec.get('output_format'))}: {spec.get('output_format')}"
     )
     lines.append('    """')
-    lines.append(f"    logger.info(f'Running tool: {spec.get('name')}')")
+    lines.append(f"    logger.info(f\"Running tool: {spec.get('name')}\")")
     lines.append("    result = None")
     lines.append("    logger.warning('Tool logic not yet implemented!')")
     lines.append("    return result")
@@ -152,14 +179,17 @@ class meta:
 
 class Environment:
     def __init__(
-        self, loader: FileSystemLoader | None = None, autoescape: Any = None, **_kwargs: Any
+        self,
+        loader: FileSystemLoader | None = None,
+        autoescape: Any = None,
+        **_kwargs: Any,
     ) -> None:
         self.loader = loader or FileSystemLoader(".")
         self.globals: Dict[str, Any] = {}
 
     def get_template(self, name: str) -> Template:
         text = self.loader.get_source(self, name)
-        return Template(text, name, globals=self.globals)
+        return Template(text, name, globals={**self.globals, "env": self})
 
     def parse(self, source: str) -> None:
         """Naive validation that braces are balanced."""
