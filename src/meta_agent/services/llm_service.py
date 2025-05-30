@@ -193,13 +193,15 @@ class LLMService:
         # Make the API call
         session = aiohttp.ClientSession()
         try:
-            # Fixed: Using async with directly instead of await + async with
-            async with session.post(
+            # First await the post coroutine to obtain the response context
+            response_ctx = await session.post(
                 self.api_base,
                 headers=headers,
                 json=payload,
                 timeout=self.timeout,
-            ) as response:
+            )
+
+            async with response_ctx as response:
                 if response.status != 200:
                     error_text = await response.text()
                     self.logger.error(f"API error: {response.status} - {error_text}")
