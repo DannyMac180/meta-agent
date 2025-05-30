@@ -80,7 +80,7 @@ def validate_generated_tool(
         has_pytest_cov = False
         if not is_edge_case:
             try:
-                import pytest_cov  # type: ignore
+                import pytest_cov  # noqa: F401  # type: ignore
 
                 has_pytest_cov = True
             except Exception:  # pragma: no cover - plugin not installed
