@@ -75,7 +75,7 @@ def _render_tool_template(
         f"        {map_type(spec.get('output_format'))}: {spec.get('output_format')}"
     )
     lines.append('    """')
-    lines.append(f"    logger.info(f'Running tool: {spec.get('name')}')")
+    lines.append(f"    logger.info(f\"Running tool: {spec.get('name')}\")")
     lines.append("    result = None")
     lines.append("    logger.warning('Tool logic not yet implemented!')")
     lines.append("    return result")
@@ -122,8 +122,11 @@ class FileSystemLoader:
 
     def get_source(self, _environment: Any, template: str) -> str:
         path = os.path.join(self.searchpath, template)
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError as e:
+            raise TemplateNotFound(template) from e
 
 
 class BaseLoader:
@@ -152,7 +155,10 @@ class meta:
 
 class Environment:
     def __init__(
-        self, loader: FileSystemLoader | None = None, autoescape: Any = None, **_kwargs: Any
+        self,
+        loader: FileSystemLoader | None = None,
+        autoescape: Any = None,
+        **_kwargs: Any,
     ) -> None:
         self.loader = loader or FileSystemLoader(".")
         self.globals: Dict[str, Any] = {}
