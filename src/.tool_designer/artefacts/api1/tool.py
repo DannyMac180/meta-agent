@@ -17,7 +17,7 @@ def get_weather(
     Returns:
         dict: dict
     """
-    logger.info(f'Running tool: get_weather')
+    logger.info(f"Running tool: get_weather")
     result = None
     logger.warning('Tool logic not yet implemented!')
     return result

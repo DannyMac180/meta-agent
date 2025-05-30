@@ -17,7 +17,7 @@ def multiply(
     Returns:
         int: int
     """
-    logger.info(f'Running tool: multiply')
+    logger.info(f"Running tool: multiply")
     result = None
     logger.warning('Tool logic not yet implemented!')
     return result

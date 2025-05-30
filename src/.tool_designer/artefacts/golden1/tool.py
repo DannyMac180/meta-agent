@@ -17,7 +17,7 @@ def add_numbers(
     Returns:
         int: int
     """
-    logger.info(f'Running tool: add_numbers')
+    logger.info(f"Running tool: add_numbers")
     result = None
     logger.warning('Tool logic not yet implemented!')
     return result

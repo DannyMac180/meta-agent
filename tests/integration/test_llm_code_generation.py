@@ -13,17 +13,23 @@ from meta_agent.models.validation_result import ValidationResult
 class TestLLMCodeGenerationIntegration:
     """Integration tests for the LLM-backed code generation pipeline."""
 
-    @pytest.fixture
-    def mock_llm_service(self):
+    @pytest.fixture(scope="function")
+    def mock_llm_service(self, request):
         """Create a mock LLM service that returns predefined responses."""
-        with patch('meta_agent.services.llm_service.LLMService', autospec=True) as mock_service_cls:
-            mock_service = AsyncMock()
-            mock_service_cls.return_value = mock_service
-            
-            # Configure the mock to return different responses based on the prompt
-            async def mock_generate_code(prompt, context):
-                if "api_caller" in prompt.lower():
-                    return """  
+        # Use patch as a function instead of a context manager to ensure proper cleanup
+        patcher = patch('meta_agent.services.llm_service.LLMService', autospec=True)
+        mock_service_cls = patcher.start()
+        
+        # Add finalizer to ensure patch is stopped after the test
+        request.addfinalizer(patcher.stop)
+        
+        mock_service = AsyncMock()
+        mock_service_cls.return_value = mock_service
+        
+        # Configure the mock to return different responses based on the prompt
+        async def mock_generate_code(prompt, context):
+            if "api_caller" in prompt.lower():
+                return """  
 import requests
 from typing import Dict, Any, Optional
 
@@ -53,24 +59,24 @@ def execute(url: str, headers: Optional[Dict[str, str]] = None) -> Dict[str, Any
             "status_code": getattr(e.response, "status_code", None)
         }
 """
-                elif "syntax_error" in prompt.lower():
-                    return """  
+            elif "syntax_error" in prompt.lower():
+                return """  
 def execute(file_path:
     # Missing closing parenthesis
     with open(file_path, 'r') as f:
         content = f.read()
     return content
 """
-                elif "security_issue" in prompt.lower():
-                    return """  
+            elif "security_issue" in prompt.lower():
+                return """  
 import os
 
 def execute(command: str):
     # Potential security risk with os.system
     return os.system(command)
 """
-                elif "greet_user" in prompt.lower():
-                    return """  
+            elif "greet_user" in prompt.lower():
+                return """  
 from typing import Dict, Any
 
 def execute(name: str) -> Dict[str, Any]:
@@ -88,8 +94,8 @@ def execute(name: str) -> Dict[str, Any]:
         "message": f"Hello, {name}!"
     }
 """
-                else:
-                    return """  
+            else:
+                return """  
 from typing import Dict, Any
 
 def execute(name: str) -> Dict[str, Any]:
@@ -107,9 +113,9 @@ def execute(name: str) -> Dict[str, Any]:
         "message": f"Hello, {name}!"
     }
 """
-            
-            mock_service.generate_code.side_effect = mock_generate_code
-            yield mock_service
+        
+        mock_service.generate_code.side_effect = mock_generate_code
+        return mock_service
 
     @pytest.fixture
     def template_engine(self):

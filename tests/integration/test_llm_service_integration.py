@@ -1,8 +1,46 @@
 import os
 import socket
-
+import logging
 import pytest
+from unittest.mock import patch
+import sys
+
 from meta_agent.services.llm_service import LLMService
+
+# Configure logging for this test module
+logger = logging.getLogger(__name__)
+
+# Module-level setup and teardown to ensure clean state
+@pytest.fixture(scope="module", autouse=True)
+def ensure_clean_state():
+    """Ensure clean state before and after running tests in this module.
+    
+    This fixture runs automatically for all tests in this module and ensures
+    that any global state or mocks that might affect LLMService are reset.
+    """
+    # Store original sys.modules entries that we care about
+    original_modules = {}
+    for module_name in list(sys.modules.keys()):
+        if module_name.startswith('meta_agent.services'):
+            original_modules[module_name] = sys.modules.get(module_name)
+    
+    # Store original environment variables
+    original_env = os.environ.copy()
+    
+    # Yield control to the tests
+    yield
+    
+    # Restore original modules to undo any monkey patching
+    for module_name, module in original_modules.items():
+        if module is None:
+            if module_name in sys.modules:
+                del sys.modules[module_name]
+        else:
+            sys.modules[module_name] = module
+    
+    # Restore original environment variables
+    os.environ.clear()
+    os.environ.update(original_env)
 
 
 def internet_available() -> bool:
@@ -28,9 +66,12 @@ async def test_llm_service_live_api_call():
     This test relies on the OPENAI_API_KEY environment variable being set.
     It uses the default model and API base configured in LLMService.
     """
+    # Create a fresh instance of LLMService for this test
+    # This ensures we're not affected by any mocking or state changes from other tests
     try:
         # LLMService will attempt to load the API key from .env or environment
         service = LLMService()
+        logger.info("Successfully created LLMService instance")
     except ValueError as e:
         pytest.fail(
             f"Failed to initialize LLMService, API key likely missing or invalid: {e}"
@@ -40,7 +81,12 @@ async def test_llm_service_live_api_call():
     context = {}
 
     try:
+        # Add debug logging to see what's happening
+        logger.info(f"Sending prompt to LLM: {simple_prompt}")
         code_response = await service.generate_code(simple_prompt, context)
+
+        # Log the response for debugging
+        logger.info(f"Received response from LLM: {code_response[:100]}...")
 
         assert isinstance(code_response, str), "Response should be a string"
         assert len(code_response.strip()) > 0, "Response string should not be empty"
@@ -50,8 +96,21 @@ async def test_llm_service_live_api_call():
         )
 
     except Exception as e:
+        # Get more detailed error information
+        error_type = type(e).__name__
+        error_message = str(e)
+        
+        # Log the error details
+        logger.error(f"Error type: {error_type}")
+        logger.error(f"Error message: {error_message}")
+        
+        # Include the exception traceback in the failure message
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"Traceback: {tb}")
+        
         pytest.fail(
-            f"LLMService.generate_code failed with an unexpected exception: {e}"
+            f"LLMService.generate_code failed with an unexpected exception ({error_type}): {error_message}"
         )
 
 

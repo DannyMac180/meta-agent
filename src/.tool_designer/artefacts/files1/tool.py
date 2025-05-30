@@ -17,7 +17,7 @@ def file_search(
     Returns:
         list: list
     """
-    logger.info(f'Running tool: file_search')
+    logger.info(f"Running tool: file_search")
     result = None
     logger.warning('Tool logic not yet implemented!')
     return result
