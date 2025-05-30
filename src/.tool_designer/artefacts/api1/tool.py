@@ -1,5 +1,5 @@
 import logging
-from typing import Any # Add other necessary imports based on spec
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -8,7 +8,7 @@ def get_weather(
     city: str,
     api_key: str
 ) -> dict:
-    """Fetches current weather for a city
+    """Fetches current weather for a city"
 
     Args:
         city: City name (Required)
@@ -17,14 +17,7 @@ def get_weather(
     Returns:
         dict: dict
     """
-    logger.info(f"Running tool: get_weather")
-    # --- Tool Implementation Start ---
-    # TODO: Implement the core logic for the get_weather tool.
-    # Use the input parameters: city, api_key
-    # Expected output format: dict
-    
-    result = None # Placeholder for the actual result
-    logger.warning("Tool logic not yet implemented!")
-    
-    # --- Tool Implementation End ---
+    logger.info(f'Running tool: get_weather')
+    result = None
+    logger.warning('Tool logic not yet implemented!')
     return result
