@@ -1,20 +1,18 @@
 from __future__ import annotations
-import sys
 import pytest
 from unittest.mock import patch, AsyncMock
 
 
 class MockerFixture:
+    """Minimal stand-in for pytest-mock's fixture class."""
+
     AsyncMock = AsyncMock
 
-    def patch(self, *args, **kwargs):  # noqa: D401
+    def patch(self, *args, **kwargs):
         return patch(*args, **kwargs)
 
 
-def pytest_configure(config):  # pragma: no cover - register fixture
-    @pytest.fixture
-    def mocker():
-        return MockerFixture()
-
-    if not config.pluginmanager.hasplugin("pytest_mock"):
-        config.pluginmanager.register(sys.modules[__name__])
+@pytest.fixture
+def mocker() -> MockerFixture:
+    """Provide a minimal mocker fixture using ``unittest.mock``."""
+    return MockerFixture()
