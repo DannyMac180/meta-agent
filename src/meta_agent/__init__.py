@@ -18,10 +18,6 @@ from typing import Any
 
 from pydantic import BaseModel
 
-_src_dir = Path(__file__).resolve().parents[1]
-if _src_dir.name == "src" and str(_src_dir) not in sys.path:
-    sys.path.insert(0, str(_src_dir))
-
 from .bundle import Bundle
 from .template_schema import (
     TemplateCategory,
@@ -50,19 +46,24 @@ except Exception:  # pragma: no cover
     pass
 
 # ---------------------------------------------------------------------------
-# Pydantic v1/v2 compatibility helpers
+# Pydantic compatibility helpers
 # ---------------------------------------------------------------------------
+try:
+    if not hasattr(BaseModel, "model_dump"):
 
-if not hasattr(BaseModel, "model_dump"):
+        def _model_dump(self: BaseModel, *args: Any, **kwargs: Any) -> Any:
+            return self.dict(*args, **kwargs)
 
-    def _model_dump(self: BaseModel, *args: Any, **kwargs: Any) -> Any:
-        return self.dict(*args, **kwargs)
+        BaseModel.model_dump = _model_dump  # type: ignore[attr-defined]
 
-    def _model_dump_json(self: BaseModel, *args: Any, **kwargs: Any) -> str:
-        return self.json(*args, **kwargs)
+    if not hasattr(BaseModel, "model_dump_json"):
 
-    BaseModel.model_dump = _model_dump  # type: ignore[attr-defined]
-    BaseModel.model_dump_json = _model_dump_json  # type: ignore[attr-defined]
+        def _model_dump_json(self: BaseModel, *args: Any, **kwargs: Any) -> str:
+            return self.json(*args, **kwargs)
+
+        BaseModel.model_dump_json = _model_dump_json  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover - should never fail at runtime
+    pass
 
 __all__ = [
     "Bundle",
