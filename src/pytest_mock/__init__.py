@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import pytest
 from unittest.mock import AsyncMock, patch
 
@@ -16,4 +15,5 @@ class MockerFixture:
 @pytest.fixture
 def mocker() -> MockerFixture:
     """Provide a basic mocker fixture."""
+
     return MockerFixture()
