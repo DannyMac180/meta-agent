@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound
 
 from .template_registry import TemplateRegistry
 
 
-def _split_name(name: str) -> Tuple[str, str]:
+def _split_name(name: str) -> tuple[str, str]:
     """Split ``slug@version`` into components."""
     if "@" in name:
         slug, version = name.split("@", 1)
@@ -25,14 +25,12 @@ class _RegistryLoader(BaseLoader):
     def __init__(self, registry: TemplateRegistry) -> None:
         self.registry = registry
 
-    def get_source(
-        self, environment: Environment, template: str
-    ) -> Tuple[str, str, Any]:
+    def get_source(self, environment: Environment, template: str) -> str:
         slug, version = _split_name(template)
         source = self.registry.load_template(slug, version)
         if source is None:
             raise TemplateNotFound(template)
-        return source, template, lambda: True
+        return source
 
 
 class TemplateMixer:
@@ -52,7 +50,7 @@ class TemplateMixer:
         """Render a template and all of its dependencies."""
         name = slug if version == "latest" else f"{slug}@{version}"
         template = self.env.get_template(name)
-        return template.render(context or {})
+        return template.render(**(context or {}))
 
     def dependency_graph(
         self, slug: str, *, version: str = "latest"

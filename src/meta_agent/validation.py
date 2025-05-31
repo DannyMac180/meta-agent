@@ -74,9 +74,19 @@ def validate_generated_tool(
             "--maxfail=1",
             "--disable-warnings",
         ]
-        # Conditionally add coverage arguments
         is_edge_case = tool_id.startswith("edge")
+
+        # Add coverage options only if pytest-cov is available
+        has_pytest_cov = False
         if not is_edge_case:
+            try:
+                import pytest_cov  # noqa: F401  # type: ignore
+
+                has_pytest_cov = True
+            except Exception:  # pragma: no cover - plugin not installed
+                has_pytest_cov = False
+
+        if not is_edge_case and has_pytest_cov:
             cov_config = Path(__file__).resolve().parents[2] / "pyproject.toml"
             pytest_command.extend(
                 [
