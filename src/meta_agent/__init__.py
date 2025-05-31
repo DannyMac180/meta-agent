@@ -11,6 +11,9 @@ while remaining completely harmless in regular usage.
 from __future__ import annotations
 
 import builtins
+from typing import Any
+
+from pydantic import BaseModel
 
 from .bundle import Bundle
 from .template_schema import (
@@ -37,6 +40,26 @@ except Exception:  # pragma: no cover
     # Failing to add the helper must never break runtime code, so swallow
     # any unexpected error silently – tests will fail loudly if they rely
     # on it and something went wrong here.
+    pass
+
+# ---------------------------------------------------------------------------
+# Pydantic compatibility helpers
+# ---------------------------------------------------------------------------
+try:
+    if not hasattr(BaseModel, "model_dump"):
+
+        def _model_dump(self: BaseModel, *args: Any, **kwargs: Any) -> Any:
+            return self.dict(*args, **kwargs)
+
+        BaseModel.model_dump = _model_dump  # type: ignore[attr-defined]
+
+    if not hasattr(BaseModel, "model_dump_json"):
+
+        def _model_dump_json(self: BaseModel, *args: Any, **kwargs: Any) -> str:
+            return self.json(*args, **kwargs)
+
+        BaseModel.model_dump_json = _model_dump_json  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover - should never fail at runtime
     pass
 
 __all__ = [
