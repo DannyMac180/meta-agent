@@ -3,9 +3,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-SRC_DIR = Path(__file__).resolve().parents[1] / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
+# Ensure src directory is on path so local plugins can load
+src_dir = Path(__file__).resolve().parent.parent / "src"
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
 
 pytest_plugins = ["pytest_mock"]
 
