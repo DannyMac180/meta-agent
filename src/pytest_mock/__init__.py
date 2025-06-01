@@ -1,5 +1,4 @@
 from __future__ import annotations
-import sys
 import pytest
 from unittest.mock import patch, AsyncMock
 
@@ -16,4 +15,5 @@ def pytest_configure(config):  # pragma: no cover - register fixture
     def mocker():
         return MockerFixture()
 
-    config.pluginmanager.register(sys.modules[__name__])
+    # The plugin is loaded via ``pytest_plugins`` so no further registration is
+    # needed here.
