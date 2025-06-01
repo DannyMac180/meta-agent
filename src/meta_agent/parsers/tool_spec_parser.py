@@ -1,5 +1,6 @@
 import json
 import yaml
+import textwrap
 
 try:
     from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_validator
@@ -104,13 +105,14 @@ class ToolSpecificationParser:
             if isinstance(self.raw_specification, dict):
                 data = self.raw_specification
             elif isinstance(self.raw_specification, str):
+                text_spec = textwrap.dedent(self.raw_specification)
                 # Try parsing as JSON first
                 try:
-                    data = json.loads(self.raw_specification)
+                    data = json.loads(text_spec)
                 except json.JSONDecodeError:
                     # If JSON fails, try parsing as YAML
                     try:
-                        data = yaml.safe_load(self.raw_specification)
+                        data = yaml.safe_load(text_spec)
                         if data is None or not isinstance(data, dict):
                             self.errors.append(
                                 "YAML specification did not parse into a dictionary."
