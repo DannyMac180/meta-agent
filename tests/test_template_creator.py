@@ -12,8 +12,16 @@ def _meta() -> TemplateMetadata:
         slug="demo",
         title="Demo Template",
         description="Simple demo",
+        intended_use="demo",
+        io_contract={"input": "text", "output": "text"},
+        tools=[],
+        guardrails=[],
+        model_pref="gpt3",
         category=TemplateCategory.CONVERSATION,
         complexity=TemplateComplexity.BASIC,
+        created_by="tester",
+        semver="0.1.0",
+        last_test_passed="2024-01-01T00:00:00Z",
         tags=["demo"],
     )
 

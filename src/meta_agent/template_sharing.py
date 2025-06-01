@@ -65,10 +65,21 @@ class TemplateSharingManager:
             slug=meta["slug"],
             title=meta.get("title", meta["slug"]),
             description=meta.get("description", ""),
+            intended_use=meta.get("intended_use", ""),
+            io_contract=meta.get("io_contract", {"input": "", "output": ""}),
+            tools=meta.get("tools", []),
+            guardrails=meta.get("guardrails", []),
+            model_pref=meta.get("model_pref", ""),
             category=meta.get("category"),
             subcategory=meta.get("subcategory"),
             complexity=meta.get("complexity"),
+            created_by=meta.get("created_by", "unknown"),
+            semver=meta.get("semver", "0.0.0"),
+            last_test_passed=meta.get("last_test_passed"),
             tags=meta.get("tags", []),
+            eval_score=meta.get("eval_score"),
+            cost_estimate=meta.get("cost_estimate"),
+            tokens_per_run=meta.get("tokens_per_run"),
         )
         version = meta.get("version", "0.1.0")
         creator = TemplateCreator(self.registry)

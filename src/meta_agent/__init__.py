@@ -23,6 +23,7 @@ from .template_schema import (
     TemplateCategory,
     TemplateComplexity,
     TemplateMetadata,
+    IOContract,
 )
 from .template_registry import TemplateRegistry
 from .template_creator import TemplateCreator, validate_template
@@ -70,6 +71,7 @@ __all__ = [
     "TemplateCategory",
     "TemplateComplexity",
     "TemplateMetadata",
+    "IOContract",
     "TemplateRegistry",
     "TemplateCreator",
     "validate_template",
