@@ -18,13 +18,24 @@ Each template defines the following fields:
 
 | Field        | Description                                             |
 |--------------|---------------------------------------------------------|
-| `slug`       | Unique identifier used when referencing the template.   |
-| `title`      | Human friendly name.                                    |
-| `description`| Short summary of the template's purpose.                |
-| `category`   | One of the primary categories above.                    |
-| `subcategory`| Optional free‑form subcategory for finer grouping.      |
-| `complexity` | `basic`, `intermediate` or `advanced`.                  |
-| `tags`       | List of additional keywords.                            |
+| `slug`            | Unique identifier used when referencing the template.   |
+| `title`           | Human friendly name.                                    |
+| `description`     | Short summary of the template's purpose.                |
+| `intended_use`    | Primary scenario the template targets.                  |
+| `io_contract`     | Mapping of expected input and output.                   |
+| `tools`           | Tools referenced by the template.                       |
+| `guardrails`      | Guardrails applied when running the template.           |
+| `model_pref`      | Preferred model/provider for generation.                |
+| `category`        | One of the primary categories above.                    |
+| `subcategory`     | Optional free‑form subcategory for finer grouping.      |
+| `complexity`      | `basic`, `intermediate` or `advanced`.                  |
+| `created_by`      | Author or source of the template.                       |
+| `semver`          | Semantic version of the template.                       |
+| `last_test_passed`| ISO timestamp when tests last passed.                   |
+| `tags`            | List of additional keywords.                            |
+| `eval_score`      | (optional) Evaluation score from tests.                 |
+| `cost_estimate`   | (optional) Estimated cost per run in dollars.           |
+| `tokens_per_run`  | (optional) Approximate token usage per run.             |
 
 ## Classification Examples
 
@@ -32,6 +43,13 @@ Each template defines the following fields:
 - slug: basic-chat
   title: Basic Chat Bot
   description: Minimal conversational agent.
+  intended_use: demo
+  io_contract:
+    input: text
+    output: text
+  tools: []
+  guardrails: []
+  model_pref: gpt3
   category: conversation
   subcategory: qa
   complexity: basic
@@ -40,6 +58,13 @@ Each template defines the following fields:
 - slug: structured-reasoner
   title: Structured Reasoner
   description: Performs multi-step reasoning with tool calls.
+  intended_use: demo
+  io_contract:
+    input: text
+    output: text
+  tools: []
+  guardrails: []
+  model_pref: gpt3
   category: reasoning
   subcategory: step-by-step
   complexity: advanced
