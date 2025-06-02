@@ -1,7 +1,7 @@
 from __future__ import annotations
-import sys
+
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 
 class MockerFixture:
@@ -11,9 +11,11 @@ class MockerFixture:
         return patch(*args, **kwargs)
 
 
-def pytest_configure(config):  # pragma: no cover - register fixture
-    @pytest.fixture
-    def mocker():
-        return MockerFixture()
+@pytest.fixture
+def mocker() -> MockerFixture:  # pragma: no cover - simple fixture
+    return MockerFixture()
 
-    config.pluginmanager.register(sys.modules[__name__])
+
+def pytest_configure(config):  # pragma: no cover - plugin auto-discovery
+    # The fixture is provided via the module; no additional setup required.
+    return None
