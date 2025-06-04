@@ -8,6 +8,7 @@ identifier ``patch`` without importing it; adding the alias
 here prevents a ``NameError`` during test collection/execution
 while remaining completely harmless in regular usage.
 """
+# ruff: noqa: E402
 from __future__ import annotations
 
 import sys
@@ -30,6 +31,7 @@ from .template_creator import TemplateCreator, validate_template
 from .template_mixer import TemplateMixer
 from .template_validator import TemplateValidator, TemplateTestCase
 from .template_sharing import TemplateSharingManager
+from .template_index import TemplateIndex
 
 # Expose `patch` globally for tests that forget to import it.
 try:
@@ -79,4 +81,5 @@ __all__ = [
     "TemplateValidator",
     "TemplateTestCase",
     "TemplateSharingManager",
+    "TemplateIndex",
 ]
