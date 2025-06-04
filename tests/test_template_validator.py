@@ -1,4 +1,9 @@
 from meta_agent.template_validator import TemplateValidator, TemplateTestCase
+from meta_agent.template_schema import (
+    TemplateMetadata,
+    TemplateCategory,
+    TemplateComplexity,
+)
 
 
 def test_template_validator_success() -> None:
@@ -30,3 +35,37 @@ def test_template_validator_performance_fail() -> None:
     result = validator.validate("Hello", [case], max_render_seconds=0.0)
     assert not result.success
     assert any("too slow" in e for e in result.errors)
+
+
+def test_template_validator_shell_detection() -> None:
+    validator = TemplateValidator()
+    result = validator.validate("{{ os.system('ls') }}")
+    assert not result.success
+    assert any("shell command" in e for e in result.errors)
+
+
+def test_template_validator_license_scan(monkeypatch) -> None:
+    def fake_resolve(pkgs):
+        return [], {"badpkg": "GPL"}, None
+
+    validator = TemplateValidator()
+    monkeypatch.setattr(validator.dep_manager, "resolve", fake_resolve)
+    meta = TemplateMetadata(
+        slug="demo",
+        title="Demo",
+        description="",
+        intended_use="",
+        io_contract={"input": "text", "output": "text"},
+        tools=["badpkg"],
+        guardrails=[],
+        model_pref="gpt3",
+        category=TemplateCategory.CONVERSATION,
+        complexity=TemplateComplexity.BASIC,
+        created_by="me",
+        semver="0.1.0",
+        last_test_passed=None,
+        tags=[],
+    )
+    result = validator.validate("hi", metadata=meta)
+    assert not result.success
+    assert any("non-permissive license" in e for e in result.errors)
