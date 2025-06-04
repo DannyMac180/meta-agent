@@ -87,7 +87,7 @@ Implement template signing with sha256 signatures, JSON-Schema validation, and R
 ### Details:
 Add provider compatibility flags to templates (e.g., requires_structured_outputs, requires_web_search). Enhance the template selection engine to filter out incompatible matches based on available capabilities in the runtime environment.
 
-## 12. Create early 'hello-world' template [pending]
+## 12. Create early 'hello-world' template [done]
 ### Dependencies: None
 ### Description: Develop a simple starter template that can be used in early phases
 ### Details:
