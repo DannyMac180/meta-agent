@@ -60,18 +60,33 @@ class TemplateSearchEngine:
         *,
         category: str | None = None,
         tags: Optional[List[str]] = None,
+        capabilities: Optional[List[str]] = None,
         limit: int = 5,
     ) -> List[TemplateMatch]:
-        """Return templates matching the query and optional filters."""
+        """Return templates matching the query and optional filters.
+
+        ``capabilities`` is a list of available provider features, e.g.
+        ``["structured_outputs", "web_search"]``. Templates requiring
+        capabilities not present in this list will be excluded from results.
+        """
         if not self._index:
             self.build_index()
         tokens = [t.lower() for t in query.split() if t]
+        caps = set(capabilities or [])
         results: List[TemplateMatch] = []
         for item in self._index:
             meta = item.get("metadata", {})
             if category and meta.get("category") != category:
                 continue
             if tags and not all(t in meta.get("tags", []) for t in tags):
+                continue
+            if "requires_structured_outputs" in meta and meta[
+                "requires_structured_outputs"
+            ] and "structured_outputs" not in caps:
+                continue
+            if "requires_web_search" in meta and meta[
+                "requires_web_search"
+            ] and "web_search" not in caps:
                 continue
             haystack = " ".join(
                 [
