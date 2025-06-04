@@ -74,5 +74,14 @@ class TemplateMetadata(BaseModel):
         default=None, description="Approximate token usage per run"
     )
 
+    requires_structured_outputs: bool = Field(
+        default=False,
+        description="Template requires model structured outputs",
+    )
+    requires_web_search: bool = Field(
+        default=False,
+        description="Template requires web search capability",
+    )
+
     class Config:
         use_enum_values = False

@@ -52,3 +52,19 @@ def test_search_filters(tmp_path):
 
     res_none = engine.search("content", tags=["missing"])
     assert res_none == []
+
+
+def test_search_capabilities(tmp_path):
+    reg = TemplateRegistry(base_dir=tmp_path)
+    reg.register(_meta("basic", TemplateCategory.CONVERSATION), "c1")
+    m2 = _meta("web", TemplateCategory.CONVERSATION)
+    m2.requires_web_search = True
+    reg.register(m2, "c2")
+
+    engine = TemplateSearchEngine(reg)
+    none = engine.search("c", capabilities=[])
+    assert [r.slug for r in none] == ["basic"]
+
+    cap = engine.search("c", capabilities=["web_search"])
+    slugs = {r.slug for r in cap}
+    assert slugs == {"basic", "web"}
