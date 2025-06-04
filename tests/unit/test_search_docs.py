@@ -1,6 +1,8 @@
 import importlib
 import sys
 import subprocess
+import os
+from pathlib import Path
 
 # --------------------------------------------------------------------------- #
 # Helpers                                                                     #
@@ -20,6 +22,7 @@ def _clear_import(name: str, monkeypatch):
 # Tests                                                                        #
 # --------------------------------------------------------------------------- #
 
+
 def test_import_fallback_logs_warning():
     """Importing search_docs in a subprocess should emit a fallback warning."""
     cmd = (
@@ -29,9 +32,12 @@ def test_import_fallback_logs_warning():
         "import importlib; importlib.invalidate_caches(); "
         "import meta_agent.search_docs"
     )
-    result = subprocess.run([
-        sys.executable, "-c", cmd
-    ], capture_output=True, text=True)
+    env = os.environ.copy()
+    src_path = Path(__file__).resolve().parents[2] / "src"
+    env["PYTHONPATH"] = f"{src_path}{os.pathsep}" + env.get("PYTHONPATH", "")
+    result = subprocess.run(
+        [sys.executable, "-c", cmd], capture_output=True, text=True, env=env
+    )
     stderr = result.stderr
     assert _FALLBACK_MSG in stderr, "Fallback warning not found in subprocess stderr"
 
@@ -43,8 +49,9 @@ def test_search_docs_function_uses_stub(monkeypatch):
 
     # Force WebSearchTool to our stub that returns a simple string.
     monkeypatch.setattr(
-        search_docs, "WebSearchTool",
-        lambda *_a, **_kw: "Hosted tool unavailable in this environment."
+        search_docs,
+        "WebSearchTool",
+        lambda *_a, **_kw: "Hosted tool unavailable in this environment.",
     )
 
     assert search_docs.search_docs("anything", k=3) == [
@@ -53,5 +60,5 @@ def test_search_docs_function_uses_stub(monkeypatch):
 
 
 # It might be good to add a test for the 'happy path' as well,
-# assuming 'agents' and its tools ARE available, but that requires 
+# assuming 'agents' and its tools ARE available, but that requires
 # mocking the actual tools if they make external calls.
