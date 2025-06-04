@@ -1,0 +1,12 @@
+{
+  "hello-world": {
+    "versions": {
+      "0.1.0": {
+        "path": "hello-world/v0_1_0/template.yaml",
+        "checksum": "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+        "created_at": "2025-01-01T00:00:00Z"
+      }
+    },
+    "current_version": "0.1.0"
+  }
+}
