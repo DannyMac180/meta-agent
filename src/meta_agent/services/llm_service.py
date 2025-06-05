@@ -11,15 +11,47 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, IO, Optional, Union  # Added Callable, IO, Union for load_dotenv wrapper
+
+_original_load_dotenv_func: Optional[Callable[..., bool]] = None
 
 try:  # pragma: no cover - optional dependency
-    from dotenv import load_dotenv
-except Exception:  # pragma: no cover - fallback when python-dotenv isn't installed
+    # Attempt to import the real load_dotenv function from python-dotenv
+    from dotenv import load_dotenv as _env_load_dotenv_actual
+    _original_load_dotenv_func = _env_load_dotenv_actual
+except ImportError:  # pragma: no cover - fallback if python-dotenv isn't installed
+    # If python-dotenv is not installed, _original_load_dotenv_func remains None,
+    # and our wrapper function below will effectively become a no-op.
+    pass
 
-    def load_dotenv(*_args, **_kwargs) -> None:
-        """Fallback no-op for environments without python-dotenv."""
-        return None
+def load_dotenv(
+    dotenv_path: Optional[Union[str, "os.PathLike[str]"]] = None,
+    stream: Optional[IO[str]] = None,
+    verbose: bool = False,
+    override: bool = False,
+    interpolate: bool = True,
+    encoding: Optional[str] = "utf-8",
+) -> None:
+    """
+    Wrapper for python-dotenv's load_dotenv or a no-op fallback.
+
+    This function ensures a consistent '-> None' signature, resolving type
+    checker errors that arise when python-dotenv (which returns bool) is
+    conditionally imported alongside a fallback definition that returns None.
+    The boolean return value of the original load_dotenv (if used) is ignored.
+    """
+    if _original_load_dotenv_func:
+        # Call the actual load_dotenv function if it was successfully imported
+        _original_load_dotenv_func(
+            dotenv_path=dotenv_path,
+            stream=stream,
+            verbose=verbose,
+            override=override,
+            interpolate=interpolate,
+            encoding=encoding,
+        )
+    # If _original_load_dotenv_func is None (i.e., import failed),
+    # this function does nothing and implicitly returns None, satisfying the '-> None' type hint.
 
 
 try:  # pragma: no cover - optional dependency
