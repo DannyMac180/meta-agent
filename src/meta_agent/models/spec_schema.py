@@ -111,6 +111,12 @@ class SpecSchema(BaseModel):
             if not isinstance(data, dict):
                 raise TypeError("YAML content did not parse into a dictionary.")
 
+            if isinstance(data.get("metadata"), dict):
+                data["metadata"] = {
+                    k: str(v) if not isinstance(v, str) else v
+                    for k, v in data["metadata"].items()
+                }
+
             return cls.from_dict(data)
         except yaml.YAMLError as e:
             print(f"Error decoding YAML: {e}")

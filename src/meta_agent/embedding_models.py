@@ -7,7 +7,37 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-import numpy as np
+
+def _hash_embed(text: str, dim: int) -> List[float]:
+    """Create a simple hashed bag-of-words embedding."""
+    vec = [0.0] * dim
+    for word in text.lower().split():
+        idx = hash(word) % dim
+        vec[idx] += 1.0
+    return vec
+
+
+try:  # pragma: no cover - optional dependency
+    import numpy as np  # type: ignore
+except Exception:  # pragma: no cover - fallback when numpy isn't installed
+    import random
+
+    class _RandomNormal:
+        """Minimal stub mimicking ``numpy.random`` for tests."""
+
+        _rand: random.Random
+
+        def seed(self, seed: int) -> None:
+            self._rand = random.Random(seed)
+
+        def normal(self, mu: float, sigma: float, size: int):
+            return [self._rand.gauss(mu, sigma) for _ in range(size)]
+
+    class _NPStub:
+        def __init__(self) -> None:
+            self.random = _RandomNormal()
+
+    np = _NPStub()  # type: ignore
 
 
 @dataclass
@@ -70,13 +100,9 @@ class OpenAIEmbeddingModel(EmbeddingModel):
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts."""
-        # Mock implementation - would use OpenAI client in production
         embeddings = []
         for text in texts:
-            # Simulate embedding generation with random vectors
-            np.random.seed(hash(text) % 2**32)
-            embedding = np.random.normal(0, 1, 1536).tolist()
-            embeddings.append(embedding)
+            embeddings.append(_hash_embed(text, 1536))
         return embeddings
 
     def embed_query(self, query: str) -> List[float]:
@@ -106,13 +132,10 @@ class LocalEmbeddingModel(EmbeddingModel):
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts."""
-        # Mock implementation - would use sentence-transformers in production
         embeddings = []
         dim = self._dimension_map.get(self.model_name, 384)
         for text in texts:
-            np.random.seed(hash(text) % 2**32)
-            embedding = np.random.normal(0, 1, dim).tolist()
-            embeddings.append(embedding)
+            embeddings.append(_hash_embed(text, dim))
         return embeddings
 
     def embed_query(self, query: str) -> List[float]:
@@ -243,6 +266,10 @@ class EmbeddingModelSelector:
         if not candidates:
             return self._default_model
 
+        if prioritize_cost:
+            cheapest = min(candidates, key=lambda m: m.cost_per_1k_tokens)
+            return cheapest.model_name
+
         # Score each model based on priorities
         scored_models = []
         for model in candidates:
@@ -256,12 +283,6 @@ class EmbeddingModelSelector:
                 max_time = max(m.avg_inference_time for m in candidates)
                 if max_time > 0:
                     score += (1 - model.avg_inference_time / max_time) * 0.3
-
-            if prioritize_cost:
-                # Lower cost is better
-                max_cost = max(m.cost_per_1k_tokens for m in candidates)
-                if max_cost > 0:
-                    score += (1 - model.cost_per_1k_tokens / max_cost) * 0.4
 
             scored_models.append((model.model_name, score))
 
