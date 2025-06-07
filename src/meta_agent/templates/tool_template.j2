@@ -1,0 +1,32 @@
+import logging
+from typing import Any # Add other necessary imports based on spec
+
+logger = logging.getLogger(__name__)
+
+# {{ spec.purpose }}
+def {{ spec.name }}(
+    {%- for param in spec.input_parameters %}
+    {{ param.name }}: {{ map_type(param.type_) }}{% if not param.required %} = None{% endif %}{% if not loop.last %},{% endif %}
+    {%- endfor %}
+) -> {{ map_type(spec.output_format) }}:
+    """{{ spec.purpose }}
+
+    Args:
+    {%- for param in spec.input_parameters %}
+        {{ param.name }}: {{ param.description or 'No description provided.' }} {% if param.required %}(Required){% else %}(Optional){% endif %}
+    {%- endfor %}
+
+    Returns:
+        {{ map_type(spec.output_format) }}: {{ spec.output_format }}
+    """
+    logger.info(f"Running tool: {{ spec.name }}")
+    # --- Tool Implementation Start ---
+    # TODO: Implement the core logic for the {{ spec.name }} tool.
+    # Use the input parameters: {{ spec.input_parameters | map(attribute='name') | join(', ') }}
+    # Expected output format: {{ spec.output_format }}
+    
+    result = None # Placeholder for the actual result
+    logger.warning("Tool logic not yet implemented!")
+    
+    # --- Tool Implementation End ---
+    return result

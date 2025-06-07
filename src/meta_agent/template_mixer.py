@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound
 
 from .template_registry import TemplateRegistry
 
 
-def _split_name(name: str) -> Tuple[str, str]:
+def _split_name(name: str) -> tuple[str, str]:
     """Split ``slug@version`` into components."""
     if "@" in name:
         slug, version = name.split("@", 1)

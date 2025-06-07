@@ -63,7 +63,6 @@ def test_design_tool_success_dict():
     """Test successful tool design from a dictionary spec."""
     agent = ToolDesignerAgent()
     generated_code = agent.design_tool(VALID_DICT_SPEC)
-    # The current template outputs '= None' for optional parameters
     assert "def multiply_numbers(" in generated_code
     assert "x: float," in generated_code
     assert "y: float = None" in generated_code

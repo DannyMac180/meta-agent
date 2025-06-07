@@ -6,19 +6,52 @@ Large Language Model (LLM) APIs for code generation.
 """
 
 import asyncio
+import inspect
 import json
 import logging
 import os
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, IO, Optional, Union  # Added Callable, IO, Union for load_dotenv wrapper
+
+_original_load_dotenv_func: Optional[Callable[..., bool]] = None
 
 try:  # pragma: no cover - optional dependency
-    from dotenv import load_dotenv
-except Exception:  # pragma: no cover - fallback when python-dotenv isn't installed
+    # Attempt to import the real load_dotenv function from python-dotenv
+    from dotenv import load_dotenv as _env_load_dotenv_actual
+    _original_load_dotenv_func = _env_load_dotenv_actual
+except ImportError:  # pragma: no cover - fallback if python-dotenv isn't installed
+    # If python-dotenv is not installed, _original_load_dotenv_func remains None,
+    # and our wrapper function below will effectively become a no-op.
+    pass
 
-    def load_dotenv(*_args, **_kwargs) -> None:
-        """Fallback no-op for environments without python-dotenv."""
-        return None
+def load_dotenv(
+    dotenv_path: Optional[Union[str, "os.PathLike[str]"]] = None,
+    stream: Optional[IO[str]] = None,
+    verbose: bool = False,
+    override: bool = False,
+    interpolate: bool = True,
+    encoding: Optional[str] = "utf-8",
+) -> None:
+    """
+    Wrapper for python-dotenv's load_dotenv or a no-op fallback.
+
+    This function ensures a consistent '-> None' signature, resolving type
+    checker errors that arise when python-dotenv (which returns bool) is
+    conditionally imported alongside a fallback definition that returns None.
+    The boolean return value of the original load_dotenv (if used) is ignored.
+    """
+    if _original_load_dotenv_func:
+        # Call the actual load_dotenv function if it was successfully imported
+        _original_load_dotenv_func(
+            dotenv_path=dotenv_path,
+            stream=stream,
+            verbose=verbose,
+            override=override,
+            interpolate=interpolate,
+            encoding=encoding,
+        )
+    # If _original_load_dotenv_func is None (i.e., import failed),
+    # this function does nothing and implicitly returns None, satisfying the '-> None' type hint.
 
 
 try:  # pragma: no cover - optional dependency
@@ -193,13 +226,20 @@ class LLMService:
         # Make the API call
         session = aiohttp.ClientSession()
         try:
-            request_ctx = await session.post(
+            response_ctx_or_coro = session.post(
                 self.api_base,
                 headers=headers,
                 json=payload,
                 timeout=self.timeout,
             )
-            async with request_ctx as response:
+
+            response_ctx = (
+                await response_ctx_or_coro
+                if inspect.isawaitable(response_ctx_or_coro)
+                else response_ctx_or_coro
+            )
+
+            async with response_ctx as response:
                 if response.status != 200:
                     error_text = await response.text()
                     self.logger.error(f"API error: {response.status} - {error_text}")
@@ -224,8 +264,14 @@ class LLMService:
             str: The extracted code, or an empty string if extraction fails
         """
         content_str = ""
+        
+        # Log the response format for debugging
+        self.logger.debug(f"Response keys: {list(response.keys())}")
+        
+        # Try to extract from 'output' format (responses endpoint)
         try:
             if isinstance(response.get("output"), list):
+                self.logger.debug("Found 'output' list format, attempting to extract content")
                 for item in response["output"]:
                     if isinstance(item, dict):
                         content = None
@@ -239,20 +285,46 @@ class LLMService:
                             content = item["text"]
                         if content:
                             content_str = content
+                            self.logger.debug("Successfully extracted content from 'output' format")
                             break
-
-            if not content_str:
-                self.logger.error(
-                    "Failed to extract content string from 'responses' endpoint. Expected 'output' list with a 'message' type item containing 'output_text'."
-                )
-                self.logger.debug(
-                    f"Full response for debugging: {json.dumps(response, indent=2)}"
-                )
-                return ""
-
         except (KeyError, IndexError, TypeError) as e:
+            self.logger.debug(f"Error extracting from 'output' format: {e}")
+        
+        # Try to extract from 'choices' format (standard OpenAI API)
+        if not content_str and isinstance(response.get("choices"), list) and response["choices"]:
+            self.logger.debug("Attempting to extract from 'choices' format (standard OpenAI API)")
+            try:
+                choice = response["choices"][0]
+                if isinstance(choice, dict):
+                    # Check for message.content format
+                    if isinstance(choice.get("message"), dict) and isinstance(choice["message"].get("content"), str):
+                        content_str = choice["message"]["content"]
+                        self.logger.debug("Successfully extracted content from 'choices[0].message.content'")
+                    # Check for text format
+                    elif isinstance(choice.get("text"), str):
+                        content_str = choice["text"]
+                        self.logger.debug("Successfully extracted content from 'choices[0].text'")
+            except (KeyError, IndexError, TypeError) as e:
+                self.logger.debug(f"Error extracting from 'choices' format: {e}")
+        
+        # Try direct access to content field (some APIs use this)
+        if not content_str and isinstance(response.get("content"), str):
+            self.logger.debug("Found direct 'content' field, using it")
+            content_str = response["content"]
+        
+        # If still no content, check for any string field at the top level
+        if not content_str:
+            self.logger.debug("Searching for any string field at top level")
+            for key, value in response.items():
+                if isinstance(value, str) and len(value) > 10:  # Arbitrary minimum length to avoid metadata fields
+                    content_str = value
+                    self.logger.debug(f"Using string field '{key}' as content")
+                    break
+        
+        # If we still don't have content, log and return empty string
+        if not content_str:
             self.logger.error(
-                f"Error accessing content from 'responses' API structure: {e}"
+                "Failed to extract content from response. Unsupported response format."
             )
             self.logger.debug(
                 f"Full response for debugging: {json.dumps(response, indent=2)}"
@@ -263,11 +335,13 @@ class LLMService:
             # Try to extract code blocks with Python markers
             python_blocks = re.findall(r"```python\n(.*?)```", content_str, re.DOTALL)
             if python_blocks:
+                self.logger.debug("Extracted Python code block")
                 return python_blocks[0].strip()
 
             # Try to extract any code blocks
             code_blocks = re.findall(r"```(.*?)```", content_str, re.DOTALL)
             if code_blocks:
+                self.logger.debug("Extracted generic code block")
                 return code_blocks[0].strip()
 
             # If no code blocks found, try to extract based on common patterns
@@ -289,16 +363,17 @@ class LLMService:
                 code_lines.append(line)
 
             if code_lines:
+                self.logger.debug("Extracted code based on line patterns")
                 return "\n".join(code_lines).strip()
 
             # If all else fails, return the entire content
-            self.logger.warning(
+            self.logger.info(
                 "Could not extract specific code blocks, returning full content"
             )
             return content_str.strip()
 
         except Exception as e:
             self.logger.error(
-                f"Error extracting code from response: {str(e)}", exc_info=True
+                f"Error extracting code from response content: {str(e)}", exc_info=True
             )
             return ""

@@ -42,13 +42,21 @@ class TemplateMetadata(BaseModel):
     slug: str = Field(..., description="Unique identifier for the template")
     title: str = Field(..., description="Human friendly name")
     description: str = Field(..., description="Short summary of the template")
-    intended_use: str = Field(..., description="Primary scenario the template targets")
-    io_contract: IOContract = Field(..., description="Expected inputs and outputs")
+    intended_use: str = Field(
+        default="general", description="Primary scenario the template targets"
+    )
+    io_contract: IOContract = Field(
+        default_factory=lambda: IOContract(input="input", output="output"),
+        description="Expected inputs and outputs",
+    )
     tools: List[str] = Field(default_factory=list, description="Tools referenced")
     guardrails: List[str] = Field(
         default_factory=list, description="Guardrails applied"
     )
-    model_pref: str = Field(..., description="Preferred model or provider")
+    model_pref: str = Field(
+        default="openai:text-embedding-3-small",
+        description="Preferred model or provider",
+    )
     category: TemplateCategory = Field(..., description="Primary template category")
     subcategory: Optional[str] = Field(
         default=None, description="Optional secondary grouping"
@@ -57,8 +65,10 @@ class TemplateMetadata(BaseModel):
         default=TemplateComplexity.BASIC,
         description="Overall complexity level",
     )
-    created_by: str = Field(..., description="Author or source of the template")
-    semver: str = Field(..., description="Semantic version of the template")
+    created_by: str = Field(
+        default="unknown", description="Author or source of the template"
+    )
+    semver: str = Field(default="0.1.0", description="Semantic version of the template")
     last_test_passed: Optional[str] = Field(
         default=None,
         description="ISO timestamp when tests last passed",

@@ -143,6 +143,8 @@ class ToolSpecificationParser:
                 loc_parts = [str(part) for part in err["loc"]]
                 field_name = loc_parts[0] if loc_parts else "unknown"
                 error_msg = err["msg"]
+                if error_msg.lower() == "field required":
+                    error_msg = "Field required"
 
                 # Special handling for specific validation errors to match test expectations
                 if field_name == "name" and "valid Python identifier" in error_msg:

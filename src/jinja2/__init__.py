@@ -23,6 +23,33 @@ class Template:
         if self.name.endswith("agent_default.j2"):
             return _render_agent_default(kwargs)
         text = self.text
+
+        if "{% extends" in text:
+            import re
+
+            match = re.search(r"{% extends '([^']+)' %}", text)
+            if match:
+                base_name = match.group(1)
+                base_template = self.globals["env"].get_template(base_name)
+                base_text = base_template.text
+                base_block = re.search(
+                    r"{% block (\w+) %}(.*?){% endblock %}", base_text, re.S
+                )
+                child_block = re.search(
+                    r"{% block (\w+) %}(.*?){% endblock %}", text, re.S
+                )
+                if (
+                    base_block
+                    and child_block
+                    and base_block.group(1) == child_block.group(1)
+                ):
+                    child_content = child_block.group(2).replace(
+                        "{{ super() }}", base_block.group(2)
+                    )
+                    text = base_text.replace(base_block.group(0), child_content)
+                else:
+                    text = base_text
+
         for key, value in kwargs.items():
             text = text.replace(f"{{{{ {key} }}}}", str(value))
         return text
@@ -122,8 +149,11 @@ class FileSystemLoader:
 
     def get_source(self, _environment: Any, template: str) -> str:
         path = os.path.join(self.searchpath, template)
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError as e:
+            raise TemplateNotFound(template) from e
 
 
 class BaseLoader:
@@ -162,7 +192,7 @@ class Environment:
 
     def get_template(self, name: str) -> Template:
         text = self.loader.get_source(self, name)
-        return Template(text, name, globals=self.globals)
+        return Template(text, name, globals={**self.globals, "env": self})
 
     def parse(self, source: str) -> None:
         """Naive validation that braces are balanced."""

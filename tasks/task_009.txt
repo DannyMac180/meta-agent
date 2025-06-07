@@ -24,7 +24,7 @@ Test template retrieval with various specifications. Verify template mixing prod
 ### Details:
 Define primary template categories (e.g., conversation, reasoning, creative), subcategories, and metadata fields needed for each template. Create a document outlining the schema with examples of how different templates would be classified.
 
-## 2. Implement template versioning system [done]
+## 2. Implement template versioning system [pending]
 ### Dependencies: 9.1
 ### Description: Develop a versioning mechanism to track template changes and maintain backward compatibility
 ### Details:
@@ -63,7 +63,7 @@ For the template validation and testing framework, create a 'golden-spec fuzz se
 ### Details:
 Implement template export/import, sharing permissions, collaborative editing, version merging, and a rating/review system. Create a community showcase for popular templates with usage statistics.
 
-## 8. Implement storage-vs-index architecture [pending]
+## 8. Implement storage-vs-index architecture [done]
 ### Dependencies: 9.1
 ### Description: Create a system that separates version-controlled template storage from retrieval index
 ### Details:
