@@ -35,6 +35,7 @@ Generate production-ready agents in minutes, with built-in validation, sandboxin
 *   **Guardrail Designer sub-agent:** Creates validation logic (Pydantic, regex, policy checks) and guardrail tests, embedding safety and compliance early to prevent bad outputs. See [docs/guardrail_designer_guide.md](docs/guardrail_designer_guide.md) for details.
 *   **Automated evaluation harness:** Compiles generated code, executes unit tests, and surfaces results, guaranteeing that the agent "actually runs." See [docs/evaluation_harness_architecture.md](docs/evaluation_harness_architecture.md) for the design.
 *   **Artifact bundle & dependency lock:** Outputs `agent.py`, `tests/`, `requirements.txt`, and an optional diagram. This allows for one-command install and run, ensuring reproducible builds.
+*   **Diagram & UX modules:** Handle Mermaid diagram generation, coloured CLI output, and interactive prompts. See [docs/diagram_cli_architecture.md](docs/diagram_cli_architecture.md) for the design.
 *   **Cost & trace telemetry:** Logs token usage, latency, and spend per generation, helping to manage cloud costs and aid optimization. See [docs/telemetry_overview.md](docs/telemetry_overview.md) for details.
 *   See [docs/telemetry_roadmap.md](docs/telemetry_roadmap.md) for the telemetry development roadmap.
 
