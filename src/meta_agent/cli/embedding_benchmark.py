@@ -2,8 +2,6 @@
 
 import click
 
-from ..embedding_benchmark import run_embedding_benchmark
-
 
 @click.command()
 @click.option(
@@ -19,11 +17,7 @@ from ..embedding_benchmark import run_embedding_benchmark
 def benchmark_embeddings(models, save):
     """Run embedding model benchmarks for template retrieval."""
     from ..embedding_benchmark import TemplateBenchmarkRunner
-    from ..embedding_models import (
-        LocalEmbeddingModel,
-        OpenAIEmbeddingModel,
-        EmbeddingModelSelector,
-    )
+    from ..embedding_models import EmbeddingModelSelector
 
     runner = TemplateBenchmarkRunner()
 
