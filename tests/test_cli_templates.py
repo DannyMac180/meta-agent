@@ -1,15 +1,12 @@
 """Tests for CLI template functionality (init command)."""
 
 import pytest
-import json
-import yaml
 from pathlib import Path
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
 
 from meta_agent.cli.main import cli
 from meta_agent.template_registry import TemplateRegistry
-from meta_agent.template_schema import TemplateMetadata
 
 
 @pytest.fixture

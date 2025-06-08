@@ -10,6 +10,7 @@ from .error_handler import (
     CLIOutputError,
     InteractiveError,
 )
+from .user_feedback import NotificationSeverity, UserFeedback
 
 __all__ = [
     "DiagramGenerator",
@@ -20,4 +21,6 @@ __all__ = [
     "InteractiveError",
     "CLIOutput",
     "Interactive",
+    "UserFeedback",
+    "NotificationSeverity",
 ]
