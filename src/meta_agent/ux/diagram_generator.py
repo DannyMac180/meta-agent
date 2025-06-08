@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import Mapping, Any
 
-
-class DiagramGenerationError(Exception):
-    """Raised when diagram generation fails."""
+from .error_handler import DiagramGenerationError
 
 
 class DiagramGenerator:
