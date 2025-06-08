@@ -1,4 +1,5 @@
-from meta_agent.ux import Interactive
+import pytest
+from meta_agent.ux import Interactive, InteractiveError
 
 
 def test_ask(monkeypatch):
@@ -23,3 +24,19 @@ def test_form(monkeypatch):
     inter = Interactive()
     result = inter.form(["first", "second"])
     assert result == {"first": "foo", "second": "bar"}
+
+
+def test_menu_empty_options():
+    inter = Interactive()
+    with pytest.raises(InteractiveError):
+        inter.menu("Pick", [])
+
+
+def test_ask_interrupt(monkeypatch):
+    def raise_interrupt(_):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", raise_interrupt)
+    inter = Interactive()
+    with pytest.raises(InteractiveError):
+        inter.ask("Question")
