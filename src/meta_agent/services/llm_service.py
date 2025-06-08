@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import backoff
 from typing import Any, Callable, Dict, IO, Optional, Union  # Added Callable, IO, Union for load_dotenv wrapper
 
 _original_load_dotenv_func: Optional[Callable[..., bool]] = None
@@ -74,8 +75,8 @@ except Exception:  # pragma: no cover - fallback when aiohttp isn't installed
         class ClientError(Exception):
             pass
 
+
     aiohttp = AiohttpPlaceholder()
-import backoff
 
 load_dotenv()
 

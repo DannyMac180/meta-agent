@@ -1,10 +1,8 @@
 """Tests for embedding models and selection."""
 
 import pytest
-from unittest.mock import Mock, patch
 
 from meta_agent.embedding_models import (
-    EmbeddingModel,
     EmbeddingModelBenchmark,
     EmbeddingModelSelector,
     EmbeddingMetrics,

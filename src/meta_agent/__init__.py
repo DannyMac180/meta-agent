@@ -11,9 +11,6 @@ while remaining completely harmless in regular usage.
 # ruff: noqa: E402
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import builtins
 from typing import Any
 

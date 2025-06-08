@@ -1,9 +1,7 @@
 """Tests for the REST API functionality."""
 
 import pytest
-import json
 from unittest.mock import patch, MagicMock
-from datetime import datetime
 
 # Import with graceful fallback for missing FastAPI
 try:
