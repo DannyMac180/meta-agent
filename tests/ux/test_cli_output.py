@@ -1,5 +1,6 @@
 import click
-from meta_agent.ux import CLIOutput
+import pytest
+from meta_agent.ux import CLIOutput, CLIOutputError
 
 
 def test_info_output(capsys):
@@ -26,3 +27,13 @@ def test_error_output_stderr(capsys):
     out, err = capsys.readouterr()
     assert out == ""
     assert "oops" in click.unstyle(err)
+
+
+def test_cli_output_error(monkeypatch):
+    def fail(*args, **kwargs):
+        raise OSError("boom")
+
+    monkeypatch.setattr(click, "secho", fail)
+    cli = CLIOutput()
+    with pytest.raises(CLIOutputError):
+        cli.info("hello")

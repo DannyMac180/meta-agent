@@ -4,18 +4,23 @@ from __future__ import annotations
 
 from typing import Sequence
 
+from .error_handler import InteractiveError
+
 
 class Interactive:
     """Handle user prompts and interactive menus."""
 
     def ask(self, prompt: str) -> str:
         """Return a response to the given prompt."""
-        return input(f"{prompt.strip()} ")
+        try:
+            return input(f"{prompt.strip()} ")
+        except (EOFError, KeyboardInterrupt) as e:  # pragma: no cover - user interrupt
+            raise InteractiveError("input interrupted") from e
 
     def menu(self, prompt: str, options: Sequence[str]) -> str:
         """Display a numbered menu and return the selected option."""
         if not options:
-            raise ValueError("options must not be empty")
+            raise InteractiveError("options must not be empty")
 
         while True:
             print(prompt)

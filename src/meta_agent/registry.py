@@ -231,6 +231,7 @@ class ToolRegistry:
                 spec = importlib.util.spec_from_file_location(
                     pkg_name, self.tools_dir / "__init__.py"
                 )
+                assert spec is not None
                 pkg = importlib.util.module_from_spec(spec)
                 sys.modules[pkg_name] = pkg
                 pkg.__path__ = [pkg_path]

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import click
 
+from .error_handler import CLIOutputError
+
 
 class CLIOutput:
     """Manage colored terminal output with verbosity control."""
@@ -25,7 +27,12 @@ class CLIOutput:
         level: int = 1,
     ) -> None:
         if self.verbosity >= level:
-            click.secho(message, fg=fg, bold=bold, err=err)
+            try:
+                click.secho(message, fg=fg, bold=bold, err=err)
+            except Exception as e:  # pragma: no cover - extremely unlikely
+                raise CLIOutputError(
+                    "failed to write output", context={"message": message}
+                ) from e
 
     def info(self, message: str, *, level: int = 1) -> None:
         """Output an informational message."""
