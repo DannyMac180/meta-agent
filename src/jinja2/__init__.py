@@ -1,5 +1,5 @@
 import os
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, cast
 
 
 class TemplateSyntaxError(Exception):
@@ -67,10 +67,15 @@ def _render_tool_template(
             spec = spec.dict()
         else:
             spec = vars(spec)
+    spec = cast(Dict[str, Any], spec)
     if map_type is None:
 
-        def map_type(t: str) -> str:
+        def _default_map_type(t: str) -> str:
             return t
+
+        map_type_fn: Callable[[str], str] = _default_map_type
+    else:
+        map_type_fn = map_type
 
     lines: List[str] = []
     lines.append("import logging")
@@ -82,13 +87,13 @@ def _render_tool_template(
     lines.append(f"def {spec.get('name')}(")
     params = spec.get("input_parameters") or []
     for i, p in enumerate(params):
-        line = f"    {p['name']}: {map_type(p['type_'])}"
+        line = f"    {p['name']}: {map_type_fn(p['type_'])}"
         if not p.get("required", True):
             line += " = None"
         if i < len(params) - 1:
             line += ","
         lines.append(line)
-    lines.append(f") -> {map_type(spec.get('output_format'))}:")
+    lines.append(f") -> {map_type_fn(str(spec.get('output_format')))}:")
     lines.append(f"    \"\"\"{spec.get('purpose')}\"")
     lines.append("")
     lines.append("    Args:")
@@ -99,7 +104,7 @@ def _render_tool_template(
     lines.append("")
     lines.append("    Returns:")
     lines.append(
-        f"        {map_type(spec.get('output_format'))}: {spec.get('output_format')}"
+        f"        {map_type_fn(str(spec.get('output_format')))}: {spec.get('output_format')}"
     )
     lines.append('    """')
     lines.append(f"    logger.info(f\"Running tool: {spec.get('name')}\")")
@@ -109,7 +114,9 @@ def _render_tool_template(
     return "\n".join(lines)
 
 
-def _render_agent_default(ctx: Dict[str, Any]) -> str:
+def _render_agent_default(ctx: Dict[str, Any] | None) -> str:
+    if ctx is None:
+        return ""
     tools = ctx.get("tools") or []
     guardrails = ctx.get("guardrails") or []
     lines: List[str] = []
@@ -194,7 +201,7 @@ class Environment:
         text = self.loader.get_source(self, name)
         return Template(text, name, globals={**self.globals, "env": self})
 
-    def parse(self, source: str) -> None:
+    def parse(self, source: str) -> str:
         """Naive validation that braces are balanced."""
         if source.count("{{") != source.count("}}"):  # pragma: no cover - simple
             raise TemplateSyntaxError("unbalanced variable braces")
