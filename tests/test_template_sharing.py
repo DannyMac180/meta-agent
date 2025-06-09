@@ -1,5 +1,6 @@
 from meta_agent.template_sharing import TemplateSharingManager
 from meta_agent.template_schema import (
+    IOContract,
     TemplateMetadata,
     TemplateCategory,
     TemplateComplexity,
@@ -13,7 +14,7 @@ def _meta(slug: str) -> TemplateMetadata:
         title=slug,
         description="demo",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",
