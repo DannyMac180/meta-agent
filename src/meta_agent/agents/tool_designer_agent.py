@@ -283,10 +283,11 @@ class ToolDesignerAgent(Agent):  # Inherit from Agent
             docs = self._generate_basic_docs(parsed_spec)
 
             result_tool = GeneratedTool(code=generated_code, tests=tests, docs=docs)
-            if hasattr(result_tool, "model_dump"):
-                output = result_tool.model_dump()
-            else:  # pragma: no cover - pydantic v1 fallback
-                output = result_tool.dict()
+            output = (
+                result_tool.model_dump()
+                if hasattr(result_tool, "model_dump")
+                else result_tool.dict()
+            )
             return {"status": "success", "output": output}
 
         except (ValueError, CodeGenerationError) as e:
