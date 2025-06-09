@@ -6,7 +6,7 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 
 import logging
 import inspect
-from typing import Dict, Any, Optional, Type
+from typing import Dict, Any, Optional, Type, cast
 import tempfile
 from pathlib import Path
 
@@ -259,7 +259,7 @@ def get_tool_instance():
         spec: Dict[str, Any],
         version: str = "0.1.0",
         tool_registry=None,
-        tool_designer_agent=None,
+        tool_designer_agent: Optional[ToolDesignerAgent] = None,
     ) -> Optional[str]:
         """
         Creates a tool by executing the full pipeline: parse → generate → validate → register.
@@ -282,7 +282,10 @@ def get_tool_instance():
         # 1. Get or create required components
         if tool_designer_agent is None:
             logger.debug("No tool designer agent provided, attempting to get one")
-            tool_designer_agent = self.get_agent("tool_designer_tool")
+            tool_designer_agent = cast(
+                Optional[ToolDesignerAgent],
+                self.get_agent("tool_designer_tool"),
+            )
             if tool_designer_agent is None:
                 logger.error(f"Failed to get tool designer agent for '{tool_name}'")
                 return None
