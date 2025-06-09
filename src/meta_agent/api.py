@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 from datetime import datetime
 
 try:
     from fastapi import FastAPI, Query, HTTPException
     from pydantic import BaseModel
-except ImportError:
-    # Graceful fallback if FastAPI is not available
-    FastAPI = None
-    Query = None
-    HTTPException = None
-    BaseModel = object
+except ImportError:  # pragma: no cover - optional dependency missing
+    # Graceful fallback types when FastAPI or Pydantic are absent.
+    FastAPI = cast(Any, None)
+    Query = cast(Any, None)
+    HTTPException = cast(Any, None)
+    BaseModel = cast(Any, object)
 
 from .template_registry import TemplateRegistry
 from .template_search import TemplateSearchEngine
@@ -170,10 +170,11 @@ def create_app() -> FastAPI:
     return app
 
 
-# Global app instance for easy import
+# Global app instance for easy import by the CLI and tests.
 app = None
 try:
     app = create_app()
 except ImportError:
-    # FastAPI not available, app will be None
+    # FastAPI isn't installed; keep ``app`` as ``None`` so other
+    # parts of the codebase can handle the missing dependency gracefully.
     pass
