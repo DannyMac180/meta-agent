@@ -7,7 +7,7 @@ def pytest_configure(config):
     # Also register the simple mocker fixture from our local pytest_mock module
     if not config.pluginmanager.hasplugin("pytest_mock"):
         try:
-            pytest_mock.pytest_configure(config)
+            pytest_mock.pytest_configure(config)  # type: ignore[attr-defined]
         except Exception:  # pragma: no cover - ignore if already registered
             pass
 
