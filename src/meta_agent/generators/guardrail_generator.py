@@ -6,10 +6,12 @@ from enum import Enum
 import re
 from typing import Awaitable, Callable, List
 
+from pydantic import BaseModel, Field
+
 try:
-    from pydantic import BaseModel, Field, field_validator
-except ImportError:  # pragma: no cover - pydantic v1 fallback
-    from pydantic import BaseModel, Field, validator as field_validator
+    from pydantic import field_validator
+except ImportError:  # Pydantic v1
+    from pydantic import validator as field_validator
 
 
 class GuardrailAction(str, Enum):

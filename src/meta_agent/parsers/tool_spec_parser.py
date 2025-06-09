@@ -2,12 +2,14 @@ import json
 import yaml
 import textwrap
 
+from pydantic import BaseModel, Field, ValidationError
+
 try:
-    from pydantic import BaseModel, Field, ValidationError, ConfigDict, field_validator
+    from pydantic import ConfigDict, field_validator
 
     _HAS_V2 = True
-except ImportError:  # pragma: no cover - pydantic v1 fallback
-    from pydantic import BaseModel, Field, ValidationError, validator as field_validator
+except ImportError:  # Pydantic v1
+    from pydantic import validator as field_validator
 
     _HAS_V2 = False
 
