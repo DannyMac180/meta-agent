@@ -7,10 +7,10 @@ from typing import Any, Dict, Optional
 
 
 try:
-    from agents import Agent
+    from agents import Agent as _Agent
 except Exception:  # pragma: no cover - fallback for missing SDK
 
-    class Agent:
+    class _Agent:
         """Minimal stand-in when the Agents SDK is unavailable."""
 
         def __init__(
@@ -26,10 +26,12 @@ except Exception:  # pragma: no cover - fallback for missing SDK
 from meta_agent.services.guardrail_router import GuardrailModelRouter, LLMModelAdapter
 from meta_agent.services.llm_service import LLMService
 
+BaseAgent = _Agent
+
 logger = logging.getLogger(__name__)
 
 
-class GuardrailDesignerAgent(Agent):
+class GuardrailDesignerAgent(BaseAgent):
     """Generates guardrail code using configurable model backends."""
 
     def __init__(
