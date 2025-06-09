@@ -2,10 +2,12 @@ import json
 import yaml
 from pathlib import Path
 
+from pydantic import BaseModel, Field, ValidationError
+
 try:
-    from pydantic import BaseModel, Field, field_validator, ValidationError
-except ImportError:  # pragma: no cover - pydantic v1 fallback
-    from pydantic import BaseModel, Field, ValidationError, validator as field_validator
+    from pydantic import field_validator
+except ImportError:  # Pydantic v1
+    from pydantic import validator as field_validator
 from typing import Optional, Dict, List, Any, Union
 
 
