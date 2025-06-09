@@ -6,6 +6,7 @@ _src = Path(__file__).resolve().parent.parent / "src" / "meta_agent" / "__init__
 _spec = spec_from_file_location(
     "meta_agent", _src, submodule_search_locations=[str(_src.parent)]
 )
+assert _spec is not None
 _module = module_from_spec(_spec)
 sys.modules[__name__] = _module
 _spec.loader.exec_module(_module)  # type: ignore
