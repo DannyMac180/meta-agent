@@ -17,16 +17,19 @@ TYPE_MAP = {
 
 # --- Import base Agent, handling potential unavailability ---
 try:
-    from agents import Agent
+    from agents import Agent as _Agent
 except ImportError:
     logging.warning("Failed to import 'Agent' from agents library. Using placeholder.")
 
-    class Agent:
-        def __init__(self, name=None, *args, **kwargs):
-            pass
+    class _Agent:
+        def __init__(self, name: str | None = None, *_: Any, **__: Any) -> None:
+            self.name = name or "StubAgent"
 
-        async def run(self, *args, **kwargs):
+        async def run(self, *_a: Any, **_kw: Any) -> Dict[str, Any]:
             return {"error": "Base Agent class not available"}
+
+
+BaseAgent = _Agent
 
 
 from meta_agent.parsers.tool_spec_parser import (
@@ -52,7 +55,7 @@ from meta_agent.generators.test_generator import generate_basic_tests
 logger = logging.getLogger(__name__)
 
 
-class ToolDesignerAgent(Agent):  # Inherit from Agent
+class ToolDesignerAgent(BaseAgent):
     """Orchestrates the process of parsing a tool specification and generating code."""
 
     def __init__(

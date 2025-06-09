@@ -16,22 +16,23 @@ except (ImportError, AttributeError):
     logging.warning("Hosted tools unavailable: patching stubs into 'agents' package.")
 
     import agents as _agents_pkg  # type: ignore
+    from typing import Any
 
-    class _StubHostedTool:  # pylint: disable=too-few-public-methods
-        """Minimal stand‑in when WebSearchTool / FileSearchTool aren't shipped.
+    class WebSearchTool:  # type: ignore
+        """Typed fallback when the real hosted tool is missing."""
 
-        `Tool()` → returns instance; instance is **callable** so that
-        `WebSearchTool()(query)` works without raising TypeError.
-        """
+        def __call__(self, query: str, *args: Any, **kwargs: Any) -> str:
+            return "Hosted tool unavailable in this environment."
 
-        def __call__(self, *_, **__):  # noqa: D401,E501
+    class FileSearchTool:  # type: ignore
+        """Typed fallback when the real hosted tool is missing."""
+
+        def __call__(self, query: str, *args: Any, **kwargs: Any) -> str:
             return "Hosted tool unavailable in this environment."
 
     # expose the stubs both locally *and* inside the real `agents` module
-    WebSearchTool = _StubHostedTool()  # type: ignore
-    FileSearchTool = _StubHostedTool()  # type: ignore
-    _agents_pkg.WebSearchTool = WebSearchTool  # type: ignore
-    _agents_pkg.FileSearchTool = FileSearchTool  # type: ignore
+    _agents_pkg.WebSearchTool = WebSearchTool
+    _agents_pkg.FileSearchTool = FileSearchTool
     from agents import Agent
 
 from meta_agent.models.generated_tool import GeneratedTool
@@ -39,12 +40,6 @@ from meta_agent.generators.code_validator import CodeValidator
 import time
 
 logger = logging.getLogger(__name__)
-
-# --- Imports for Agent Logic ---
-from agents import Agent
-
-# --- Logging Setup ---
-import logging
 
 # --- Placeholder Sub-Agent Classes --- #
 
