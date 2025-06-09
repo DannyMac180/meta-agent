@@ -1,11 +1,11 @@
 class ClientSession:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
     async def close(self) -> None:
         pass
 
-    def post(self, *args, **kwargs):
+    async def post(self, *args, **kwargs):
         class _RespCtx:
             async def __aenter__(self_inner):
                 return Response()
@@ -17,7 +17,7 @@ class ClientSession:
 
 
 class TCPConnector:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         pass
 
 
@@ -40,10 +40,8 @@ class ClientResponseError(ClientError):
 class Response:
     status = 200
 
-    async def json(self):
+    async def json(self) -> dict:
         return {}
 
-    async def text(self):
+    async def text(self) -> str:
         return ""
-
-
