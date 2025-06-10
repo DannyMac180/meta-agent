@@ -1,8 +1,10 @@
+from typing import Any
+
 try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover - fallback when python-dotenv is missing
 
-    def load_dotenv(*_args, **_kwargs) -> None:
+    def load_dotenv(*_args: Any, **_kwargs: Any) -> None:
         return None
 
 
@@ -23,7 +25,7 @@ from meta_agent.sub_agent_manager import SubAgentManager
 from meta_agent.registry import ToolRegistry
 from meta_agent.tool_designer import ToolDesignerAgent
 from meta_agent.telemetry import TelemetryCollector
-from meta_agent.telemetry_db import TelemetryDB
+from meta_agent.telemetry_db import TelemetryDB, TelemetryRow
 from meta_agent.template_registry import TemplateRegistry
 from meta_agent.template_search import TemplateSearchEngine
 from meta_agent.template_docs_generator import TemplateDocsGenerator
@@ -342,7 +344,7 @@ def tool_command_wrapper(action, spec_file, use_llm, version):
 def dashboard(db_path: Path) -> None:
     """Display a simple telemetry dashboard."""
     db = TelemetryDB(db_path)
-    records = db.fetch_all()
+    records: list[TelemetryRow] = db.fetch_all()
     if not records:
         click.echo("No telemetry data found.")
         db.close()
