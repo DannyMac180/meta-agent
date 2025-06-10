@@ -5,16 +5,24 @@ import textwrap
 from pydantic import BaseModel, Field, ValidationError
 
 try:
-    from pydantic import ConfigDict, field_validator
+    from pydantic import ConfigDict  # type: ignore
 
     _HAS_V2 = True
+except ImportError:  # Pydantic v1
+    from typing import TypedDict
+
+    _HAS_V2 = False
+
+    class ConfigDict(TypedDict, total=False):  # type: ignore[no-redef]
+        populate_by_name: bool
+
+
+try:
+    from pydantic import field_validator  # type: ignore
 except ImportError:  # Pydantic v1
     from pydantic import validator as field_validator
 
     _HAS_V2 = False
-
-    class ConfigDict(dict):
-        pass
 
 
 from typing import Any, Dict, List, Optional, Union
