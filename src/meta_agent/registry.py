@@ -4,7 +4,6 @@ import json
 import logging
 import shutil
 import sys
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -12,22 +11,14 @@ from packaging.version import parse as parse_version
 from hashlib import sha256
 from datetime import datetime
 
+from .models.generated_tool import GeneratedTool
+
 logger = logging.getLogger(__name__)
 
 GENERATED_TOOLS_BASE_DIR_NAME = "generated_tools"
 METADATA_FILE_NAME = "metadata.json"
 TOOL_CODE_FILE_NAME = "tool.py"
 MANIFEST_FILE_NAME = "registry.json"
-
-
-@dataclass
-class GeneratedTool:
-    """Represents a generated tool's source code and metadata."""
-
-    name: str
-    description: str
-    code: str  # The Python code for the tool
-    specification: Dict[str, Any] = field(default_factory=dict)
 
 
 class ToolRegistry:
