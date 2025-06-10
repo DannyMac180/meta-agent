@@ -18,13 +18,13 @@ SPEC_WITH_PARAMS = ToolSpecification(
     input_parameters=[
         ToolParameter(
             name="ticker",
-            type_="string",
+            type="string",
             description="The stock ticker symbol (e.g., AAPL)",
             required=True,
         ),
         ToolParameter(
             name="exchange",
-            type_="string",
+            type="string",
             description="The stock exchange (e.g., NASDAQ)",
             required=False,
         ),
@@ -38,7 +38,7 @@ SPEC_LIST_PARAM = ToolSpecification(
     input_parameters=[
         ToolParameter(
             name="numbers",
-            type_="list[float]",
+            type="list[float]",
             description="A list of numbers to sum.",
             required=True,
         )
@@ -52,7 +52,7 @@ SPEC_INVALID_SYNTAX_IN_PURPOSE = ToolSpecification(
     purpose="Fetches data using `SELECT * FROM table WHERE id = {id}`. It's tricky.",
     input_parameters=[
         ToolParameter(
-            name="id", type_="integer", description="The ID to fetch.", required=True
+            name="id", type="integer", description="The ID to fetch.", required=True
         )
     ],
     output_format="dict",
@@ -83,6 +83,7 @@ def test_generate_simple_tool():
     func_def = func_defs[0]
     assert func_def.name == "get_current_time"
     assert not func_def.args.args  # No arguments
+    assert isinstance(func_def.returns, ast.Name)
     assert func_def.returns.id == "str"  # Check return type hint
 
     # Check docstring content (basic)
@@ -114,8 +115,10 @@ def test_generate_tool_with_params():
 
     # Check parameters and type hints
     assert func_def.args.args[0].arg == "ticker"
+    assert isinstance(func_def.args.args[0].annotation, ast.Name)
     assert func_def.args.args[0].annotation.id == "str"
     assert func_def.args.args[1].arg == "exchange"
+    assert isinstance(func_def.args.args[1].annotation, ast.Name)
     assert func_def.args.args[1].annotation.id == "str"
 
     # Check optional parameter default (should be None)
@@ -123,6 +126,7 @@ def test_generate_tool_with_params():
     assert isinstance(func_def.args.defaults[0], ast.Constant)
     assert func_def.args.defaults[0].value is None
 
+    assert isinstance(func_def.returns, ast.Name)
     assert func_def.returns.id == "float"
 
     # Check docstring params
@@ -156,10 +160,12 @@ def test_generate_tool_with_list_param():
     assert func_def.args.args[0].arg == "numbers"
     annotation = func_def.args.args[0].annotation
     assert isinstance(annotation, ast.Subscript)
+    assert isinstance(annotation.value, ast.Name)
     assert annotation.value.id == "List"
     assert isinstance(annotation.slice, ast.Name)
     assert annotation.slice.id == "float"
 
+    assert isinstance(func_def.returns, ast.Name)
     assert func_def.returns.id == "float"
 
     docstring = ast.get_docstring(func_def)

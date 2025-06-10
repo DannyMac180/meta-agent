@@ -1,5 +1,6 @@
 # tests/unit/test_sub_agent_manager.py
 import pytest
+from typing import Any, Dict
 from unittest.mock import MagicMock, AsyncMock, patch
 
 # --- Import Actual Classes ---
@@ -368,7 +369,7 @@ def web_search(query: str) -> list:
 
     agent = ToolDesignerAgent()
     # Proper specification format
-    spec_search = {
+    spec_search: Dict[str, Any] = {
         "name": "WebSearchTool",
         "purpose": "Search the web for documentation",
         "output_format": "list",
@@ -390,7 +391,7 @@ async def test_tool_designer_generate_tool_filesearch():
     """Test ToolDesignerAgent.design_tool_with_llm for FileSearchTool."""
     agent = ToolDesignerAgent()
     # Proper specification format
-    spec_filesearch = {
+    spec_filesearch: Dict[str, Any] = {
         "name": "FileSearchTool",
         "purpose": "Search files using embeddings",
         "output_format": "list",
@@ -411,7 +412,7 @@ async def test_tool_designer_generate_tool_filesearch():
 async def test_tool_designer_generate_tool_openweathermap():
     """Test ToolDesignerAgent.generate_tool for OpenWeatherMap trigger keywords."""
     agent = ToolDesignerAgent()
-    spec_weather = {
+    spec_weather: Dict[str, Any] = {
         "name": "WeatherTool",
         "purpose": "Get weather data",
         "output_format": "dict",

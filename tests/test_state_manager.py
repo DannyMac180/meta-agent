@@ -1,4 +1,6 @@
 from meta_agent.state_manager import StateManager
+from typing import Any, Dict
+
 
 def test_progress_and_status():
     sm = StateManager()
@@ -11,6 +13,7 @@ def test_progress_and_status():
     assert state["current_step"] == "step1"
     assert "step1" in state["steps"]
 
+
 def test_persistence(tmp_path):
     sm = StateManager()
     sm.update_progress(0.7, current_step="foo")
@@ -21,6 +24,7 @@ def test_persistence(tmp_path):
     assert sm2.get_progress() == 0.7
     assert sm2.get_state()["current_step"] == "foo"
 
+
 def test_checkpoint(tmp_path):
     sm = StateManager()
     sm.update_progress(0.2, current_step="bar")
@@ -29,6 +33,7 @@ def test_checkpoint(tmp_path):
     sm.restore_checkpoint("cp1", directory=str(tmp_path))
     assert sm.get_progress() == 0.2
     assert sm.get_state()["current_step"] == "bar"
+
 
 def test_retry_logic():
     sm = StateManager()
@@ -44,13 +49,14 @@ def test_retry_logic():
     sm.reset_retries()
     assert sm.should_retry(step, max_retries=3)
 
+
 def test_reporting():
     sm = StateManager()
     sm.update_progress(1.0, current_step="done")
     sm.set_status("completed")
     sm.register_failure("foo")
     report_str = sm.get_report()
-    report_dict = sm.get_report(as_dict=True)
+    report_dict: Dict[str, Any] = sm.get_report(as_dict=True)
     assert isinstance(report_str, str)
     assert isinstance(report_dict, dict)
     assert report_dict["status"] == "completed"
