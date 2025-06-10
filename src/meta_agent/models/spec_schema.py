@@ -8,11 +8,25 @@ try:
     from pydantic import field_validator  # type: ignore
 except ImportError:  # Pydantic v1
     from pydantic import validator as field_validator
-from typing import Optional, Dict, List, Any, Union
+from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class _ModelDumpProtocol(Protocol):
+        def model_dump(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+            ...
 
 
 class SpecSchema(BaseModel):
     """Data model for agent specifications."""
+
+    def model_dump(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Return model data as a dictionary across Pydantic versions."""
+        base = getattr(super(), "model_dump", None)
+        if callable(base):
+            return base(*args, **kwargs)
+        return self.dict(*args, **kwargs)
 
     task_description: str = Field(
         ..., description="Detailed description of the agent's task and requirements."
