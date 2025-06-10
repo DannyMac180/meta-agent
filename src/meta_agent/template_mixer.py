@@ -38,7 +38,8 @@ class TemplateMixer:
 
     def __init__(self, registry: Optional[TemplateRegistry] = None) -> None:
         self.registry = registry or TemplateRegistry()
-        self.env = Environment(loader=_RegistryLoader(self.registry))
+        loader: BaseLoader = _RegistryLoader(self.registry)
+        self.env = Environment(loader=loader)
 
     def render(
         self,

@@ -63,11 +63,7 @@ class TemplateRegistry:
         template_path = version_dir / TEMPLATE_FILE_NAME
         template_path.write_text(content, encoding="utf-8")
         checksum = sha256(content.encode("utf-8")).hexdigest()
-        metadata_dict = (
-            metadata.model_dump()
-            if hasattr(metadata, "model_dump")
-            else metadata.dict()
-        )
+        metadata_dict = getattr(metadata, "model_dump", metadata.dict)()
         meta_data = {
             **metadata_dict,
             "version": version,
