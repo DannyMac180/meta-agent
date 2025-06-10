@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ValidationError
 
 try:
-    from pydantic import field_validator
+    from pydantic import field_validator  # type: ignore
 except ImportError:  # Pydantic v1
     from pydantic import validator as field_validator
 from typing import Optional, Dict, List, Any, Union
