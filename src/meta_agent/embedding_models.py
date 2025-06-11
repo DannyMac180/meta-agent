@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 def _hash_embed(text: str, dim: int) -> List[float]:
@@ -221,10 +221,12 @@ class EmbeddingModelBenchmark:
 
         return dot_product / (norm1 * norm2)
 
-    def run_benchmark(self, models: List[EmbeddingModel]) -> List[EmbeddingMetrics]:
+    def run_benchmark(
+        self, models: Sequence[EmbeddingModel] | None = None
+    ) -> List[EmbeddingMetrics]:
         """Run benchmark on all provided models."""
-        results = []
-        for model in models:
+        results: List[EmbeddingMetrics] = []
+        for model in models or []:
             metrics = self.benchmark_model(model)
             results.append(metrics)
         return results
