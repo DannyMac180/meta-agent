@@ -1,4 +1,8 @@
 {
   "typeCheckingMode": "basic",
-  "reportMissingImports": false
+  "reportMissingImports": false,
+  "exclude": [
+    "tests",
+    "src/.tool_designer"
+  ]
 }

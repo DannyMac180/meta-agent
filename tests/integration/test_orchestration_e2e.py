@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, cast
 import pytest
 from meta_agent.state_manager import StateManager
 from meta_agent.template_engine import TemplateEngine, validate_agent_code
@@ -18,13 +18,13 @@ def test_full_orchestration_e2e():
     spec = {"task_id": "foo", "description": "Write and test a function"}
     coder = CoderAgent()
     tester = TesterAgent()
-    coder_output = pytest.run(coro=coder.run(spec)) if hasattr(pytest, "run") else None
+    coder_output = pytest.run(coro=coder.run(spec)) if hasattr(pytest, "run") else None  # type: ignore[attr-defined]
     if coder_output is None:
         import asyncio
 
         coder_output = asyncio.run(coder.run(spec))
     tester_output = (
-        pytest.run(coro=tester.run(spec)) if hasattr(pytest, "run") else None
+        pytest.run(coro=tester.run(spec)) if hasattr(pytest, "run") else None  # type: ignore[attr-defined]
     )
     if tester_output is None:
         import asyncio
@@ -46,7 +46,8 @@ def test_full_orchestration_e2e():
         "tools": ["def tool1(self): pass"],
         "guardrails": ["def guardrail1(self): pass"],
     }
-    code = engine.assemble_agent(sub_agent_outputs)
+    # Pyright: assemble_agent expects template_name: str, then context: dict
+    code = engine.assemble_agent(sub_agent_outputs, "orchestrated_agent.py.j2")
     sm.update_progress(0.9, current_step="assembly_done")
 
     # 4. Validate
@@ -56,7 +57,7 @@ def test_full_orchestration_e2e():
     sm.update_progress(1.0, current_step="done")
 
     # 5. Check reporting and state
-    report: Dict[str, Any] = sm.get_report(as_dict=True)
+    report = cast(Dict[str, Any], sm.get_report(as_dict=True))
     assert report["status"] == "completed"
     assert report["progress"] == 1.0
     assert report["current_step"] == "done"

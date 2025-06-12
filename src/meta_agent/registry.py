@@ -73,7 +73,10 @@ class ToolRegistry:
         return None
 
     def register(self, tool: GeneratedTool, version: str = "0.1.0") -> Optional[str]:
-        tool_name_sanitized = tool.name.replace("-", "_").replace(" ", "_").lower()
+        tool_name_raw = getattr(tool, "name", "unnamed_tool") or "unnamed_tool"
+        tool_name_sanitized = (
+            tool_name_raw.replace("-", "_").replace(" ", "_").lower()
+        )
         version_sanitized = "v" + version.replace(".", "_")
         tool_version_dir = self._get_tool_version_dir(
             tool_name_sanitized, version_sanitized
@@ -101,9 +104,9 @@ class ToolRegistry:
             # orchestrator. Include the name, description and full
             # specification for stability across processes.
             fingerprint_input = {
-                "name": tool.name,
-                "description": tool.description,
-                "specification": tool.specification,
+                "name": tool_name_raw,
+                "description": getattr(tool, "description", ""),
+                "specification": getattr(tool, "specification", {}),
             }
             fingerprint = sha256(
                 json.dumps(

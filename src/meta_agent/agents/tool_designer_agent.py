@@ -1,7 +1,7 @@
 # ruff: noqa: E402,F401
 import logging
 import os
-from typing import Union, Dict, Any, Optional, List
+from typing import Union, Dict, Any, Optional, List, TYPE_CHECKING
 
 # --- Jinja2 Import ---
 import jinja2
@@ -15,21 +15,26 @@ TYPE_MAP = {
     "any": "Any",
 }
 
-# --- Import base Agent, handling potential unavailability ---
-try:
-    from agents import Agent as _Agent
-except ImportError:
-    logging.warning("Failed to import 'Agent' from agents library. Using placeholder.")
+# --- Import (or stub‑out) the Agents‑SDK base class ----------------------- #
+if TYPE_CHECKING:                                # let Pyright see the real one
+    from agents import Agent as AgentBase        # pragma: no cover
+else:
+    try:
+        from agents import Agent as AgentBase    # type: ignore
+    except ImportError:                          # pragma: no cover – stub fallback
+        logging.warning(
+            "Failed to import 'Agent' from agents SDK. Falling back to stub."
+        )
 
-    class _Agent:
-        def __init__(self, name: str | None = None, *_: Any, **__: Any) -> None:
-            self.name = name or "StubAgent"
+        class AgentBase:  # minimal stub, just enough for our needs
+            def __init__(self, name: str | None = None, *_: Any, **__: Any) -> None:
+                self.name = name or "StubAgent"
 
-        async def run(self, *_a: Any, **_kw: Any) -> Dict[str, Any]:
-            return {"error": "Base Agent class not available"}
+            async def run(self, *_a: Any, **_kw: Any) -> Dict[str, Any]:
+                return {"error": "Base Agent class not available"}
 
 
-BaseAgent = _Agent
+BaseAgent = AgentBase
 
 
 from meta_agent.parsers.tool_spec_parser import (
@@ -285,7 +290,12 @@ class ToolDesignerAgent(BaseAgent):
             tests = generate_basic_tests(parsed_spec)
             docs = self._generate_basic_docs(parsed_spec)
 
-            result_tool = GeneratedTool(code=generated_code, tests=tests, docs=docs)
+            result_tool = GeneratedTool(
+                name=getattr(parsed_spec, 'name', '') or '',
+                code=generated_code,
+                tests=tests,
+                docs=docs,
+            )
             output = (
                 result_tool.model_dump()
                 if hasattr(result_tool, "model_dump")

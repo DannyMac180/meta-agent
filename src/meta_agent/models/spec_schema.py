@@ -3,6 +3,7 @@ import yaml
 from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
+from typing import cast
 
 try:
     from pydantic import field_validator  # type: ignore
@@ -25,7 +26,8 @@ class SpecSchema(BaseModel):
         """Return model data as a dictionary across Pydantic versions."""
         base = getattr(super(), "model_dump", None)
         if callable(base):
-            return base(*args, **kwargs)
+            # Pyright: `model_dump` return type is `Any`; we narrow it.
+            return cast(Dict[str, Any], base(*args, **kwargs))
         return self.dict(*args, **kwargs)
 
     task_description: str = Field(

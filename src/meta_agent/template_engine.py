@@ -16,7 +16,7 @@ class TemplateEngine:
         self.default_template_name = "agent_default.j2"
 
     def assemble_agent(
-        self, sub_agent_outputs: Dict[str, Any], template_name: str = None
+        self, sub_agent_outputs: Dict[str, Any], template_name: str | None = None
     ) -> str:
         """
         Combine sub-agent outputs using the specified template.
@@ -26,7 +26,7 @@ class TemplateEngine:
         """
         if template_name is None:
             template_name = self.default_template_name
-        template: Template = self.env.get_template(template_name)
+        template: Template = self.env.get_template(template_name or "")
         return template.render(**sub_agent_outputs)
 
 

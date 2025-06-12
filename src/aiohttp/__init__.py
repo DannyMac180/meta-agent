@@ -7,10 +7,10 @@ class ClientSession:
 
     async def post(self, *args, **kwargs):
         class _RespCtx:
-            async def __aenter__(self_inner):
+            async def __aenter__(self):
                 return Response()
 
-            async def __aexit__(self_inner, exc_type, exc, tb):
+            async def __aexit__(self, exc_type, exc, tb):
                 pass
 
         return _RespCtx()

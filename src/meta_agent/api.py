@@ -2,18 +2,29 @@
 
 from __future__ import annotations
 
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional, cast, TYPE_CHECKING
 from datetime import datetime
 
-try:
-    from fastapi import FastAPI, Query, HTTPException
-    from pydantic import BaseModel
-except ImportError:  # pragma: no cover - optional dependency missing
-    # Graceful fallback types when FastAPI or Pydantic are absent.
-    FastAPI = cast(Any, None)
-    Query = cast(Any, None)
-    HTTPException = cast(Any, None)
-    BaseModel = cast(Any, object)
+if TYPE_CHECKING:
+    # During static checking we always import the real classes.
+    from fastapi import FastAPI, Query, HTTPException  # pragma: no cover
+    from pydantic import BaseModel as PydanticBaseModel  # pragma: no cover
+
+    BaseModel = PydanticBaseModel  # type: ignore[misc]
+else:  # ⇢ runtime fallbacks keep the project importable without FastAPI/Pydantic
+    try:
+        from fastapi import FastAPI, Query, HTTPException  # type: ignore
+        from pydantic import BaseModel  # type: ignore
+    except ImportError:  # pragma: no cover
+        FastAPI = cast(Any, None)
+        Query = cast(Any, None)
+        HTTPException = cast(Any, None)
+
+        class BaseModel:  # type: ignore[too-many-ancestors]
+            """Very small stub used only when Pydantic is absent."""
+
+            def __init_subclass__(cls, **kwargs):  # noqa: D401
+                super().__init_subclass__(**kwargs)
 
 from .template_registry import TemplateRegistry
 from .template_search import TemplateSearchEngine

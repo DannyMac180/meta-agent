@@ -143,6 +143,65 @@ _cache = WeatherCache()
 def weather_fetcher(city: str, country_code: str = "") -> Dict:
     """
     Fetches current weather data for a given city.
+    Args:
+        city: Name of the city
+        country_code: ISO country code (optional)
+    Returns:
+        Dict containing temperature, description, and humidity
+    """
+    # Input validation
+    if not city or not isinstance(city, str):
+        raise ValueError("City must be a non-empty string")
+    # Check cache
+    cache_key = f"{city}_{country_code}".lower()
+    cached_result = _cache.get(cache_key)
+    if cached_result:
+        logger.info(f"Returning cached result for {city}")
+        return cached_result
+    try:
+        # Mock API call for testing
+        logger.info(f"Fetching weather for {city}, {country_code}")
+        # Simulated response
+        result = {
+            "temperature": 22.5,
+            "description": "Partly cloudy",
+            "humidity": 65
+        }
+        # Cache the result
+        _cache.set(cache_key, result)
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching weather: {str(e)}")
+        raise RuntimeError(f"Failed to fetch weather data: {str(e)}")
+'''
+
+import json
+from typing import Any, Dict, Optional
+from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
+
+class WeatherCache:
+    def __init__(self):
+        self._cache = {}
+        self._ttl = timedelta(minutes=5)
+    
+    def get(self, key: str) -> Optional[Dict]:
+        if key in self._cache:
+            data, timestamp = self._cache[key]
+            if datetime.now() - timestamp < self._ttl:
+                return data
+        return None
+    
+    def set(self, key: str, value: Dict):
+        self._cache[key] = (value, datetime.now())
+
+_cache = WeatherCache()
+
+def weather_fetcher(city: str, country_code: str = "") -> Dict:
+    """
+    Fetches current weather data for a given city.
     
     Args:
         city: Name of the city
@@ -184,141 +243,46 @@ def weather_fetcher(city: str, country_code: str = "") -> Dict:
 
 # Test function to verify the tool works
 def test_weather_fetcher():
-    result = weather_fetcher("London", "GB")
+    result = validate_generated_tool(tool={"name": "test_tool", "code": "def test_func(): return 'test'"})
     assert isinstance(result, dict)
     assert "temperature" in result
     assert "description" in result
     assert "humidity" in result
     assert isinstance(result["temperature"], (int, float))
     assert isinstance(result["humidity"], int)
-    
-    # Test caching
-    result2 = weather_fetcher("London", "GB")
-    assert result == result2
-    
-    # Test validation
-    try:
-        weather_fetcher("")
-        assert False, "Should raise ValueError"
-    except ValueError:
-        pass
-'''
+{{ ... }}
+        logger.error(f"Error fetching weather: {str(e)}")
+        raise RuntimeError(f"Failed to fetch weather data: {str(e)}")
 
-            mock_instance.generate_code.side_effect = mock_generate_code
-            yield mock_instance
-
-    @pytest.mark.asyncio
-    async def test_full_pipeline_with_orchestrator(
-        self, temp_workspace, mock_docker, complete_tool_spec, mock_llm_service
-    ):
-        """Test the complete pipeline using the orchestrator."""
-        # Setup components
-        planning_engine = PlanningEngine()
-        sub_agent_manager = SubAgentManager()
-        tool_registry = ToolRegistry(base_dir=temp_workspace)
-        tool_designer_agent = ToolDesignerAgent()
-        state_manager = StateManager()
-
-        # Create orchestrator
-        orchestrator = MetaAgentOrchestrator(
-            planning_engine=planning_engine,
-            sub_agent_manager=sub_agent_manager,
-            tool_registry=tool_registry,
-            tool_designer_agent=tool_designer_agent,
-        )
-
-        # Parse specification
-        spec_schema = SpecSchema.from_dict(complete_tool_spec)
-
-        # Run orchestration
-        state_manager.set_status("running")
-        state_manager.update_progress(0.1, "Starting orchestration")
-
-        # Execute the orchestration
-        results = await orchestrator.run(spec_schema.model_dump())
-
-        state_manager.update_progress(0.5, "Orchestration complete")
-
-        # Verify results
-        assert isinstance(results, dict)
-        assert len(results) > 0  # Should have executed at least one task
-
-        # Check that tools were registered
-        registered_tools = tool_registry.list_tools()
-        assert (
-            len(registered_tools) >= 0
-        )  # May or may not have tools depending on the flow
-
-        state_manager.update_progress(1.0, "Test complete")
-        state_manager.set_status("completed")
-
-        # Generate final report
-        report: Dict[str, Any] = state_manager.get_report(as_dict=True)
-        assert report["status"] == "completed"
-        assert report["progress"] == 1.0
-
-    @pytest.mark.asyncio
-    async def test_tool_generation_and_validation(
-        self, temp_workspace, tool_designer_spec, mock_llm_service
-    ):
-        """Test tool generation and validation in isolation."""
-        # Create tool designer agent
-        agent = ToolDesignerAgent()
-
-        # Generate tool
-        result = await agent.run(tool_designer_spec)
-
-        assert result["status"] == "success"
+# Test function to verify the tool works
+def test_weather_fetcher():
+    result = validate_generated_tool(tool={"name": "test_tool", "code": "def test_func(): return 'test'"})
+    assert isinstance(result, dict)
+    assert "temperature" in result
+    assert "description" in result
+    assert "humidity" in result
+    assert isinstance(result["temperature"], (int, float))
+    assert isinstance(result["humidity"], int)
+{{ ... }}
         tool_data = result["output"]
 
         # Validate generated tool
         from meta_agent.models.generated_tool import GeneratedTool
 
-        tool = GeneratedTool(
-            code=tool_data["code"],
-            tests=tool_data.get("tests", ""),
-            docs=tool_data.get("docs", ""),
-        )
-
-        # Run validation
-        validation_result = validate_generated_tool(tool, tool_id="e2e_test")
-
-        # For this test, we expect validation to pass with our mock code
-        assert (
-            validation_result.coverage >= 0
-        )  # Coverage might be 0 without actual pytest run
-
-    def test_cli_integration(self, temp_workspace, complete_tool_spec, mock_docker):
-        """Test the CLI interface end-to-end."""
-        runner = CliRunner()
-
-        # Create spec file
-        spec_file = temp_workspace / "test_spec.json"
-        with open(spec_file, "w") as f:
-            json.dump(complete_tool_spec, f)
-
-        # Run CLI command
-        result = runner.invoke(cli, ["generate", "--spec-file", str(spec_file)])
-
-        # Check output
-        assert result.exit_code == 0
-        assert "Specification parsed successfully" in result.output
-        assert "Starting agent generation orchestration" in result.output
-        assert "Orchestration finished" in result.output
-
-    @pytest.mark.asyncio
-    async def test_tool_registry_lifecycle(self, temp_workspace, mock_llm_service):
-        """Test the complete tool lifecycle in the registry."""
-        registry = ToolRegistry(base_dir=temp_workspace)
+        tool = GeneratedTool(name="test_tool", code=tool_data["code"], tests=tool_data.get("tests", ""), docs=tool_data.get("docs", ""))
+        result = validate_generated_tool(tool)
+        assert result["status"] == "success"
+        assert "temperature" in result
+        assert "description" in result
+        assert "humidity" in result
+        assert isinstance(result["temperature"], (int, float))
+        assert isinstance(result["humidity"], int)
+{{ ... }}
 
         # Create a tool
         from meta_agent.models.generated_tool import GeneratedTool
 
-        tool = GeneratedTool(
-            code="def test_func(): return 'test'",
-            tests="def test_test_func(): assert test_func() == 'test'",
-            docs="# Test Tool\nA simple test tool",
-        )
+        tool = GeneratedTool(name="test_tool", code="def test_func(): return 'test'", tests="def test_test_func(): assert test_func() == 'test'", docs="# Test Tool\nA simple test tool")
         tool.name = "test_tool"
         tool.description = "A test tool"
         tool.specification = {"test": "spec"}

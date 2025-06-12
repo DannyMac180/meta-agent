@@ -56,8 +56,10 @@ class ToolCodeGenerator:
             )
 
     def generate(self) -> str:
+        assert ToolCodeGenerator._template is not None, "Jinja template not initialised"
+        template = ToolCodeGenerator._template
         try:
-            generated_code = ToolCodeGenerator._template.render(spec=self.specification)
+            generated_code = template.render(spec=self.specification)
             try:
                 ast.parse(generated_code)
             except SyntaxError as se:

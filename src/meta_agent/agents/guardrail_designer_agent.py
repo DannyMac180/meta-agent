@@ -4,29 +4,32 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
+from typing_extensions import TYPE_CHECKING
 
+if TYPE_CHECKING:                      # static-analysis path
+    from agents import Agent as AgentBase
+else:                                  # runtime – keep the graceful fallback
+    try:
+        from agents import Agent as AgentBase  # type: ignore
+    except Exception:  # pragma: no cover – SDK unavailable
 
-try:
-    from agents import Agent as _Agent
-except Exception:  # pragma: no cover - fallback for missing SDK
+        class AgentBase:               # noqa: D101  (very small stub)
+            """Minimal stand-in when the Agents SDK is unavailable."""
 
-    class _Agent:
-        """Minimal stand-in when the Agents SDK is unavailable."""
+            def __init__(
+                self, name: str | None = None, tools: list[Any] | None = None
+            ) -> None:
+                self.name = name or "StubAgent"
+                self.tools = tools or []
 
-        def __init__(
-            self, name: str | None = None, tools: list[Any] | None = None
-        ) -> None:
-            self.name = name or "StubAgent"
-            self.tools = tools or []
-
-        async def run(self, *_: Any, **__: Any) -> Dict[str, Any]:
-            return {"status": "error", "error": "agents SDK unavailable"}
+            async def run(self, *_: Any, **__: Any) -> Dict[str, Any]:
+                return {"status": "error", "error": "agents SDK unavailable"}
 
 
 from meta_agent.services.guardrail_router import GuardrailModelRouter, LLMModelAdapter
 from meta_agent.services.llm_service import LLMService
 
-BaseAgent = _Agent
+BaseAgent = AgentBase
 
 logger = logging.getLogger(__name__)
 

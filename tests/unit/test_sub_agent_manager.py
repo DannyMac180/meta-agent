@@ -376,7 +376,7 @@ def web_search(query: str) -> list:
         "description": "Search the web for documentation",
     }
 
-    spec_search["use_llm"] = True
+    spec_search["use_llm"] = "true"
     result = await agent.run(spec_search)
 
     assert result["status"] == "success"
@@ -398,7 +398,7 @@ async def test_tool_designer_generate_tool_filesearch():
         "description": "embedding lookup",
     }
 
-    spec_filesearch["use_llm"] = True
+    spec_filesearch["use_llm"] = "true"
     result = await agent.run(spec_filesearch)
 
     assert result["status"] == "success"
@@ -419,7 +419,7 @@ async def test_tool_designer_generate_tool_openweathermap():
         "description": "Get the weather using openweathermap",
     }
 
-    spec_weather["use_llm"] = True
+    spec_weather["use_llm"] = "true"
     result = await agent.run(spec_weather)
 
     assert result["status"] == "success"
@@ -458,7 +458,7 @@ async def test_tool_designer_generate_tool_fallback_llm(monkeypatch):
     agent = ToolDesignerAgent()
     spec = {"task_id": "badjson", "description": "some generic task"}
 
-    spec["use_llm"] = True
+    spec["use_llm"] = "true"
     spec["name"] = "TestTool"
     spec["purpose"] = "Test tool generation"
     spec["output_format"] = "string"

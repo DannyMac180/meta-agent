@@ -20,6 +20,7 @@ class TestValidation:
     def mock_generated_tool(self):
         """Fixture for a mock generated tool."""
         return GeneratedTool(
+            name="test_tool",
             code="def test_function(param):\n    return param",
             tests="def test_test_function():\n    assert test_function('test') == 'test'",
             docs="# Test Function\n\nA simple test function.",

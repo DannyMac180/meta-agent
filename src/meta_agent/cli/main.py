@@ -4,8 +4,9 @@ try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover - fallback when python-dotenv is missing
 
-    def load_dotenv(*_args: Any, **_kwargs: Any) -> None:
-        return None
+    def load_dotenv(*_args: Any, **_kwargs: Any) -> bool:  # pragma: no cover
+        """Stub replacement when `python‑dotenv` isn’t installed."""
+        return False
 
 
 import click
