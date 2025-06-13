@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Environment Setup
+**IMPORTANT: Always use the project's .venv virtual environment**
+- Activate with: `source .venv/bin/activate`
+- All package installations should be done within this venv using `uv pip install`
+
 ## Development Commands
 
 This project uses **uv** for Python dependency management (not Hatch). Key commands:
