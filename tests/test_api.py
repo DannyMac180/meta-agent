@@ -275,12 +275,12 @@ class TestAPIIntegration:
         registry = TemplateRegistry(base_dir=tmp_path)
         
         # Register a test template
-        from meta_agent.template_schema import TemplateMetadata
+        from meta_agent.template_schema import TemplateMetadata, TemplateCategory
         metadata = TemplateMetadata(
             slug="test-template",
             title="Test Template",
             description="A test template for integration testing",
-            category=TemplateCategory.TEST,
+            category=TemplateCategory.INTEGRATION,
             tags=["test", "integration"]
         )
         template_content = """# Test Template

@@ -1,8 +1,10 @@
 {
   "typeCheckingMode": "basic",
+  "pythonVersion": "3.12",
   "reportMissingImports": false,
   "exclude": [
     "tests",
-    "src/.tool_designer"
+    "src/.tool_designer",
+    ".venv"
   ]
 }
