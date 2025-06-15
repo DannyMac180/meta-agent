@@ -19,7 +19,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
       - name: Install dependencies
         run: |
-          uv sync --extra test --retry 3
+          uv sync --extra test
       - name: Run test suite
         env:
           # Ensure OpenAI API key is not required for tests (they should be mocked)
