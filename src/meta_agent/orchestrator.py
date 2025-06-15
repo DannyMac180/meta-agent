@@ -386,13 +386,7 @@ def get_tool_instance():
         # Create a dictionary suitable for the designer, maybe including name/desc?
         # This depends on what refine_design expects. Let's pass the core spec for now.
         # We might need the full GeneratedTool structure eventually.
-        design_input_spec = {
-            "name": original_metadata.get(
-                "original_name", tool_name
-            ),  # Use original name if available
-            "description": original_metadata.get("description", ""),
-            "specification": original_spec,
-        }
+        design_input_spec = original_spec
 
         # 2. Call ToolDesignerAgent to refine the design
         try:

@@ -9,22 +9,15 @@ import pytest
 import asyncio
 import tempfile
 import shutil
-import json
 from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import patch, MagicMock
 
 # Import all the components we need to test
-from meta_agent.orchestrator import MetaAgentOrchestrator
-from meta_agent.planning_engine import PlanningEngine
-from meta_agent.sub_agent_manager import SubAgentManager
 from meta_agent.registry import ToolRegistry
 from meta_agent.agents.tool_designer_agent import ToolDesignerAgent
 from meta_agent.models.spec_schema import SpecSchema
 from meta_agent.state_manager import StateManager
-from meta_agent.validation import validate_generated_tool
-from meta_agent.cli.main import cli
-from click.testing import CliRunner
 
 
 class TestMetaAgentE2E:

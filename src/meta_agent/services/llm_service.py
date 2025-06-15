@@ -5,13 +5,18 @@ This module provides the LLMService class which handles communication with
 Large Language Model (LLM) APIs for code generation.
 """
 
+# Apply compatibility patch before importing OpenAI
+try:
+    from meta_agent.compatibility_patch import patch_openai_compatibility
+    patch_openai_compatibility()
+except ImportError:
+    pass
+
 import asyncio
-import inspect
 import json
 import logging
 import os
 import re
-import backoff
 from typing import Any, Callable, Dict, IO, Optional, Union, cast  # Added Callable, IO, Union, cast for load_dotenv wrapper
 
 _original_load_dotenv_func: Optional[Callable[..., bool]] = None
@@ -58,7 +63,7 @@ def load_dotenv(
 try:  # pragma: no cover - optional dependency
     from openai import OpenAI
     OPENAI_AVAILABLE = True
-except ImportError as e:  # pragma: no cover - fallback when openai isn't installed
+except ImportError:  # pragma: no cover - fallback when openai isn't installed
     OpenAI = None
     OPENAI_AVAILABLE = False
 
@@ -102,9 +107,16 @@ class LLMService:
                 "OpenAI API key not provided and not found in environment variables (OPENAI_API_KEY)."
             )
 
+        # Set default api_base if not provided
+        if api_base is None:
+            api_base = "https://api.openai.com/v1"
+
+        # Store initialization parameters
+        self.api_key = api_key
         self.model = model
         self.max_retries = max_retries
         self.timeout = timeout
+        self.api_base = api_base
         self.logger = logging.getLogger(__name__)
         
         # Initialize OpenAI client
@@ -216,12 +228,12 @@ class LLMService:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=cast(Any, messages),  # type: ignore[arg-type]
-            max_tokens=2000
+            max_completion_tokens=2000
         )
         
         # Convert to dict format
         result = response.model_dump()
-        self.logger.info(f"Chat Completions API call successful")
+        self.logger.info("Chat Completions API call successful")
         self.logger.debug(f"Raw API response: {json.dumps(result, indent=2, default=str)}")
         return result
 

@@ -12,6 +12,8 @@ class TemplateEngine:
     def __init__(self, templates_dir: str | None = None):
         if templates_dir is None:
             templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+        # Resolve the templates directory to an absolute path
+        templates_dir = os.path.abspath(templates_dir)
         self.env = Environment(loader=FileSystemLoader(templates_dir))
         self.default_template_name = "agent_default.j2"
 
@@ -50,9 +52,10 @@ def validate_agent_code(code: str) -> Tuple[bool, str]:
                     isinstance(base, ast.Attribute) and base.attr == "Agent"
                 ):
                     agent_class_found = True
-                    # Check for run method
+                    # Check for run method (both sync and async)
                     for item in node.body:
-                        if isinstance(item, ast.FunctionDef) and item.name == "run":
+                        if (isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) 
+                            and item.name == "run"):
                             run_method_found = True
     if not agent_class_found:
         return False, "No class subclassing 'Agent' found."

@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound
-from typing import Any, cast
+from typing import cast
 
 from .template_registry import TemplateRegistry
 

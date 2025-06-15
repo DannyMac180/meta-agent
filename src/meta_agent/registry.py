@@ -4,8 +4,14 @@ import json
 import logging
 import shutil
 import sys
+from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
+
+from packaging.version import parse as parse_version
+
+from .models.generated_tool import GeneratedTool
 
 
 # --------------------------------------------------------------------------- #
@@ -45,12 +51,6 @@ class ToolsCollection(List[Dict[str, Any]]):
 
     def items(self) -> Iterator[tuple[str, Dict[str, Any]]]:  # pragma: no cover
         return iter(self._by_name.items())
-
-from packaging.version import parse as parse_version
-from hashlib import sha256
-from datetime import datetime
-
-from .models.generated_tool import GeneratedTool
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +172,7 @@ class ToolRegistry:
             if "original_name" not in entry:
                 entry["original_name"] = tool_name_raw
             entry["versions"][version] = {
+                "version": version,
                 "module_path": module_import_path,
                 "fingerprint": fingerprint,
                 "created_at": datetime.utcnow().isoformat(),
