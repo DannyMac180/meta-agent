@@ -225,8 +225,7 @@ async def test_invalid_json_from_llm():
 
     async def fake_run(*_, **__):
         class FakeRes:
-            final_output = "nonsense"
-
+            final_output = "not-json"
         return FakeRes()
 
     # Store original run method

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 
@@ -18,26 +18,16 @@ class ValidationResult:
     is_valid: bool = False
 
     # Detailed error information
-    syntax_errors: List[str] = None
-    security_issues: List[str] = None
-    compliance_issues: List[str] = None
+    syntax_errors: List[str] = field(default_factory=list)
+    security_issues: List[str] = field(default_factory=list)
+    compliance_issues: List[str] = field(default_factory=list)
     error_message: Optional[str] = None
 
     # For validation.py compatibility
     success: bool = False
-    errors: List[str] = None
+    errors: List[str] = field(default_factory=list)
     coverage: float = 0.0
 
-    def __post_init__(self):
-        """Initialize lists if they are None."""
-        if self.syntax_errors is None:
-            self.syntax_errors = []
-        if self.security_issues is None:
-            self.security_issues = []
-        if self.compliance_issues is None:
-            self.compliance_issues = []
-        if self.errors is None:
-            self.errors = []
 
     def update_validity(self):
         """

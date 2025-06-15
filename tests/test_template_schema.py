@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from meta_agent.template_schema import (
+    IOContract,
     TemplateCategory,
     TemplateComplexity,
     TemplateMetadata,
@@ -13,7 +14,7 @@ def test_template_metadata_valid() -> None:
         title="Basic Chat Bot",
         description="Minimal conversational agent",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",
@@ -38,7 +39,7 @@ def test_template_metadata_invalid_category() -> None:
             title="Bad",
             description="Bad",
             intended_use="demo",
-            io_contract={"input": "", "output": ""},
+            io_contract=IOContract(input="", output=""),
             tools=[],
             guardrails=[],
             model_pref="gpt3",
@@ -61,7 +62,7 @@ def test_template_metadata_compat_flags() -> None:
         title="Compat",
         description="desc",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",

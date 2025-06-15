@@ -6,45 +6,30 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 
 import logging
 import inspect
-from typing import Dict, Any, Optional, Type
+from typing import Dict, Any, Optional, Type, cast
 import tempfile
 from pathlib import Path
 
+from meta_agent.services.tool_stubs import WebSearchTool, FileSearchTool  # type: ignore[attr-defined]
 try:
-    from agents import Agent, Tool, Runner, WebSearchTool, FileSearchTool
+    from agents import Agent, Tool, Runner
+    try:
+        # These symbols exist only when running inside the hosted environment;
+        # tell Pyright to skip attribute checks.
+        from agents import WebSearchTool as RealWebSearchTool, FileSearchTool as RealFileSearchTool  # type: ignore[attr-defined]
+        WebSearchTool = RealWebSearchTool  # type: ignore[assignment]
+        FileSearchTool = RealFileSearchTool  # type: ignore[assignment]
+    except (ImportError, AttributeError):
+        pass
 except (ImportError, AttributeError):
     logging.warning("Hosted tools unavailable: patching stubs into 'agents' package.")
-
-    import agents as _agents_pkg  # type: ignore
-
-    class _StubHostedTool:  # pylint: disable=too-few-public-methods
-        """Minimal stand‑in when WebSearchTool / FileSearchTool aren't shipped.
-
-        `Tool()` → returns instance; instance is **callable** so that
-        `WebSearchTool()(query)` works without raising TypeError.
-        """
-
-        def __call__(self, *_, **__):  # noqa: D401,E501
-            return "Hosted tool unavailable in this environment."
-
-    # expose the stubs both locally *and* inside the real `agents` module
-    WebSearchTool = _StubHostedTool()  # type: ignore
-    FileSearchTool = _StubHostedTool()  # type: ignore
-    _agents_pkg.WebSearchTool = WebSearchTool  # type: ignore
-    _agents_pkg.FileSearchTool = FileSearchTool  # type: ignore
-    from agents import Agent
+    from agents import Agent, Tool, Runner
 
 from meta_agent.models.generated_tool import GeneratedTool
 from meta_agent.generators.code_validator import CodeValidator
 import time
 
 logger = logging.getLogger(__name__)
-
-# --- Imports for Agent Logic ---
-from agents import Agent
-
-# --- Logging Setup ---
-import logging
 
 # --- Placeholder Sub-Agent Classes --- #
 
@@ -126,7 +111,9 @@ from meta_agent.agents.tool_designer_agent import ToolDesignerAgent
 class SubAgentManager:
     """Manages the lifecycle and delegation to specialized sub-agents."""
 
-    AGENT_TOOL_MAP: Dict[str, Type[Agent]] = {
+    # Relax the value type so Pyright doesn’t complain if a class is only
+    # *runtime‑compatible* with `Agent` (e.g. when the SDK stub is missing).
+    AGENT_TOOL_MAP: Dict[str, Type[Any]] = {
         "coder_tool": CoderAgent,  # Assumes CoderAgent is defined above or imported
         "tester_tool": TesterAgent,  # Assumes TesterAgent is defined above or imported
         "reviewer_tool": ReviewerAgent,  # Assumes ReviewerAgent is defined above or imported
@@ -178,7 +165,11 @@ def get_tool_instance():
             if tool_requirement not in self.active_agents:
                 try:
                     # Pass kwargs to the agent constructor
-                    self.active_agents[tool_requirement] = agent_cls(**kwargs)
+                    # The Agent base‑class actually accepts ``name: str | None = None``,
+                    # but the runtime SDK stub sometimes marks it as just ``str``.
+                    # Cast + ignore keeps Pyright happy without altering behaviour.
+                    from typing import cast
+                    self.active_agents[tool_requirement] = cast(Agent, agent_cls(**kwargs))  # type: ignore[reportArgumentType]
                     logger.info(
                         f"Instantiated agent {agent_cls.__name__} for tool '{tool_requirement}' with config: {kwargs}"
                     )
@@ -234,7 +225,8 @@ def get_tool_instance():
             )
             try:
                 # Instantiate the agent
-                new_agent = agent_class()
+                from typing import cast
+                new_agent = cast(Agent, agent_class())  # type: ignore[reportArgumentType]
                 self.active_agents[agent_type_name] = new_agent  # Cache by class name
                 # Also cache by tool requirement for get_agent() to find it
                 if selected_tool:
@@ -259,7 +251,7 @@ def get_tool_instance():
         spec: Dict[str, Any],
         version: str = "0.1.0",
         tool_registry=None,
-        tool_designer_agent=None,
+        tool_designer_agent: Optional[ToolDesignerAgent] = None,
     ) -> Optional[str]:
         """
         Creates a tool by executing the full pipeline: parse → generate → validate → register.
@@ -282,7 +274,10 @@ def get_tool_instance():
         # 1. Get or create required components
         if tool_designer_agent is None:
             logger.debug("No tool designer agent provided, attempting to get one")
-            tool_designer_agent = self.get_agent("tool_designer_tool")
+            tool_designer_agent = cast(
+                Optional[ToolDesignerAgent],
+                self.get_agent("tool_designer_tool"),
+            )
             if tool_designer_agent is None:
                 logger.error(f"Failed to get tool designer agent for '{tool_name}'")
                 return None
@@ -311,7 +306,7 @@ def get_tool_instance():
                 generated_tool = design_result
             elif isinstance(design_result, str):
                 generated_tool = GeneratedTool(
-                    name=spec.get("name"),
+                    name=cast(str, spec.get("name", "UnnamedTool")),
                     description=spec.get("description", ""),
                     specification=spec.get("specification", spec),
                     code=design_result,
@@ -343,7 +338,7 @@ def get_tool_instance():
             # Fallback to a very simple tool so tests can proceed
             try:
                 generated_tool = GeneratedTool(
-                    name=spec.get("name"),
+                    name=cast(str, spec.get("name", "UnnamedTool")),
                     description=spec.get("description", ""),
                     specification=spec.get("specification", spec),
                     code=self._generate_basic_tool_code(spec.get("name", "Tool")),

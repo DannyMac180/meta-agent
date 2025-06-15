@@ -1,7 +1,7 @@
 from typing import List
 import logging
 try:
-    from agents import WebSearchTool, FileSearchTool
+    from agents import WebSearchTool, FileSearchTool  # type: ignore[attr-defined]
 except (ImportError, AttributeError):
     logging.warning("Hosted tools unavailable: using stub implementations for WebSearchTool, FileSearchTool.")
     def _stub_func(*a, **kw):

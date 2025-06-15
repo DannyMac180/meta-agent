@@ -1,9 +1,12 @@
+from typing import Any
+
 try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover - fallback when python-dotenv is missing
 
-    def load_dotenv(*_args, **_kwargs) -> None:
-        return None
+    def load_dotenv(*_args: Any, **_kwargs: Any) -> bool:  # pragma: no cover
+        """Stub replacement when `python‑dotenv` isn’t installed."""
+        return False
 
 
 import click
@@ -23,7 +26,7 @@ from meta_agent.sub_agent_manager import SubAgentManager
 from meta_agent.registry import ToolRegistry
 from meta_agent.tool_designer import ToolDesignerAgent
 from meta_agent.telemetry import TelemetryCollector
-from meta_agent.telemetry_db import TelemetryDB
+from meta_agent.telemetry_db import TelemetryDB, TelemetryRow
 from meta_agent.template_registry import TemplateRegistry
 from meta_agent.template_search import TemplateSearchEngine
 from meta_agent.template_docs_generator import TemplateDocsGenerator
@@ -146,10 +149,11 @@ async def generate(
             # Run the orchestration
             click.echo("\nStarting agent generation orchestration...")
             # Convert Pydantic model to dict for the orchestrator
-            if hasattr(spec, "model_dump"):
-                spec_dict = spec.model_dump(exclude_unset=True)
-            else:  # pragma: no cover - pydantic v1 fallback
-                spec_dict = spec.dict(exclude_unset=True)
+            spec_dict = (
+                spec.model_dump(exclude_unset=True)
+                if hasattr(spec, "model_dump")
+                else spec.dict(exclude_unset=True)
+            )
             telemetry.start_timer()
             results = await orchestrator.run(specification=spec_dict)
             telemetry.stop_timer()
@@ -341,7 +345,7 @@ def tool_command_wrapper(action, spec_file, use_llm, version):
 def dashboard(db_path: Path) -> None:
     """Display a simple telemetry dashboard."""
     db = TelemetryDB(db_path)
-    records = db.fetch_all()
+    records: list[TelemetryRow] = db.fetch_all()
     if not records:
         click.echo("No telemetry data found.")
         db.close()
@@ -416,20 +420,20 @@ async def init_project(
     """Initialize a new meta-agent project, optionally from a template."""
     if not directory:
         directory = Path.cwd() / project_name
-    
+
     # Create project directory
     directory.mkdir(parents=True, exist_ok=True)
     click.echo(f"Initializing project '{project_name}' in {directory}")
-    
+
     # Basic project structure
     config_dir = directory / ".meta-agent"
     config_dir.mkdir(exist_ok=True)
-    
+
     if template_slug:
         # Use template
         registry = TemplateRegistry()
         template_content = registry.load_template(template_slug)
-        
+
         if template_content:
             click.echo(f"Using template: {template_slug}")
             # Create project files from template
@@ -461,7 +465,7 @@ model_preference: "gpt-4"
         spec_file = directory / "agent_spec.yaml"
         spec_file.write_text(basic_spec, encoding="utf-8")
         click.echo(f"Created basic specification file: {spec_file}")
-    
+
     # Create basic config
     config_file = config_dir / "config.yaml"
     config_content = f"""project_name: "{project_name}"
@@ -470,11 +474,15 @@ created_at: "{datetime.utcnow().isoformat()}"
 """
     config_file.write_text(config_content, encoding="utf-8")
     click.echo(f"Created config file: {config_file}")
-    
-    click.echo(click.style("\n✓ Project initialized successfully!", fg="green", bold=True))
+
+    click.echo(
+        click.style("\n✓ Project initialized successfully!", fg="green", bold=True)
+    )
     click.echo("Next steps:")
     click.echo(f"  1. Edit {spec_file} to define your agent")
-    click.echo(f"  2. Run 'meta-agent generate --spec-file {spec_file}' to create your agent")
+    click.echo(
+        f"  2. Run 'meta-agent generate --spec-file {spec_file}' to create your agent"
+    )
 
 
 @cli.command(name="init")
@@ -489,7 +497,9 @@ created_at: "{datetime.utcnow().isoformat()}"
     type=click.Path(path_type=Path),
     help="Directory to create project in (default: current directory + project name)",
 )
-def init_command_wrapper(project_name: str, template: str | None, directory: Path | None):
+def init_command_wrapper(
+    project_name: str, template: str | None, directory: Path | None
+):
     """Initialize a new meta-agent project."""
     asyncio.run(init_project(project_name, template, directory))
 
@@ -512,7 +522,9 @@ def init_command_wrapper(project_name: str, template: str | None, directory: Pat
     is_flag=True,
     help="Exclude sample usage from generated documentation",
 )
-def templates_command(action: str, output_dir: Path, template: str | None, no_samples: bool):
+def templates_command(
+    action: str, output_dir: Path, template: str | None, no_samples: bool
+):
     """
     Manage and document templates.
 
@@ -525,79 +537,103 @@ def templates_command(action: str, output_dir: Path, template: str | None, no_sa
     """
     if action == "docs":
         click.echo("Generating template documentation...")
-        
+
         registry = TemplateRegistry()
         generator = TemplateDocsGenerator(registry=registry)
-        
+
         try:
             if template:
                 # Generate docs for specific template
                 templates = registry.list_templates()
-                template_info = next((t for t in templates if t["slug"] == template), None)
-                
+                template_info = next(
+                    (t for t in templates if t["slug"] == template), None
+                )
+
                 if not template_info:
                     click.echo(f"Error: Template '{template}' not found.", err=True)
                     sys.exit(1)
-                
+
                 current_version = template_info["current_version"]
                 if not current_version:
-                    click.echo(f"Error: No current version found for template '{template}'.", err=True)
+                    click.echo(
+                        f"Error: No current version found for template '{template}'.",
+                        err=True,
+                    )
                     sys.exit(1)
-                
+
                 metadata = generator._load_template_metadata(template, current_version)
                 if not metadata:
-                    click.echo(f"Error: Could not load metadata for template '{template}'.", err=True)
+                    click.echo(
+                        f"Error: Could not load metadata for template '{template}'.",
+                        err=True,
+                    )
                     sys.exit(1)
-                
+
                 # Generate sample usage if requested
-                sample_usage = None if no_samples else generator._generate_sample_usage(metadata)
-                
+                sample_usage = (
+                    None if no_samples else generator._generate_sample_usage(metadata)
+                )
+
                 # Generate card
                 card_content = generator.generate_card(metadata, sample_usage)
-                
+
                 # Save to file
                 output_dir.mkdir(parents=True, exist_ok=True)
                 filename = f"{template.replace('_', '-')}.md"
                 file_path = output_dir / filename
                 file_path.write_text(card_content, encoding="utf-8")
-                
-                click.echo(click.style("✓ Documentation generated successfully!", fg="green", bold=True))
+
+                click.echo(
+                    click.style(
+                        "✓ Documentation generated successfully!", fg="green", bold=True
+                    )
+                )
                 click.echo(f"File: {file_path}")
-                
+
             else:
                 # Generate docs for all templates
                 include_samples = not no_samples
-                generated_files = generator.generate_all_cards(output_dir, include_sample=include_samples)
-                
+                generated_files = generator.generate_all_cards(
+                    output_dir, include_sample=include_samples
+                )
+
                 if generated_files:
                     # Generate index file
                     index_path = generator.generate_index(output_dir)
-                    
-                    click.echo(click.style("✓ Documentation generated successfully!", fg="green", bold=True))
-                    click.echo(f"Generated {len(generated_files)} template documentation files")
+
+                    click.echo(
+                        click.style(
+                            "✓ Documentation generated successfully!",
+                            fg="green",
+                            bold=True,
+                        )
+                    )
+                    click.echo(
+                        f"Generated {len(generated_files)} template documentation files"
+                    )
                     click.echo(f"Index file: {index_path}")
                     click.echo(f"Documentation directory: {output_dir}")
                 else:
                     click.echo("No templates found to document.", err=True)
-                    
+
         except Exception as e:
             click.echo(f"Error generating documentation: {e}", err=True)
             sys.exit(1)
-            
+
     elif action == "list":
         click.echo("Available templates:")
         registry = TemplateRegistry()
         templates = registry.list_templates()
-        
+
         if not templates:
             click.echo("No templates found.")
             return
-            
+
         for template_info in templates:
             slug = template_info["slug"]
             version = template_info["current_version"] or "unknown"
             click.echo(f"  - {slug} (v{version})")
-            
+
     elif action == "search":
         click.echo("Template search is not implemented yet.")
 
@@ -625,22 +661,20 @@ def serve_command(host: str, port: int, reload: bool):
     try:
         import uvicorn
         from meta_agent.api import app
-        
+
         if app is None:
-            click.echo("Error: FastAPI and uvicorn are required to run the API server.", err=True)
+            click.echo(
+                "Error: FastAPI and uvicorn are required to run the API server.",
+                err=True,
+            )
             click.echo("Install with: pip install fastapi uvicorn", err=True)
             sys.exit(1)
-        
+
         click.echo(f"Starting API server on http://{host}:{port}")
         click.echo("API documentation available at: http://{host}:{port}/docs")
-        
-        uvicorn.run(
-            "meta_agent.api:app",
-            host=host,
-            port=port,
-            reload=reload
-        )
-        
+
+        uvicorn.run("meta_agent.api:app", host=host, port=port, reload=reload)
+
     except ImportError as e:
         click.echo(f"Error: Missing dependency for API server: {e}", err=True)
         click.echo("Install with: pip install fastapi uvicorn", err=True)

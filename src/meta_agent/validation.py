@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def validate_generated_tool(
-    tool: GeneratedTool, tool_id: str = None
+    tool: GeneratedTool, tool_id: str | None = None
 ) -> ValidationResult:
     """
     Run pytest and coverage on the generated tool code and tests.
@@ -35,8 +35,9 @@ def validate_generated_tool(
 
     with open(code_file, "w") as f:
         f.write(tool.code)
-    with open(test_file, "w") as f:
-        f.write(tool.tests)
+    if tool.tests:
+        with open(test_file, "w") as f:
+            f.write(tool.tests)
     # Write docs if present
     if tool.docs:
         with open(os.path.join(artefact_dir, "docs.md"), "w") as f:

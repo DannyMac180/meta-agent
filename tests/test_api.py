@@ -252,8 +252,7 @@ class TestAPIWithoutFastAPI:
     def test_import_without_fastapi(self):
         """Test that API module can be imported without FastAPI."""
         with patch.dict('sys.modules', {'fastapi': None}):
-            # Should not raise ImportError
-            from meta_agent import api
+            from meta_agent import api  # Patch or mock as needed
             assert hasattr(api, 'create_app')
 
     def test_create_app_without_fastapi(self):
@@ -276,12 +275,12 @@ class TestAPIIntegration:
         registry = TemplateRegistry(base_dir=tmp_path)
         
         # Register a test template
-        from meta_agent.template_schema import TemplateMetadata
+        from meta_agent.template_schema import TemplateMetadata, TemplateCategory
         metadata = TemplateMetadata(
             slug="test-template",
             title="Test Template",
             description="A test template for integration testing",
-            category="test",
+            category=TemplateCategory.INTEGRATION,
             tags=["test", "integration"]
         )
         template_content = """# Test Template

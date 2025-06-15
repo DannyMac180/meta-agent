@@ -4,7 +4,17 @@ import csv
 import gzip
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Optional, Iterable
+from typing import List, Optional, Iterable, TypedDict
+
+
+class TelemetryRow(TypedDict):
+    """Typed representation of a telemetry record."""
+
+    timestamp: str
+    tokens: int
+    cost: float
+    latency: float
+    guardrail_hits: int
 
 
 class TelemetryDB:
@@ -59,7 +69,7 @@ class TelemetryDB:
         self,
         start: datetime | str | None = None,
         end: datetime | str | None = None,
-    ) -> List[Dict[str, object]]:
+    ) -> List[TelemetryRow]:
         """Fetch records optionally filtered by ``start``/``end`` timestamps."""
         conds: List[str] = []
         params: List[str] = []
@@ -98,7 +108,7 @@ class TelemetryDB:
         start: datetime | str | None = None,
         end: datetime | str | None = None,
         metrics: Iterable[str] | None = None,
-    ) -> List[Dict[str, object]]:
+    ) -> List[TelemetryRow]:
         data = self._query(start=start, end=end)
         if metrics is not None:
             allowed = set(metrics)

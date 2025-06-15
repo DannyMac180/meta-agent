@@ -49,19 +49,39 @@ except Exception:  # pragma: no cover
 # Pydantic compatibility helpers
 # ---------------------------------------------------------------------------
 try:
-    if not hasattr(BaseModel, "model_dump"):
 
-        def _model_dump(self: BaseModel, *args: Any, **kwargs: Any) -> Any:
-            return self.dict(*args, **kwargs)
+    def _ensure_pydantic_methods(cls: type[BaseModel]) -> None:
+        """Ensure ``model_dump`` and ``model_dump_json`` exist on ``cls``."""
 
-        BaseModel.model_dump = _model_dump  # type: ignore[attr-defined]
+        if not hasattr(cls, "model_dump"):
 
-    if not hasattr(BaseModel, "model_dump_json"):
+            def _model_dump(self: BaseModel, *args: Any, **kwargs: Any) -> Any:
+                return self.dict(*args, **kwargs)
 
-        def _model_dump_json(self: BaseModel, *args: Any, **kwargs: Any) -> str:
-            return self.json(*args, **kwargs)
+            cls.model_dump = _model_dump  # type: ignore[attr-defined]
 
-        BaseModel.model_dump_json = _model_dump_json  # type: ignore[attr-defined]
+        if not hasattr(cls, "model_dump_json"):
+
+            def _model_dump_json(self: BaseModel, *args: Any, **kwargs: Any) -> str:
+                return self.json(*args, **kwargs)
+
+            cls.model_dump_json = _model_dump_json  # type: ignore[attr-defined]
+
+    # Patch BaseModel itself
+    _ensure_pydantic_methods(BaseModel)
+
+    # Patch any subclasses defined before this module was imported
+    for _sub in list(BaseModel.__subclasses__()):
+        _ensure_pydantic_methods(_sub)
+
+    # Ensure future subclasses also get patched automatically
+    _orig_init_subclass = BaseModel.__init_subclass__
+
+    def _patched_init_subclass(cls, **kwargs: Any) -> None:  # type: ignore[override]
+        _orig_init_subclass(**kwargs)
+        _ensure_pydantic_methods(cls)
+
+    BaseModel.__init_subclass__ = classmethod(_patched_init_subclass)  # type: ignore[assignment]
 except Exception:  # pragma: no cover - should never fail at runtime
     pass
 

@@ -1,6 +1,7 @@
 from meta_agent.template_mixer import TemplateMixer
 from meta_agent.template_creator import TemplateCreator
 from meta_agent.template_schema import (
+    IOContract,
     TemplateMetadata,
     TemplateCategory,
     TemplateComplexity,
@@ -14,7 +15,7 @@ def _meta(slug: str) -> TemplateMetadata:
         title=slug,
         description="demo",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",

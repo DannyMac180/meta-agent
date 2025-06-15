@@ -1,19 +1,25 @@
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 from jinja2 import Environment, FileSystemLoader, Template
 import os
 import ast
+
 
 class TemplateEngine:
     """
     Combines sub-agent outputs into a final agent implementation using Jinja2 templates.
     """
-    def __init__(self, templates_dir: str = None):
+
+    def __init__(self, templates_dir: str | None = None):
         if templates_dir is None:
             templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+        # Resolve the templates directory to an absolute path
+        templates_dir = os.path.abspath(templates_dir)
         self.env = Environment(loader=FileSystemLoader(templates_dir))
         self.default_template_name = "agent_default.j2"
 
-    def assemble_agent(self, sub_agent_outputs: Dict[str, Any], template_name: str = None) -> str:
+    def assemble_agent(
+        self, sub_agent_outputs: Dict[str, Any], template_name: str | None = None
+    ) -> str:
         """
         Combine sub-agent outputs using the specified template.
         sub_agent_outputs: dict with keys like 'tools', 'guardrails', 'core_logic', etc.
@@ -22,7 +28,7 @@ class TemplateEngine:
         """
         if template_name is None:
             template_name = self.default_template_name
-        template: Template = self.env.get_template(template_name)
+        template: Template = self.env.get_template(template_name or "")
         return template.render(**sub_agent_outputs)
 
 
@@ -46,9 +52,10 @@ def validate_agent_code(code: str) -> Tuple[bool, str]:
                     isinstance(base, ast.Attribute) and base.attr == "Agent"
                 ):
                     agent_class_found = True
-                    # Check for run method
+                    # Check for run method (both sync and async)
                     for item in node.body:
-                        if isinstance(item, ast.FunctionDef) and item.name == "run":
+                        if (isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) 
+                            and item.name == "run"):
                             run_method_found = True
     if not agent_class_found:
         return False, "No class subclassing 'Agent' found."

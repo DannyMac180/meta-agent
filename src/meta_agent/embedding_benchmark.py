@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from .embedding_models import (
     EmbeddingModel,
@@ -106,7 +106,7 @@ class TemplateBenchmarkRunner:
 
     def run_benchmark(
         self,
-        models: Optional[List[EmbeddingModel]] = None,
+        models: Sequence[EmbeddingModel] | None = None,
         save_results: bool = True,
     ) -> List[EmbeddingMetrics]:
         """Run the complete benchmark suite."""

@@ -1,5 +1,6 @@
 from meta_agent.template_validator import TemplateValidator, TemplateTestCase
 from meta_agent.template_schema import (
+    IOContract,
     TemplateMetadata,
     TemplateCategory,
     TemplateComplexity,
@@ -55,7 +56,7 @@ def test_template_validator_license_scan(monkeypatch) -> None:
         title="Demo",
         description="",
         intended_use="",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=["badpkg"],
         guardrails=[],
         model_pref="gpt3",

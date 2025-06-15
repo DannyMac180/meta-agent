@@ -7,7 +7,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .template_registry import TemplateRegistry, METADATA_FILE_NAME
 from .template_creator import TemplateCreator
-from .template_schema import TemplateMetadata
+from .template_schema import (
+    TemplateCategory,
+    TemplateComplexity,
+    TemplateMetadata,
+)
 
 
 class TemplateSharingManager:
@@ -70,9 +74,17 @@ class TemplateSharingManager:
             tools=meta.get("tools", []),
             guardrails=meta.get("guardrails", []),
             model_pref=meta.get("model_pref", ""),
-            category=meta.get("category"),
+            category=(
+                TemplateCategory(meta.get("category"))
+                if meta.get("category")
+                else TemplateCategory.CONVERSATION
+            ),
             subcategory=meta.get("subcategory"),
-            complexity=meta.get("complexity"),
+            complexity=(
+                TemplateComplexity(meta.get("complexity"))
+                if meta.get("complexity")
+                else TemplateComplexity.BASIC
+            ),
             created_by=meta.get("created_by", "unknown"),
             semver=meta.get("semver", "0.0.0"),
             last_test_passed=meta.get("last_test_passed"),

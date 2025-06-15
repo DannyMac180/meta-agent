@@ -26,10 +26,10 @@ def sample_tool_spec():
                 "name": "user_name",
                 "type": "string",
                 "description": "Name to greet",
-                "required": True
+                "required": True,
             }
         ],
-        "output_format": "string"
+        "output_format": "string",
     }
 
 
@@ -68,7 +68,8 @@ def components(tool_registry, mock_sandbox_manager):
 
     # Patch the SandboxManager - it might be imported conditionally
     with patch(
-        "meta_agent.sandbox.sandbox_manager.SandboxManager", return_value=mock_sandbox_manager
+        "meta_agent.sandbox.sandbox_manager.SandboxManager",
+        return_value=mock_sandbox_manager,
     ):
         yield {
             "planning_engine": planning_engine,
@@ -133,10 +134,10 @@ async def test_end_to_end_tool_creation(orchestrator, sample_tool_spec, tool_reg
     assert orchestrator.tool_generated_total == 1
 
     # 2. Check that the tool appears in the registry
-    tools_list = tool_registry.list_tools()
-    assert len(tools_list) == 1
-    assert tools_list[0]["name"] == sample_tool_spec["name"]
-    assert tools_list[0]["versions"][0]["version"] == "0.1.0"
+    tools = tool_registry.list_tools()
+    assert sample_tool_spec["name"] in tools
+    tool_info = tools[sample_tool_spec["name"]]
+    assert tool_info["versions"]["0.1.0"]["version"] == "0.1.0"
 
     # 3. Get the tool metadata
     metadata = tool_registry.get_tool_metadata(sample_tool_spec["name"])
@@ -200,16 +201,16 @@ async def test_tool_refinement_version_bump(
     assert orchestrator.tool_refined_total == 1
 
     # 3. Check version was bumped
-    tools_list = tool_registry.list_tools()
-    assert len(tools_list) == 1
-    tool_info = tools_list[0]
+    tools = tool_registry.list_tools()
+    assert sample_tool_spec["name"] in tools
+    tool_info = tools[sample_tool_spec["name"]]
     assert len(tool_info["versions"]) == 2
 
     # Versions should be sorted with newest first
     assert (
-        tool_info["versions"][0]["version"] == "0.2.0"
+        tool_info["versions"]["0.2.0"]["version"] == "0.2.0"
     )  # Minor bump for non-breaking change
-    assert tool_info["versions"][1]["version"] == "0.1.0"
+    assert tool_info["versions"]["0.1.0"]["version"] == "0.1.0"
 
     # 4. Load latest tool (should be v0.2.0)
     latest_tool = tool_registry.load(sample_tool_spec["name"], "latest")

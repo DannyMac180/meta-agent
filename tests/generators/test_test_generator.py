@@ -7,7 +7,7 @@ def test_generate_basic_tests():
     spec = ToolSpecification(
         name="greet",
         purpose="Greets a user",
-        input_parameters=[ToolParameter(name="name", type_="string")],
+        input_parameters=[ToolParameter(name="name", type="string")],
         output_format="string",
     )
     test_code = generate_basic_tests(spec)

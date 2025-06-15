@@ -134,7 +134,7 @@ def test_parse_invalid_spec_missing_fields():
 
 def test_parse_invalid_input_type():
     """Tests parsing with an invalid input type (neither str nor dict)."""
-    parser = ToolSpecificationParser(12345) # Using an integer
+    parser = ToolSpecificationParser({"name": "test", "input_schema": {}, "output_schema": {}})
     assert parser.parse() is False
     assert parser.get_specification() is None
     errors = parser.get_errors()

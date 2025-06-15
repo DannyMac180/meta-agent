@@ -21,22 +21,22 @@ class {{ agent_class_name | default('GeneratedAgent') }}(Agent):
 
     def __init__(self):
         super().__init__(name="{{ name | default('GeneratedAgent') }}", tools=[])
-        logger.info(f"Initialized {{ agent_class_name | default('GeneratedAgent') }}")
+        logger.info("Initialized {{ agent_class_name | default('GeneratedAgent') }}")
 
     async def run(self, specification: Dict[str, Any]) -> Dict[str, Any]:
         """
         {{ instructions | default('Execute the agent logic') }}
         """
-        logger.info(f"{{ agent_class_name | default('GeneratedAgent') }} running with spec: {specification}")
+        logger.info("{{ agent_class_name | default('GeneratedAgent') }} running with spec: %s", specification)
         
         # Core logic implementation
         try:
-{% if core_logic %}
-            {{ core_logic }}
-{% else %}
+            {% if core_logic %}
+            {{ core_logic | indent(12, True) }}
+            {% else %}
             # Default implementation
-            result = f"Executed {{ name | default('GeneratedAgent') }} for task {specification.get('task_id', 'unknown')}"
-{% endif %}
+            result = "Executed {{ name | default('GeneratedAgent') }} for task {}".format(specification.get('task_id', 'unknown'))
+            {% endif %}
             
             return {
                 "status": "success",
@@ -44,23 +44,23 @@ class {{ agent_class_name | default('GeneratedAgent') }}(Agent):
                 "agent": "{{ agent_class_name | default('GeneratedAgent') }}"
             }
         except Exception as e:
-            logger.error(f"Error in {{ agent_class_name | default('GeneratedAgent') }}: {e}")
+            logger.error("Error in {{ agent_class_name | default('GeneratedAgent') }}: %s", e)
             return {
                 "status": "error",
-                "output": f"Agent execution failed: {str(e)}",
+                "output": "Agent execution failed: {}".format(str(e)),
                 "agent": "{{ agent_class_name | default('GeneratedAgent') }}"
             }
 
-{% if tools %}
+    {% if tools %}
     # Tools implementation
-{% for tool in tools %}
-    {{ tool }}
-{% endfor %}
-{% endif %}
+    {% for tool in tools %}
+    {{ tool | indent(4, True) }}
+    {% endfor %}
+    {% endif %}
 
-{% if guardrails %}
+    {% if guardrails %}
     # Guardrails implementation
-{% for guardrail in guardrails %}
-    {{ guardrail }}
-{% endfor %}
-{% endif %}
+    {% for guardrail in guardrails %}
+    {{ guardrail | indent(4, True) }}
+    {% endfor %}
+    {% endif %}

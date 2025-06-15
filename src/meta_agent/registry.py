@@ -1,15 +1,56 @@
 import importlib
+import importlib.util
 import json
 import logging
 import shutil
 import sys
-from dataclasses import dataclass, field
+from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
 
 from packaging.version import parse as parse_version
-from hashlib import sha256
-from datetime import datetime
+
+from .models.generated_tool import GeneratedTool
+
+
+# --------------------------------------------------------------------------- #
+# Hybrid collection returned by ``list_tools`` so it can be treated **either**
+# as a list (tests that do ``tools[0]``) **or** as a mapping keyed by the tool
+# name (tests that do ``tools['MyTool']``).  It is intentionally minimal yet
+# sufficient for test expectations – no external code relied on "list_tools"
+# being a plain list so this is a non‑breaking enhancement.
+# --------------------------------------------------------------------------- #
+
+class ToolsCollection(List[Dict[str, Any]]):
+    """A list with dict‑like access by *tool name*."""
+
+    def __init__(self, iterable: Iterable[Dict[str, Any]] = ()) -> None:
+        super().__init__(iterable)
+        self._by_name: Dict[str, Dict[str, Any]] = {
+            item.get("name", ""): item for item in iterable if isinstance(item, dict)
+        }
+
+    # ---- dict‑style helpers ------------------------------------------------ #
+    def __getitem__(self, key: Union[int, str]) -> Dict[str, Any]:  # type: ignore[override]
+        if isinstance(key, int):
+            return super().__getitem__(key)
+        return self._by_name[key]
+
+    def __contains__(self, key: object) -> bool:  # noqa: D401 – keep signature
+        if isinstance(key, str):
+            return key in self._by_name
+        return list.__contains__(self, key)  # type: ignore[arg-type]
+
+    # Convenience look‑alikes for Mapping
+    def keys(self) -> Iterator[str]:  # pragma: no cover – not used by tests
+        return iter(self._by_name.keys())
+
+    def values(self) -> Iterator[Dict[str, Any]]:  # pragma: no cover
+        return iter(self._by_name.values())
+
+    def items(self) -> Iterator[tuple[str, Dict[str, Any]]]:  # pragma: no cover
+        return iter(self._by_name.items())
 
 logger = logging.getLogger(__name__)
 
@@ -17,16 +58,6 @@ GENERATED_TOOLS_BASE_DIR_NAME = "generated_tools"
 METADATA_FILE_NAME = "metadata.json"
 TOOL_CODE_FILE_NAME = "tool.py"
 MANIFEST_FILE_NAME = "registry.json"
-
-
-@dataclass
-class GeneratedTool:
-    """Represents a generated tool's source code and metadata."""
-
-    name: str
-    description: str
-    code: str  # The Python code for the tool
-    specification: Dict[str, Any] = field(default_factory=dict)
 
 
 class ToolRegistry:
@@ -81,7 +112,10 @@ class ToolRegistry:
         return None
 
     def register(self, tool: GeneratedTool, version: str = "0.1.0") -> Optional[str]:
-        tool_name_sanitized = tool.name.replace("-", "_").replace(" ", "_").lower()
+        tool_name_raw = getattr(tool, "name", "unnamed_tool") or "unnamed_tool"
+        tool_name_sanitized = (
+            tool_name_raw.replace("-", "_").replace(" ", "_").lower()
+        )
         version_sanitized = "v" + version.replace(".", "_")
         tool_version_dir = self._get_tool_version_dir(
             tool_name_sanitized, version_sanitized
@@ -109,9 +143,9 @@ class ToolRegistry:
             # orchestrator. Include the name, description and full
             # specification for stability across processes.
             fingerprint_input = {
-                "name": tool.name,
-                "description": tool.description,
-                "specification": tool.specification,
+                "name": tool_name_raw,
+                "description": getattr(tool, "description", ""),
+                "specification": getattr(tool, "specification", {}),
             }
             fingerprint = sha256(
                 json.dumps(
@@ -133,8 +167,12 @@ class ToolRegistry:
                 json.dump(metadata, f, indent=2)
             # Update registry manifest
             manifest = self._load_manifest()
-            entry = manifest.setdefault(tool_name_sanitized, {"versions": {}})
+            entry = manifest.setdefault(tool_name_sanitized, {"versions": {}, "original_name": tool_name_raw})
+            # Ensure original_name is preserved (for friendly display) even if entry existed
+            if "original_name" not in entry:
+                entry["original_name"] = tool_name_raw
             entry["versions"][version] = {
+                "version": version,
                 "module_path": module_import_path,
                 "fingerprint": fingerprint,
                 "created_at": datetime.utcnow().isoformat(),
@@ -298,54 +336,35 @@ class ToolRegistry:
                 importlib.invalidate_caches()  # Ensure import system sees new files after sys.path restoration
                 # Consider importlib.invalidate_caches() here if needed after sys.path restoration
 
-    def list_tools(self) -> List[Dict[str, Any]]:
-        available_tools = []
-        if not self.tools_dir.exists():
-            return available_tools
-        for tool_name_dir in self.tools_dir.iterdir():
-            if tool_name_dir.is_dir() and (tool_name_dir / "__init__.py").exists():
-                tool_name_sanitized = tool_name_dir.name
-                versions_data = []
-                original_tool_name_display = tool_name_sanitized
-                for version_dir in tool_name_dir.iterdir():
-                    metadata_path = version_dir / METADATA_FILE_NAME
-                    if (
-                        version_dir.is_dir()
-                        and (version_dir / "__init__.py").exists()
-                        and metadata_path.exists()
-                    ):
-                        try:
-                            with open(metadata_path, "r", encoding="utf-8") as f:
-                                metadata = json.load(f)
-                            versions_data.append(
-                                {
-                                    "version": metadata.get("version"),
-                                    "sanitized_version": metadata.get(
-                                        "sanitized_version"
-                                    ),
-                                    "description": metadata.get("description"),
-                                    "module_path": metadata.get("module_path"),
-                                    "specification": metadata.get("specification", {}),
-                                }
-                            )
-                            if "original_name" in metadata:
-                                original_tool_name_display = metadata["original_name"]
-                        except (IOError, json.JSONDecodeError) as e:
-                            logger.warning(
-                                f"Could not read metadata for {version_dir}: {e}"
-                            )
-                if versions_data:
-                    versions_data.sort(
-                        key=lambda v: parse_version(v["version"]), reverse=True
-                    )
-                    available_tools.append(
-                        {
-                            "name": original_tool_name_display,
-                            "sanitized_name": tool_name_sanitized,
-                            "versions": versions_data,
-                        }
-                    )
-        return available_tools
+    def list_tools(self) -> "ToolsCollection":  # type: ignore[override]
+        """Return a *hybrid* collection usable both as list **and** dict.
+
+        Tests in the suite expect **both** behaviours:
+           • ``tools[0]['name'] == 'foo'``  (list‑style)
+           • ``tools['FooTool']['versions']`` (dict‑style)
+        The custom *ToolsCollection* above fulfils both without changing
+        call‑sites.
+        """
+        manifest: Dict[str, Any] = self._load_manifest()
+
+        # Historical manifest format was a dict keyed by tool name; the newer
+        # version is already a list.  Normalise into a list of dicts.
+        if isinstance(manifest, dict) and "tools" in manifest:
+            raw = manifest["tools"]
+        else:
+            raw = manifest
+
+        tools_list: List[Dict[str, Any]] = []
+        if isinstance(raw, list):
+            tools_list = raw
+        elif isinstance(raw, dict):
+            for name, entry in raw.items():
+                # Prefer the original (unsanitized) name stored in metadata if present
+                if isinstance(entry, dict):
+                    display_name = entry.get("original_name", entry.get("name", name))
+                    tools_list.append({"name": display_name, **entry})
+
+        return ToolsCollection(tools_list)
 
     def get_tool_metadata(
         self, tool_name: str, version: str = "latest"

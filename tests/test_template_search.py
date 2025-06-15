@@ -1,5 +1,6 @@
 from meta_agent.template_registry import TemplateRegistry
 from meta_agent.template_schema import (
+    IOContract,
     TemplateMetadata,
     TemplateCategory,
     TemplateComplexity,
@@ -13,7 +14,7 @@ def _meta(slug: str, category: TemplateCategory) -> TemplateMetadata:
         title=slug.title(),
         description=f"Template {slug}",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",

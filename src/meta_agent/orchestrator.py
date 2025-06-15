@@ -222,7 +222,7 @@ def get_tool_instance():
                 generated_tool = design_result
             elif isinstance(design_result, str):
                 generated_tool = GeneratedTool(
-                    name=tool_spec.get("name"),
+                    name=tool_spec.get("name") or "",
                     description=tool_spec.get("description", ""),
                     specification=tool_spec.get("specification", tool_spec),
                     code=design_result,
@@ -386,13 +386,7 @@ def get_tool_instance():
         # Create a dictionary suitable for the designer, maybe including name/desc?
         # This depends on what refine_design expects. Let's pass the core spec for now.
         # We might need the full GeneratedTool structure eventually.
-        design_input_spec = {
-            "name": original_metadata.get(
-                "original_name", tool_name
-            ),  # Use original name if available
-            "description": original_metadata.get("description", ""),
-            "specification": original_spec,
-        }
+        design_input_spec = original_spec
 
         # 2. Call ToolDesignerAgent to refine the design
         try:
@@ -447,14 +441,14 @@ def get_tool_instance():
 
                 # Compare Input/Output Schemas for breaking change detection
                 original_io_spec = {
-                    "input": original_spec.get("input_schema", {}),
-                    "output": original_spec.get("output_schema", {}),
+                    "input": (original_spec or {}).get("input_schema", {}),
+                    "output": (original_spec or {}).get("output_schema", {}),
                 }
                 refined_io_spec = {
-                    "input": refined_tool_artefact.specification.get(
+                    "input": (getattr(refined_tool_artefact, 'specification', None) or {}).get(
                         "input_schema", {}
                     ),
-                    "output": refined_tool_artefact.specification.get(
+                    "output": (getattr(refined_tool_artefact, 'specification', None) or {}).get(
                         "output_schema", {}
                     ),
                 }
