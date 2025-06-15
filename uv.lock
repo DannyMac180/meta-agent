@@ -619,7 +619,7 @@ requires-dist = [
     { name = "docker", specifier = ">=7" },
     { name = "jinja2", specifier = ">=3.0.0" },
     { name = "numpy", specifier = ">=1.20.0" },
-    { name = "openai", specifier = ">=1.25.1,<2" },
+    { name = "openai", specifier = ">=1.80.0,<2" },
     { name = "openai-agents", specifier = ">=0.0.17" },
     { name = "pydantic", specifier = ">=2.7,<3" },
     { name = "pyright", marker = "extra == 'test'", specifier = ">=1.1.300" },
