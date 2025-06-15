@@ -66,6 +66,7 @@ def load_dotenv(
 
 
 try:  # pragma: no cover - optional dependency
+    import openai as _openai
     from openai import OpenAI
 
     OPENAI_AVAILABLE = True
