@@ -19,6 +19,8 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync --extra test
+          # ensure compatible pydantic version for openai
+          uv pip install 'pydantic>=2.10,<3'
       - name: Run test suite
         env:
           # Ensure OpenAI API key is not required for tests (they should be mocked)
