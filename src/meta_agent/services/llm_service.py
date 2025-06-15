@@ -5,12 +5,7 @@ This module provides the LLMService class which handles communication with
 Large Language Model (LLM) APIs for code generation.
 """
 
-# Apply compatibility patch before importing OpenAI
-try:
-    from meta_agent.compatibility_patch import patch_openai_compatibility
-    patch_openai_compatibility()
-except ImportError:
-    pass
+# OpenAI SDK compatibility is handled by dependency pinning in pyproject.toml
 
 import asyncio
 import json
