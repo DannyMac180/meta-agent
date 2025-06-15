@@ -21,3 +21,32 @@ docker_mock.errors = SimpleNamespace(
 docker_mock.from_env = MagicMock()
 
 sys.modules.setdefault("docker", docker_mock)
+
+
+# Always provide a lightweight OpenAI stub to avoid dependency issues during collection.
+class _OpenAIError(Exception):
+    """Base class for OpenAI error stubs."""
+
+
+class AuthenticationError(_OpenAIError):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args)
+
+
+class APIConnectionError(_OpenAIError):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args)
+
+
+class APITimeoutError(_OpenAIError):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args)
+
+
+openai_stub = SimpleNamespace(
+    OpenAI=MagicMock(),
+    AuthenticationError=AuthenticationError,
+    APIConnectionError=APIConnectionError,
+    APITimeoutError=APITimeoutError,
+)
+sys.modules.setdefault("openai", openai_stub)

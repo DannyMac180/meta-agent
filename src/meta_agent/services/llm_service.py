@@ -70,13 +70,13 @@ try:  # pragma: no cover - optional dependency
     from openai import OpenAI
 
     OPENAI_AVAILABLE = True
-except Exception:  # pragma: no cover - fallback when openai isn't installed
-    from . import openai_stub as _openai
-    from .openai_stub import OpenAI
-    import sys
-
-    sys.modules.setdefault("openai", _openai)
+    _OPENAI_IMPORT_ERROR: Optional[Exception] = None
+except (
+    Exception
+) as exc:  # pragma: no cover - fallback when openai isn't installed or incompatible
+    OpenAI = None
     OPENAI_AVAILABLE = False
+    _OPENAI_IMPORT_ERROR = exc
 
 load_dotenv()
 
@@ -107,10 +107,7 @@ class LLMService:
             timeout: Timeout in seconds for API calls
             api_base: Base URL for the API (defaults to OpenAI's responses API)
         """
-        if not OPENAI_AVAILABLE or OpenAI is None:
-            raise ImportError(
-                "OpenAI SDK is required and must be compatible. Install with: pip install openai"
-            )
+        self.logger = logging.getLogger(__name__)
 
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY")
@@ -124,18 +121,25 @@ class LLMService:
         if api_base is None:
             api_base = "https://api.openai.com/v1"
 
+        if not OPENAI_AVAILABLE or OpenAI is None:
+            self.client = None
+            self.logger.warning(
+                "OpenAI SDK not available; LLMService will operate in stub mode."
+            )
+        else:
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url=api_base,
+                timeout=timeout,
+                max_retries=max_retries,
+            )
+
         # Store initialization parameters
         self.api_key = api_key
         self.model = model
         self.max_retries = max_retries
         self.timeout = timeout
         self.api_base = api_base
-        self.logger = logging.getLogger(__name__)
-
-        # Initialize OpenAI client
-        self.client = OpenAI(
-            api_key=api_key, base_url=api_base, timeout=timeout, max_retries=max_retries
-        )
 
     async def generate_code(self, prompt: str, context: Dict[str, Any]) -> str:
         """
@@ -213,6 +217,11 @@ class LLMService:
         Raises:
             Exception: If the API call fails
         """
+        if self.client is None:
+            raise RuntimeError(
+                "OpenAI client is not available; cannot perform LLM API call."
+            )
+
         # Prepare the messages for the API
         messages = [
             {
