@@ -25,14 +25,49 @@ sys.modules.setdefault("docker", docker_mock)
 # ---------------------------
 # Mock the OpenAI SDK if it is not installed
 # ---------------------------
+
+# Create proper exception classes that inherit from their respective base exceptions
+class MockOpenAIError(Exception):
+    pass
+
+class MockAPIError(MockOpenAIError):
+    def __init__(self, message="API Error", response=None, body=None):
+        super().__init__(message)
+        self.response = response
+        self.body = body
+
+class MockAuthenticationError(MockAPIError):
+    def __init__(self, message="Authentication Error", response=None, body=None):
+        super().__init__(message)
+        self.response = response
+        self.body = body
+
+class MockAPIConnectionError(MockOpenAIError):
+    def __init__(self, request=None):
+        super().__init__("Connection Error")
+        self.request = request
+
+class MockAPITimeoutError(MockOpenAIError):
+    def __init__(self, request=None):
+        super().__init__("Timeout Error")
+        self.request = request
+
+class MockRateLimitError(MockAPIError):
+    def __init__(self, message="Rate Limit Error", response=None, body=None):
+        super().__init__(message)
+        self.response = response
+        self.body = body
+
 openai_mock = MagicMock()
-openai_mock.error = SimpleNamespace(
-    OpenAIError=Exception,
-    APIError=Exception,
-    AuthenticationError=Exception,
-    RateLimitError=Exception,
-)
+openai_mock.OpenAIError = MockOpenAIError
+openai_mock.APIError = MockAPIError
+openai_mock.AuthenticationError = MockAuthenticationError
+openai_mock.APIConnectionError = MockAPIConnectionError
+openai_mock.APITimeoutError = MockAPITimeoutError
+openai_mock.RateLimitError = MockRateLimitError
+
 # Register mock so that `import openai` works anywhere in the codebase
+# Use mock by default, but allow integration tests to override it
 sys.modules.setdefault("openai", openai_mock)
 
 # (Nothing else changes below)

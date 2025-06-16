@@ -352,9 +352,14 @@ class LLMService:
             self.logger.error(
                 "Failed to extract content from response. Unsupported response format."
             )
-            self.logger.error(
-                f"Full response for debugging: {json.dumps(response, indent=2)}"
-            )
+            try:
+                self.logger.error(
+                    f"Full response for debugging: {json.dumps(response, indent=2)}"
+                )
+            except (TypeError, ValueError) as e:
+                self.logger.error(
+                    f"Full response for debugging (repr): {repr(response)}"
+                )
             return ""
 
         try:
