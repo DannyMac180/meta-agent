@@ -58,13 +58,17 @@ class MockRateLimitError(MockAPIError):
         self.response = response
         self.body = body
 
-# Create a mock type structure that mimics OpenAI SDK structure
-mock_types = MagicMock()
-mock_chat = MagicMock()
-mock_parsed_chat_completion = MagicMock()
+# Create comprehensive mock structure that mimics OpenAI SDK
+class MockGeneric:
+    """Mock for typing.Generic that handles parametrization"""
+    def __class_getitem__(cls, item):
+        return cls
+    
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
 
 # Create mock classes that properly handle parametrization
-class MockParsedChatCompletionMessage:
+class MockParsedChatCompletionMessage(MockGeneric):
     """Mock for ParsedChatCompletionMessage that handles parametrization"""
     def __class_getitem__(cls, item):
         return cls
@@ -72,11 +76,38 @@ class MockParsedChatCompletionMessage:
     def __init__(self, *args, **kwargs):
         pass
 
+class MockChatCompletionMessage(MockGeneric):
+    """Mock for ChatCompletionMessage that handles parametrization"""
+    def __class_getitem__(cls, item):
+        return cls
+    
+    def __init__(self, *args, **kwargs):
+        pass
+
+# Create the complete module hierarchy
+mock_parsed_chat_completion = MagicMock()
 mock_parsed_chat_completion.ParsedChatCompletionMessage = MockParsedChatCompletionMessage
+
+mock_chat_completion = MagicMock()
+mock_chat_completion.ChatCompletionMessage = MockChatCompletionMessage
+
+mock_chat = MagicMock()
 mock_chat.parsed_chat_completion = mock_parsed_chat_completion
+mock_chat.chat_completion = mock_chat_completion
+mock_chat.chat_completion_message = mock_chat_completion
+
+mock_types = MagicMock()
 mock_types.chat = mock_chat
 
+# Mock the OpenAI client and related classes
+class MockOpenAI:
+    def __init__(self, *args, **kwargs):
+        self.chat = MagicMock()
+        self.chat.completions = MagicMock()
+        self.chat.completions.create = MagicMock()
+
 openai_mock = MagicMock()
+openai_mock.OpenAI = MockOpenAI
 openai_mock.OpenAIError = MockOpenAIError
 openai_mock.APIError = MockAPIError
 openai_mock.AuthenticationError = MockAuthenticationError
@@ -84,6 +115,15 @@ openai_mock.APIConnectionError = MockAPIConnectionError
 openai_mock.APITimeoutError = MockAPITimeoutError
 openai_mock.RateLimitError = MockRateLimitError
 openai_mock.types = mock_types
+
+# Mock the submodules to prevent real imports
+openai_types_mock = MagicMock()
+openai_types_mock.chat = mock_chat
+sys.modules.setdefault("openai.types", openai_types_mock)
+sys.modules.setdefault("openai.types.chat", mock_chat)
+sys.modules.setdefault("openai.types.chat.parsed_chat_completion", mock_parsed_chat_completion)
+sys.modules.setdefault("openai.types.chat.chat_completion", mock_chat_completion)
+sys.modules.setdefault("openai.types.chat.chat_completion_message", mock_chat_completion)
 
 # Register mock so that `import openai` works anywhere in the codebase
 # Use mock by default, but allow integration tests to override it
