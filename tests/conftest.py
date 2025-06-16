@@ -21,3 +21,18 @@ docker_mock.errors = SimpleNamespace(
 docker_mock.from_env = MagicMock()
 
 sys.modules.setdefault("docker", docker_mock)
+
+# ---------------------------
+# Mock the OpenAI SDK if it is not installed
+# ---------------------------
+openai_mock = MagicMock()
+openai_mock.error = SimpleNamespace(
+    OpenAIError=Exception,
+    APIError=Exception,
+    AuthenticationError=Exception,
+    RateLimitError=Exception,
+)
+# Register mock so that `import openai` works anywhere in the codebase
+sys.modules.setdefault("openai", openai_mock)
+
+# (Nothing else changes below)
