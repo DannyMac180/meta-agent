@@ -23,6 +23,26 @@ def ensure_clean_state():
         if module_name.startswith('meta_agent.services'):
             original_modules[module_name] = sys.modules.get(module_name)
     
+    # Store the original OpenAI mock and replace it with the real one
+    original_openai = sys.modules.get('openai')
+    
+    # Remove the OpenAI mock and force reload the real openai package
+    if 'openai' in sys.modules:
+        del sys.modules['openai']
+    
+    # Try to import the real openai package
+    real_openai = None
+    try:
+        import openai as real_openai
+        sys.modules['openai'] = real_openai
+        # Also need to reload the llm_service module to pick up the real openai
+        if 'meta_agent.services.llm_service' in sys.modules:
+            del sys.modules['meta_agent.services.llm_service']
+    except ImportError:
+        # If real openai is not available, restore the mock
+        if original_openai:
+            sys.modules['openai'] = original_openai
+    
     # Store original environment variables
     original_env = os.environ.copy()
     
@@ -36,6 +56,10 @@ def ensure_clean_state():
                 del sys.modules[module_name]
         else:
             sys.modules[module_name] = module
+    
+    # Restore the original OpenAI module (mock)
+    if original_openai:
+        sys.modules['openai'] = original_openai
     
     # Restore original environment variables
     os.environ.clear()
@@ -65,16 +89,37 @@ async def test_llm_service_live_api_call():
     This test relies on the OPENAI_API_KEY environment variable being set.
     It uses the default model and API base configured in LLMService.
     """
-    # Create a fresh instance of LLMService for this test
-    # This ensures we're not affected by any mocking or state changes from other tests
+    # Import the real OpenAI client directly and patch it into LLMService
     try:
-        # LLMService will attempt to load the API key from .env or environment
-        service = LLMService()
-        logger.info("Successfully created LLMService instance")
-    except ValueError as e:
-        pytest.fail(
-            f"Failed to initialize LLMService, API key likely missing or invalid: {e}"
-        )
+        # Remove mock if it exists and import real openai
+        if 'openai' in sys.modules:
+            mock_openai = sys.modules['openai']
+            del sys.modules['openai']
+        
+        # Import real OpenAI
+        import openai as real_openai
+        
+        # Create a fresh instance of LLMService for this test
+        # This ensures we're not affected by any mocking or state changes from other tests
+        try:
+            # LLMService will attempt to load the API key from .env or environment
+            service = LLMService()
+            
+            # Replace the client with a real OpenAI client
+            service.client = real_openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            
+            logger.info("Successfully created LLMService instance")
+        except ValueError as e:
+            pytest.fail(
+                f"Failed to initialize LLMService, API key likely missing or invalid: {e}"
+            )
+        
+    except ImportError as e:
+        pytest.skip(f"Real OpenAI package not available: {e}")
+    finally:
+        # Restore mock for other tests
+        if 'mock_openai' in locals():
+            sys.modules['openai'] = mock_openai
 
     simple_prompt = "Say hello in one sentence."
     context = {}
