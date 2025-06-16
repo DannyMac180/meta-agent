@@ -58,6 +58,24 @@ class MockRateLimitError(MockAPIError):
         self.response = response
         self.body = body
 
+# Create a mock type structure that mimics OpenAI SDK structure
+mock_types = MagicMock()
+mock_chat = MagicMock()
+mock_parsed_chat_completion = MagicMock()
+
+# Create mock classes that properly handle parametrization
+class MockParsedChatCompletionMessage:
+    """Mock for ParsedChatCompletionMessage that handles parametrization"""
+    def __class_getitem__(cls, item):
+        return cls
+    
+    def __init__(self, *args, **kwargs):
+        pass
+
+mock_parsed_chat_completion.ParsedChatCompletionMessage = MockParsedChatCompletionMessage
+mock_chat.parsed_chat_completion = mock_parsed_chat_completion
+mock_types.chat = mock_chat
+
 openai_mock = MagicMock()
 openai_mock.OpenAIError = MockOpenAIError
 openai_mock.APIError = MockAPIError
@@ -65,6 +83,7 @@ openai_mock.AuthenticationError = MockAuthenticationError
 openai_mock.APIConnectionError = MockAPIConnectionError
 openai_mock.APITimeoutError = MockAPITimeoutError
 openai_mock.RateLimitError = MockRateLimitError
+openai_mock.types = mock_types
 
 # Register mock so that `import openai` works anywhere in the codebase
 # Use mock by default, but allow integration tests to override it
