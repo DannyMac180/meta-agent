@@ -1,0 +1,5 @@
+[console_scripts]
+griffe = griffe:main
+
+[gui_scripts]
+

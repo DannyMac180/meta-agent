@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: meta-agent
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: openai<2,>=1.80.0
+Requires-Dist: aiohttp~=3.12
+Requires-Dist: numpy<3,>=2
+Requires-Dist: click<9,>=8.2
+Requires-Dist: pydantic<3,>=2.7
+Requires-Dist: pyyaml<7,>=6
+Requires-Dist: docker<8,>=7
+Requires-Dist: jinja2<4,>=3
+Requires-Dist: python-dotenv<2,>=1
+Requires-Dist: backoff<3,>=2.2
+Provides-Extra: test
+Requires-Dist: pytest~=8.2; extra == "test"
+Requires-Dist: pytest-asyncio~=0.23; extra == "test"
+Requires-Dist: pytest-cov~=5.0; extra == "test"
+Requires-Dist: pytest-mock~=3.12; extra == "test"
+Requires-Dist: pyright>=1.1.300; extra == "test"
