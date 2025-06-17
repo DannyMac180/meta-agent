@@ -1,171 +1,229 @@
-# Meta Agent
+# Meta Agent 🤖
 
-## Overview
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/meta-agent.svg)](https://pypi.org/project/meta-agent/)
 
-Use **uv** for everything (`uv venv`, `uv pip install -r uv.lock`). We no longer use Hatch; hatchling only builds wheels.
+**Generate fully-functional AI agents from natural language specifications in minutes.**
 
-## Requirements
+Meta Agent is a Python CLI tool that automatically produces production-ready OpenAI-powered agents complete with code, tests, and guardrails from simple English descriptions.
 
-Meta Agent is a Python application that automatically produces a fully-functional OpenAI Agents SDK agent (code + tests + guardrails) from a natural-language specification. It aims to eliminate hand-coding boilerplate, accelerate prototyping, and enforce best practices from day one.
+## 🚀 Quick Start
 
-## Problem Solved
+### Installation
 
-Developers spend significant time translating English requirements into agent scaffolds, wiring tools, and writing safety checks. Meta Agent addresses this by automating these tasks.
+```bash
+pip install meta-agent
+```
 
-## Target Users
+### Create Your First Agent
 
-Meta Agent is designed for:
+```bash
+# Initialize a new project
+meta-agent init my-calculator --template hello-world
 
-*   **AI engineers**
-*   **Solutions architects**
-*   **Power users** who need bespoke agents quickly but may not have the time to invest in days of setup.
-*   **Rapid Prototypers (“Alice”):** AI startup engineers needing a demo-ready agent quickly.
-*   **Enterprise Solutions Architects (“Bob”):** Professionals integrating bespoke agents into client workflows, focusing on compliance and audit trails.
-*   **Curious Hobbyists (“Charlie”):** Individuals exploring AI agents who may lack deep coding expertise.
+# Generate an agent from specification
+meta-agent generate --spec-file agent_spec.yaml
+```
 
-## Value Proposition
-
-Generate production-ready agents in minutes, with built-in validation, sandboxing, and documentation.
-
-## Core Features
-
-*   **Natural-language spec ingestion:** Accepts structured or free-form specifications describing goals, I/O contracts, tools, and constraints. This lowers the barrier to entry as there's no DSL to learn.
-*   **Agent planner (Meta Agent):** Decomposes the specification, orchestrates sub-agents, and assembles the final artifact. It acts as the central logic hub, enforcing consistency and versioning.
-*   **Tool Designer sub-agent:** Generates runnable Python code for each required tool and its unit tests, ensuring tools are functional from day one.
-*   **Guardrail Designer sub-agent:** Creates validation logic (Pydantic, regex, policy checks) and guardrail tests, embedding safety and compliance early to prevent bad outputs. See [docs/guardrail_designer_guide.md](docs/guardrail_designer_guide.md) for details.
-*   **Automated evaluation harness:** Compiles generated code, executes unit tests, and surfaces results, guaranteeing that the agent "actually runs." See [docs/evaluation_harness_architecture.md](docs/evaluation_harness_architecture.md) for the design.
-*   **Artifact bundle & dependency lock:** Outputs `agent.py`, `tests/`, `requirements.txt`, and an optional diagram. This allows for one-command install and run, ensuring reproducible builds.
-*   **Diagram & UX modules:** Handle Mermaid diagram generation, coloured CLI output, and interactive prompts. See [docs/diagram_cli_architecture.md](docs/diagram_cli_architecture.md) for the design.
-*   **Cost & trace telemetry:** Logs token usage, latency, and spend per generation, helping to manage cloud costs and aid optimization. See [docs/telemetry_overview.md](docs/telemetry_overview.md) for details.
-*   See [docs/telemetry_roadmap.md](docs/telemetry_roadmap.md) for the telemetry development roadmap.
-
-## User Guide/How to Use
-
-Meta Agent takes a natural-language specification as input, which can describe the agent's goals, input/output contracts, necessary tools, and constraints.
-
-The output is a fully-functional OpenAI Agents SDK agent, including the Python code for the agent, unit tests, and safety guardrails.
-
-Interaction with Meta Agent is primarily through a Command Line Interface (CLI).
-
-### Key User Flows
-
-*   **Create agent from scratch:**
-    1.  Run the CLI and paste a specification or select a template.
-    2.  Meta Agent generates the necessary files.
-    3.  The user can then run the agent (e.g., `python my_agent.py --demo`).
-    *   **Success signal:** The agent runs without error and passes auto-generated tests.
-*   **Iterate on existing agent:**
-    1.  Provide an updated specification.
-    2.  Meta Agent performs a diff-parse of the changes and regenerates only the affected parts of the agent.
-    *   **Success signal:** The modified agent works, and unchanged tests still pass.
-*   **Inspect guardrails:**
-    1.  Run an audit command (e.g., `--audit`).
-    2.  The tool lists guardrail coverage and edge cases.
-    *   **Success signal:** The developer can sign off on the guardrails or tweak the validators.
-
-## Technical Architecture
-
-The main components of Meta Agent include:
-
-*   **Meta Agent Orchestrator:** Responsible for planning, sub-agent delegation, and artifact assembly. (Tech: `openai-agents-python`, model = o3)
-*   **Tool Designer Agent:** Generates code and unit tests for tools. (Tech: model = o4-mini-high, sandboxed `python_interpreter`)
-*   **Guardrail Designer Agent:** Creates validation logic and tests. (Tech: model = gpt-4o, Agents-SDK guardrails)
-*   **Evaluation Harness:** Compiles, executes, and reports on tests. (Tech: Pytest in Docker with no outbound network access)
-
-## Getting Started/Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository_url>
-    cd meta-agent
-    ```
-2.  **Set up Python environment and install dependencies:**
-    It is recommended to use a virtual environment.
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows use `.venv\Scriptsctivate`
-    ```
-    The project uses `pyproject.toml` for Python dependencies. Install the project and its test extras using pip:
-    ```bash
-    python -m pip install -e ".[test]"
-    ```
-    The `setup.sh` script also provides this command.
-
-3.  **Node.js dependencies (if applicable for scripts):**
-    The project includes a `package.json` for Node.js scripts. If you intend to use these scripts:
-    ```bash
-    npm install
-    ```
-
-4.  **Docker (for sandboxed execution):**
-    Ensure Docker is installed and running if you plan to use features that rely on the sandboxed execution environment (like the Evaluation Harness). The `Dockerfile` provides the setup for the execution environment.
-
-## Roadmap
-
-*   **Phase 0 · Foundations:** CLI skeleton, SpecSchema, Meta Agent orchestrator stub, Docker sandbox.
-*   **Phase 1 · MVP:**
-    *   Natural-language ingestion → working `agent.py`
-    *   Single Tool Designer/Guardrail flow
-    *   Basic pytest harness
-    *   Requirements lockfile generation.
-*   **Phase 2 · Validation & Observability:**
-    *   Guardrail test coverage report
-    *   Cost/latency telemetry dashboard
-    *   Compile-time linting (ruff/pyright).
-*   **Phase 3 · Templates & UX polish:**
-    *   Library of common agent archetypes
-    *   Mermaid diagram auto-generation
-    *   Colored CLI feedback.
-*   **Phase 4 · Extensibility:**
-    *   VS Code extension
-    *   Plugin system for custom sub-agents
-    *   API endpoints for SaaS version.
-*   **Phase 5 · Enterprise Hardening:**
-    *   RBAC, audit logs, SSO
-    *   Policy engine integration
-    *   Multi-tenant artifact store.
-
-## Risks & Mitigations
-
-*   **LLM hallucination → non-runnable code:**
-    *   **Mitigation:** Automated compilation + retry loops; constrain generation via templates.
-*   **Sandbox escape / malicious code:**
-    *   **Mitigation:** Docker seccomp/apparmor, read-only FS, no outbound net unless allow-listed.
-*   **OpenAI API cost spikes:**
-    *   **Mitigation:** Telemetry guard; cost caps per generation; use cheaper models when possible.
-*   **Spec ambiguity:**
-    *   **Mitigation:** Meta Agent auto-asks clarifying questions; provide spec template wizard.
-*   **External API drift:**
-    *   **Mitigation:** Health-check tests; version pin APIs; regenerate tools on failure.
-*   **Scope creep delaying MVP:**
-    *   **Mitigation:** Strict phase gating; prioritize “agent builds, runs, tested” above all.
-
-## Example Spec Template (YAML)
+### Example Specification
 
 ```yaml
-goal: "Summarize Slack threads into daily digest"
-io_contract:
-  input: "Channel history (JSON)"
-  output: "Markdown summary"
-tools:
-  - name: slack_api
-    requirement: "Fetch channel messages"
-guardrails:
-  - "No PII leakage"
+task_description: |
+  Create a calculator agent that can perform basic arithmetic operations.
+  The agent should handle addition, subtraction, multiplication, and division.
+inputs:
+  operation: str  # "+", "-", "*", "/"
+  num1: float
+  num2: float
+outputs:
+  result: float
 constraints:
-  max_latency: 30s
-  max_cost: $0.50
+  - Must validate division by zero
+  - Should handle floating point precision
 ```
 
-## Mermaid Diagram Sample
+## ✨ Key Features
 
-```mermaid
-graph TD
-  A[User Spec] --> B[Meta Agent]
-  B --> C[Tool Designer]
-  B --> D[Guardrail Designer]
-  C --> E[Code + Tests]
-  D --> E
-  E --> F[Evaluation Harness]
-  F --> G[Agent Bundle]
+- **🎯 Natural Language Input**: Describe what you want in plain English
+- **⚡ Instant Generation**: Get working agents in minutes, not hours
+- **🛡️ Built-in Safety**: Automatic guardrails and validation
+- **🧪 Test Generation**: Unit tests created automatically
+- **📊 Telemetry**: Built-in monitoring and metrics
+- **🔧 Extensible**: Template system for custom patterns
+
+## 🎯 Perfect For
+
+- **AI Engineers** building production agents quickly
+- **Solutions Architects** integrating AI into workflows  
+- **Rapid Prototypers** who need demo-ready agents fast
+- **Hobbyists** exploring AI without deep coding expertise
+
+## 📖 Documentation
+
+### Core Commands
+
+```bash
+# Initialize new project
+meta-agent init <project-name> [--template <template-name>]
+
+# Generate agent from spec
+meta-agent generate --spec-file <path> [--metric cost,tokens,latency]
+
+# Manage templates
+meta-agent templates list
+meta-agent templates docs
+
+# View telemetry
+meta-agent dashboard
+meta-agent export --format json
 ```
+
+### Input Formats
+
+Meta Agent supports multiple input formats:
+
+**YAML File:**
+```bash
+meta-agent generate --spec-file my_agent.yaml
+```
+
+**JSON File:**
+```bash
+meta-agent generate --spec-file my_agent.json
+```
+
+**Direct Text:**
+```bash
+meta-agent generate --spec-text "Create an agent that summarizes documents"
+```
+
+### Project Structure
+
+```
+my-project/
+├── .meta-agent/
+│   └── config.yaml          # Project configuration
+├── agent_spec.yaml          # Agent specification
+└── generated/              # Generated agent code
+    ├── agent.py
+    ├── tests/
+    └── guardrails/
+```
+
+## 🏗️ Architecture
+
+Meta Agent uses a sophisticated orchestration system:
+
+- **Planning Engine**: Decomposes specifications into tasks
+- **Sub-Agent Manager**: Coordinates specialized agents
+- **Tool Designer**: Generates custom tools and functions
+- **Guardrail Designer**: Creates safety and validation logic
+- **Template System**: Reusable patterns and best practices
+
+## 🔧 Development
+
+### Requirements
+
+- Python 3.11+
+- OpenAI API key (for LLM functionality)
+
+### Setup
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/meta-agent.git
+cd meta-agent
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install development dependencies
+pip install -e ".[test]"
+
+# Run tests
+pytest
+
+# Run linting
+ruff check .
+pyright
+```
+
+## 📊 Examples
+
+### Data Processing Agent
+
+```yaml
+task_description: |
+  Create an agent that processes CSV files and generates summary reports.
+inputs:
+  csv_file: str
+  columns_to_analyze: list[str]
+outputs:
+  summary_report: dict
+  charts: list[str]
+```
+
+### Web Scraping Agent
+
+```yaml
+task_description: |
+  Build an agent that scrapes product information from e-commerce websites.
+inputs:
+  website_url: str
+  product_selectors: dict
+outputs:
+  product_data: list[dict]
+constraints:
+  - Must respect robots.txt
+  - Rate limit to 1 request per second
+```
+
+## 🔒 Environment Variables
+
+```bash
+# Required for LLM functionality
+export OPENAI_API_KEY="your-api-key-here"
+
+# Optional: Custom OpenAI base URL
+export OPENAI_BASE_URL="https://your-proxy.com/v1"
+
+# Optional: Enable debug logging
+export META_AGENT_DEBUG=true
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Quick Contribution Guide
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite (`pytest`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built on the [OpenAI SDK](https://github.com/openai/openai-python)
+- Inspired by the growing need for rapid AI agent development
+- Thanks to the open-source community for foundational tools
+
+## 📞 Support
+
+- **Documentation**: [Full documentation](https://meta-agent.readthedocs.io/)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/meta-agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/meta-agent/discussions)
+
+---
+
+**Made with ❤️ by developers, for developers building the AI-powered future.**
