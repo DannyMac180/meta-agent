@@ -2,6 +2,10 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
+import builtins
+
+# Store original import function
+_original_import = builtins.__import__
 
 # Ensure src directory is on path so local plugins can load
 src_dir = Path(__file__).resolve().parent.parent / "src"
@@ -59,6 +63,8 @@ class MockRateLimitError(MockAPIError):
         self.body = body
 
 # Create comprehensive mock structure that mimics OpenAI SDK
+import typing
+
 class MockGeneric:
     """Mock for typing.Generic that handles parametrization"""
     def __class_getitem__(cls, item):
@@ -66,23 +72,55 @@ class MockGeneric:
     
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
+    
+    def __getattr__(self, name):
+        return MagicMock()
+
+# Create type variables for generic mock classes
+T = typing.TypeVar('T')
 
 # Create mock classes that properly handle parametrization
-class MockParsedChatCompletionMessage(MockGeneric):
+class MockParsedChatCompletionMessage(typing.Generic[T]):
     """Mock for ParsedChatCompletionMessage that handles parametrization"""
+    
     def __class_getitem__(cls, item):
+        # Return the same class for any parametrization
         return cls
     
     def __init__(self, *args, **kwargs):
         pass
+    
+    def __getattr__(self, name):
+        return MagicMock()
+    
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return True
+    
+    @classmethod 
+    def __subclasscheck__(cls, subclass):
+        return True
 
-class MockChatCompletionMessage(MockGeneric):
+class MockChatCompletionMessage(typing.Generic[T]):
     """Mock for ChatCompletionMessage that handles parametrization"""
+    
     def __class_getitem__(cls, item):
+        # Return the same class for any parametrization
         return cls
     
     def __init__(self, *args, **kwargs):
         pass
+    
+    def __getattr__(self, name):
+        return MagicMock()
+    
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return True
+    
+    @classmethod 
+    def __subclasscheck__(cls, subclass):
+        return True
 
 # Create the complete module hierarchy
 mock_parsed_chat_completion = MagicMock()
@@ -125,8 +163,23 @@ sys.modules.setdefault("openai.types.chat.parsed_chat_completion", mock_parsed_c
 sys.modules.setdefault("openai.types.chat.chat_completion", mock_chat_completion)
 sys.modules.setdefault("openai.types.chat.chat_completion_message", mock_chat_completion)
 
+# Don't install the import hook by default - let pytest handle it
+# The comprehensive sys.modules registration should be sufficient
+
 # Register mock so that `import openai` works anywhere in the codebase
 # Use mock by default, but allow integration tests to override it
 sys.modules.setdefault("openai", openai_mock)
+
+# Aggressively register all possible OpenAI module paths
+sys.modules.setdefault("openai.types", openai_types_mock)
+sys.modules.setdefault("openai.types.chat", mock_chat)
+sys.modules.setdefault("openai.types.chat.parsed_chat_completion", mock_parsed_chat_completion)
+sys.modules.setdefault("openai.types.chat.chat_completion", mock_chat_completion)
+sys.modules.setdefault("openai.types.chat.chat_completion_message", mock_chat_completion)
+
+# Also register common import variations
+sys.modules.setdefault("openai._models", MagicMock())
+sys.modules.setdefault("openai._compat", MagicMock())
+sys.modules.setdefault("openai.BaseModel", MagicMock())
 
 # (Nothing else changes below)
