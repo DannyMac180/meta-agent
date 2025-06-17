@@ -12,19 +12,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git \
   && rm -rf /var/lib/apt/lists/*   # clean up apt caches to reduce image size
 
-# Copy Python project files and lock files first for dependency installation (leveraging cache)
-COPY pyproject.toml uv.lock uv-test.lock ./ 
+# Install uv for dependency management
+RUN pip install --no-cache-dir uv
 
-# Install Python dependencies:
-# Use the lock file for reproducible installs if available.
-# This installs all main and test dependencies (pytest, etc.):contentReference[oaicite:6]{index=6}.
+# Copy Python project files and lock files first for dependency installation (leveraging cache)
+COPY pyproject.toml uv.lock ./ 
+
+# Install Python dependencies using uv:
+# This installs all main and test dependencies (pytest, etc.) as specified in pyproject.toml.
 # Additionally, install dev/test tools: bandit (security scanner), pyright (type checker),
-# ruff (linting), and coverage (for test coverage) as required.
-RUN pip install --no-cache-dir -r uv-test.lock bandit pyright ruff \
- || (echo "Lock file install failed, falling back to direct dependencies" && \
-     pip install --no-cache-dir .[test] bandit pyright ruff)
-# ^ The above uses uv-test.lock if possible; if not, it falls back to installing 
-# project dependencies and [test] extras via pyproject, plus dev tools.
+# and ruff (linting) as required.
+RUN uv pip install --system -e ".[test]" bandit pyright ruff
 
 # Copy the entire project source code into the image.
 # We use --chown to ensure the files are owned by the non-root user we will create.
@@ -33,7 +31,7 @@ COPY --chown=metaagent:metaagent . /app
 
 # Install the Meta Agent project itself (as a package).
 # Using --no-deps since dependencies are already installed above.
-RUN pip install --no-cache-dir --no-deps .
+RUN uv pip install --system --no-deps .
 
 # Create a non-root user and switch to it for security:contentReference[oaicite:7]{index=7}.
 # The user has home directory /app (where code resides) and no password.
