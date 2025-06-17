@@ -6,6 +6,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound
+from typing import cast
 
 from .template_registry import TemplateRegistry
 
@@ -38,7 +39,9 @@ class TemplateMixer:
 
     def __init__(self, registry: Optional[TemplateRegistry] = None) -> None:
         self.registry = registry or TemplateRegistry()
-        self.env = Environment(loader=_RegistryLoader(self.registry))
+        loader = _RegistryLoader(self.registry)
+        # Jinja stubs require FileSystemLoader | None; cast avoids a false positive
+        self.env = Environment(loader=cast(Any, loader))  # type: ignore[arg-type]
 
     def render(
         self,

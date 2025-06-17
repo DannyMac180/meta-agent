@@ -1,31 +1,12 @@
 """
-Services package for meta_agent.
+Package initialiser for ``meta_agent.services``.
 
-This package contains service classes that interface with external APIs
-and provide functionality to other components of the meta_agent system.
+It simply re‑exports the local stub tool classes so library code can write
+``from meta_agent.services import WebSearchTool`` or
+``from meta_agent.services.tool_stubs import WebSearchTool`` interchangeably
+without upsetting static type checkers.
 """
 
-try:  # Optional dependency imports may fail in test environments
-    from .llm_service import LLMService
-except Exception:  # pragma: no cover - fallback when optional deps missing
-    LLMService = None  # type: ignore[misc]
+from .tool_stubs import WebSearchTool, FileSearchTool
 
-try:
-    from .guardrail_router import GuardrailModelRouter, ModelAdapter, LLMModelAdapter
-except Exception:  # pragma: no cover - fallback when optional deps missing
-    GuardrailModelRouter = ModelAdapter = LLMModelAdapter = None  # type: ignore[misc]
-
-from .telemetry_client import TelemetryAPIClient, EndpointConfig
-from meta_agent.telemetry import TelemetryCollector
-from meta_agent.telemetry_db import TelemetryDB
-
-__all__ = [
-    "LLMService",
-    "GuardrailModelRouter",
-    "ModelAdapter",
-    "LLMModelAdapter",
-    "TelemetryAPIClient",
-    "EndpointConfig",
-    "TelemetryCollector",
-    "TelemetryDB",
-]
+__all__: list[str] = ["WebSearchTool", "FileSearchTool"]

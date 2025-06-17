@@ -1,18 +1,12 @@
 import logging
 from typing import Callable, Dict, List, Optional
 
+from meta_agent.services.tool_stubs import WebSearchTool
 try:
-    from agents import WebSearchTool
+    from agents import WebSearchTool as RealWebSearchTool  # type: ignore[attr-defined]
+    WebSearchTool = RealWebSearchTool
 except (ImportError, AttributeError):
-    logging.warning(
-        "Hosted tools unavailable: using stub WebSearchTool implementation."
-    )
-
-    class _StubWebSearchTool:  # pylint: disable=too-few-public-methods
-        def __call__(self, *_, **__):  # noqa: D401
-            return "Hosted tool unavailable in this environment."
-
-    WebSearchTool = _StubWebSearchTool()  # type: ignore
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -64,4 +58,3 @@ class ToolResearchManager:
         except Exception as exc:  # pragma: no cover - shouldn't happen in tests
             logger.error("Web search failed: %s", exc)
             return []
-

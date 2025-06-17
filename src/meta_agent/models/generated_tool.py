@@ -2,22 +2,17 @@
 
 from typing import Any, Dict, Optional
 
+
 from pydantic import BaseModel
 
+
 class GeneratedTool(BaseModel):
-    """Representation of a generated tool."""
+    """Model representing a dynamically generated tool (code, docs, tests)."""
 
-    # Basic metadata about the tool.  These are optional so that the minimal
-    # structure returned by ``ToolDesignerAgent.run`` (which only provides code
-    # and placeholder docs/tests) still validates.
-    name: Optional[str] = None
+    # Descriptive metadata
+    name: str
     description: Optional[str] = None
-
-    # Full tool specification used when registering the tool.  Defaults to an
-    # empty dict so callers can omit it in simple cases.
-    specification: Dict[str, Any] = {}
-
-    # Generated artefacts
+    specification: Optional[Dict[str, Any]] = None
     code: str  # Python source
     tests: Optional[str] = None  # pytest source
     docs: Optional[str] = None   # markdown docs

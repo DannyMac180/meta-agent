@@ -56,7 +56,7 @@ class TestLLMService:
         assert service.model == "test_model"
         assert service.max_retries == 3
         assert service.timeout == 30
-        assert service.api_base == "https://api.openai.com/v1/responses"
+        assert service.api_base == "https://api.openai.com/v1"
         assert hasattr(service, 'logger')
 
     @pytest.mark.asyncio

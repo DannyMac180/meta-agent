@@ -1,5 +1,6 @@
 from meta_agent.template_creator import TemplateCreator, validate_template
 from meta_agent.template_schema import (
+    IOContract,
     TemplateMetadata,
     TemplateCategory,
     TemplateComplexity,
@@ -13,7 +14,7 @@ def _meta() -> TemplateMetadata:
         title="Demo Template",
         description="Simple demo",
         intended_use="demo",
-        io_contract={"input": "text", "output": "text"},
+        io_contract=IOContract(input="text", output="text"),
         tools=[],
         guardrails=[],
         model_pref="gpt3",
