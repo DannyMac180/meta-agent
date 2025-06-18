@@ -132,7 +132,7 @@ Meta Agent uses a sophisticated orchestration system:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/meta-agent.git
+git clone https://github.com/DannyMac180/meta-agent.git
 cd meta-agent
 
 # Create virtual environment
@@ -221,8 +221,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: [Full documentation](https://meta-agent.readthedocs.io/)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/meta-agent/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/meta-agent/discussions)
+- **Issues**: [GitHub Issues](https://github.com/DannyMac180/meta-agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/DannyMac180/meta-agent/discussions)
 
 ---
 

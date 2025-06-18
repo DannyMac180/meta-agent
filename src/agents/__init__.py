@@ -3,7 +3,7 @@ Enhanced stub implementation replacing openai-agents dependency.
 Provides full compatibility for meta-agent codebase.
 """
 from __future__ import annotations
-from typing import Dict, Any, List
+from typing import Dict, Any
 import logging
 
 
