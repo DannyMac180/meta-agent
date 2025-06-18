@@ -28,7 +28,17 @@ node_modules/
 tasks.json
 tasks/
 
-# Python caches
+# Python caches and build artifacts
 __pycache__/
 *.pyc
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+.venv_*/
+venv/
+env/
 

@@ -2,7 +2,6 @@ import os
 import socket
 import logging
 import pytest
-import sys
 
 from meta_agent.services.llm_service import LLMService
 
