@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meta-agent-cli"
-version = "1.0.1"
+version = "1.1.0"
 description = "Generate fully-functional AI agents from natural language specifications"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -51,6 +51,8 @@ test = [
   "pytest-cov~=5.0",
   "pytest-mock~=3.12",
   "pyright>=1.1.300",
+  "ruff>=0.3.0",
+  "twine>=5.0.0",  # For checking builds before release
 ]
 
 [project.urls]

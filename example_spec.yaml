@@ -1,6 +1,8 @@
 task_description: |
-  Create a simple Python agent that can add two numbers.
+  Create a simple calculator agent that can add two numbers.
   The agent should take two numbers as input and return their sum.
+  This is an example of a specification that can be created from natural language:
+  "Create a calculator agent that adds two numbers together"
 inputs:
   num1: int
   num2: int

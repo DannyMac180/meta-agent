@@ -6,7 +6,7 @@ Defines the SubAgentManager class responsible for creating and managing speciali
 
 import logging
 import inspect
-from typing import Dict, Any, Optional, Type, cast
+from typing import Dict, Any, Optional, Type, Union, cast
 import tempfile
 from pathlib import Path
 
@@ -248,7 +248,7 @@ def get_tool_instance():
 
     async def create_tool(
         self,
-        spec: Dict[str, Any],
+        spec: Union[Dict[str, Any], Any],
         version: str = "0.1.0",
         tool_registry=None,
         tool_designer_agent: Optional[ToolDesignerAgent] = None,
@@ -257,7 +257,7 @@ def get_tool_instance():
         Creates a tool by executing the full pipeline: parse → generate → validate → register.
 
         Args:
-            spec: The tool specification
+            spec: The tool specification (dict or SpecSchema object)
             version: The tool version (defaults to "0.1.0")
             tool_registry: Optional ToolRegistry instance, will try to get one if None
             tool_designer_agent: Optional ToolDesignerAgent instance, will try to get one if None
@@ -265,8 +265,16 @@ def get_tool_instance():
         Returns:
             Module path of the registered tool, or None if the creation process failed
         """
+        # Convert SpecSchema to dict if needed
+        if hasattr(spec, 'to_tool_spec_dict'):
+            spec_dict = spec.to_tool_spec_dict()  # type: ignore
+        elif hasattr(spec, 'model_dump'):
+            spec_dict = spec.model_dump()  # type: ignore
+        else:
+            spec_dict = spec
+            
         start_time = time.monotonic()
-        tool_name = spec.get("name", "UnknownTool")
+        tool_name = spec_dict.get("name", "UnknownTool")
         logger.info(
             f"Starting tool creation pipeline for '{tool_name}' (version {version})"
         )
@@ -296,7 +304,7 @@ def get_tool_instance():
         # 2. Generate tool code using the tool designer
         logger.info(f"Generating code for tool '{tool_name}'")
         try:
-            design_call = tool_designer_agent.design_tool(spec)
+            design_call = tool_designer_agent.design_tool(spec_dict)
             if inspect.isawaitable(design_call):
                 design_result = await design_call
             else:
@@ -306,9 +314,9 @@ def get_tool_instance():
                 generated_tool = design_result
             elif isinstance(design_result, str):
                 generated_tool = GeneratedTool(
-                    name=cast(str, spec.get("name", "UnnamedTool")),
-                    description=spec.get("description", ""),
-                    specification=spec.get("specification", spec),
+                    name=cast(str, spec_dict.get("name", "UnnamedTool")),
+                    description=spec_dict.get("description", ""),
+                    specification=spec_dict.get("specification", spec_dict),
                     code=design_result,
                 )
             else:
@@ -322,7 +330,7 @@ def get_tool_instance():
                     "Generated tool lacks 'get_tool_instance'; using basic fallback",
                 )
                 generated_tool.code = self._generate_basic_tool_code(
-                    spec.get("name", "Tool")
+                    spec_dict.get("name", "Tool")
                 )
 
             if generated_tool is None:
@@ -338,10 +346,10 @@ def get_tool_instance():
             # Fallback to a very simple tool so tests can proceed
             try:
                 generated_tool = GeneratedTool(
-                    name=cast(str, spec.get("name", "UnnamedTool")),
-                    description=spec.get("description", ""),
-                    specification=spec.get("specification", spec),
-                    code=self._generate_basic_tool_code(spec.get("name", "Tool")),
+                    name=cast(str, spec_dict.get("name", "UnnamedTool")),
+                    description=spec_dict.get("description", ""),
+                    specification=spec_dict.get("specification", spec_dict),
+                    code=self._generate_basic_tool_code(spec_dict.get("name", "Tool")),
                 )
                 logger.info(
                     f"Fallback tool generated for '{tool_name}'",
@@ -352,7 +360,7 @@ def get_tool_instance():
         # 3. Validate the generated code
         logger.info(f"Validating generated code for tool '{tool_name}'")
         code_validator = CodeValidator()
-        validation_result = code_validator.validate(generated_tool.code, spec)
+        validation_result = code_validator.validate(generated_tool.code, spec_dict)
 
         # Accept the code as long as syntax and security checks pass.  Compliance checks
         # (docstrings, defensive coding, etc.) are treated as "soft" warnings during early
