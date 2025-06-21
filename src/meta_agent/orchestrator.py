@@ -5,7 +5,7 @@ Integrates with OpenAI Agents SDK and provides interfaces for decomposing agent 
 
 import logging
 import inspect
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 import hashlib
 import json
 import time
@@ -53,17 +53,27 @@ class MetaAgentOrchestrator:
             "MetaAgentOrchestrator initialized with PlanningEngine, SubAgentManager, ToolRegistry, and ToolDesignerAgent."
         )
 
-    async def run(self, specification: Dict[str, Any]) -> Any:
+    async def run(self, specification: Union[Dict[str, Any], Any]) -> Any:
         """
         Entry point for orchestrating agent creation and execution.
+        Accepts both dictionary specifications and SpecSchema objects.
         """
-        logger.info(
-            f"Starting orchestration for specification: {specification.get('name', 'Unnamed')}"
-        )
+        # Convert SpecSchema to dict if needed
+        if hasattr(specification, 'model_dump'):
+            spec_dict = specification.model_dump()  # type: ignore
+            logger.info(
+                f"Starting orchestration for SpecSchema: {getattr(specification, 'task_description', 'Unnamed')[:50]}..."
+            )
+        else:
+            spec_dict = specification
+            logger.info(
+                f"Starting orchestration for specification: {spec_dict.get('name', spec_dict.get('task_description', 'Unnamed'))}"
+            )
+        
         try:
             # 1. Decompose the specification into tasks
             # TODO: Enhance decompose_spec to return tasks with specific inputs/details
-            decomposed_tasks = self.decompose_spec(specification)
+            decomposed_tasks = self.decompose_spec(spec_dict)
             logger.info(
                 f"Specification decomposed into {len(decomposed_tasks.get('subtasks', []))} tasks."
             )
@@ -134,11 +144,19 @@ def get_tool_instance():
         )
 
     async def design_and_register_tool(
-        self, tool_spec: Dict[str, Any], version: str = "0.1.0"
+        self, tool_spec: Union[Dict[str, Any], Any], version: str = "0.1.0"
     ) -> Optional[str]:
         """Designs a new tool using ToolDesignerAgent and registers it, using a cache."""
+        # Convert SpecSchema to dict if needed
+        if hasattr(tool_spec, 'to_tool_spec_dict'):
+            spec_dict = tool_spec.to_tool_spec_dict()  # type: ignore
+        elif hasattr(tool_spec, 'model_dump'):
+            spec_dict = tool_spec.model_dump()  # type: ignore
+        else:
+            spec_dict = tool_spec
+            
         start_time_full = time.monotonic()
-        tool_name = tool_spec.get("name", "Unnamed tool")
+        tool_name = spec_dict.get("name", "Unnamed tool")
         log_extra_base = {"tool_name": tool_name, "version": version}
         logger.info(
             "Request received to design tool",
@@ -146,7 +164,7 @@ def get_tool_instance():
         )
 
         # 1. Calculate fingerprint and check cache
-        fingerprint = self._calculate_spec_fingerprint(tool_spec)
+        fingerprint = self._calculate_spec_fingerprint(spec_dict)
         if not fingerprint:
             duration_ms = (time.monotonic() - start_time_full) * 1000
             logger.error(
@@ -208,7 +226,7 @@ def get_tool_instance():
         # 2. Design the tool (cache miss path)
         try:
             start_time_design = time.monotonic()
-            design_call = self.tool_designer_agent.design_tool(tool_spec)
+            design_call = self.tool_designer_agent.design_tool(spec_dict)
             if inspect.isawaitable(design_call):
                 design_result = await design_call
             else:
@@ -222,9 +240,9 @@ def get_tool_instance():
                 generated_tool = design_result
             elif isinstance(design_result, str):
                 generated_tool = GeneratedTool(
-                    name=tool_spec.get("name") or "",
-                    description=tool_spec.get("description", ""),
-                    specification=tool_spec.get("specification", tool_spec),
+                    name=spec_dict.get("name") or "",
+                    description=spec_dict.get("description", ""),
+                    specification=spec_dict.get("specification", spec_dict),
                     code=design_result,
                 )
             else:
@@ -238,7 +256,7 @@ def get_tool_instance():
                 logger.info(
                     "Generated tool lacks 'get_tool_instance'; using basic fallback",
                 )
-                generated_tool.code = self._basic_tool_from_spec(tool_spec).code
+                generated_tool.code = self._basic_tool_from_spec(spec_dict).code
 
             if not generated_tool:
                 design_duration_ms = (time.monotonic() - start_time_design) * 1000
@@ -308,7 +326,7 @@ def get_tool_instance():
             # keeps the tests running even if the ToolDesignerAgent rejects the
             # spec format.
             try:
-                generated_tool = self._basic_tool_from_spec(tool_spec)
+                generated_tool = self._basic_tool_from_spec(spec_dict)
                 module_path = self.tool_registry.register(
                     generated_tool, version=version
                 )
