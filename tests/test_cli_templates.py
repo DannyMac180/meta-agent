@@ -60,7 +60,7 @@ class TestCliInit:
             
             assert result.exit_code == 0
             assert f"Initializing project '{project_name}'" in result.output
-            assert "✓ Project initialized successfully!" in result.output
+            assert "✅ Project initialized successfully!" in result.output
             
             # Check that files were created
             project_dir = Path(project_name)
@@ -100,7 +100,7 @@ class TestCliInit:
             
             assert result.exit_code == 0
             assert f"Using template: {template_slug}" in result.output
-            assert "✓ Project initialized successfully!" in result.output
+            assert "✅ Project initialized successfully!" in result.output
             
             # Check that template content was used
             project_dir = Path(project_name)

@@ -23,6 +23,15 @@ from meta_agent.utils.logging import setup_logging
 # Other imports deferred to avoid circular dependencies and OpenAI SDK issues
 import tempfile
 
+# Template imports - placed here so tests can patch them
+try:
+    from meta_agent.template_registry import TemplateRegistry
+    from meta_agent.template_search import TemplateSearchEngine
+except ImportError:
+    # Handle missing template dependencies gracefully
+    TemplateRegistry = None
+    TemplateSearchEngine = None
+
 # Import potential network/API exceptions with fallbacks
 try:
     import aiohttp
@@ -843,8 +852,9 @@ async def init_project(
         if template_slug:
             # Use template with error handling
             try:
-                from meta_agent.template_registry import TemplateRegistry
-                from meta_agent.template_search import TemplateSearchEngine
+                if TemplateRegistry is None or TemplateSearchEngine is None:
+                    click.echo("❌ Template functionality not available", err=True)
+                    sys.exit(1)
                 
                 registry = TemplateRegistry()
                 template_content = registry.load_template(template_slug)
@@ -962,7 +972,10 @@ def templates_command(
     if action == "docs":
         click.echo("📚 Generating template documentation...")
         
-        from meta_agent.template_registry import TemplateRegistry
+        if TemplateRegistry is None:
+            click.echo("❌ Template functionality not available", err=True)
+            sys.exit(1)
+            
         from meta_agent.template_docs_generator import TemplateDocsGenerator
 
         registry = TemplateRegistry()
@@ -1038,7 +1051,9 @@ def templates_command(
     elif action == "list":
         click.echo("📋 Available templates:")
         try:
-            from meta_agent.template_registry import TemplateRegistry
+            if TemplateRegistry is None:
+                click.echo("❌ Template functionality not available", err=True)
+                sys.exit(1)
             
             registry = TemplateRegistry()
             templates = registry.list_templates()

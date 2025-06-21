@@ -37,7 +37,7 @@ def test_generate_records_telemetry(tmp_path, sample_json_file, monkeypatch):
     tempfile.tempdir = str(tmp_path)
 
     result = runner.invoke(
-        cli, ["--no-sensitive-logs", "generate", "--spec-file", str(sample_json_file)]
+        cli, ["--no-sensitive-logs", "generate", "--spec-file", str(sample_json_file), "--metric", "cost"]
     )
     assert result.exit_code == 0
     assert "<redacted>" in result.output
