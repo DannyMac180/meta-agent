@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meta-agent-cli"
-version = "1.1.0"
+version = "1.0.1"
 description = "Generate fully-functional AI agents from natural language specifications"
 readme = "README.md"
 requires-python = ">=3.11"
