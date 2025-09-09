@@ -1,0 +1,20 @@
+{
+  "meta": { "name": "WebResearcher", "version": "1.0.0", "description": "Research web topics and summarize" },
+  "runtime": { "target": "docker" },
+  "interfaces": ["rest", "chat"],
+  "models": { "provider": "openai", "model": "gpt-4o-mini" },
+  "embeddings": { "provider": "openai", "model": "text-embedding-3-small", "dim": 1536 },
+  "tools": [
+    { "kind": "http", "allow": ["api.github.com", "example.com"] },
+    { "kind": "web_search", "provider": "tavily" },
+    { "kind": "code", "language": "javascript", "timeoutMs": 8000, "memMb": 256, "packages": [], "network": false },
+    { "kind": "vector", "driver": "pgvector", "indexTable": "kb_chunks" }
+  ],
+  "knowledge": { "rag": true, "indexTable": "kb_chunks", "chunk": { "size": 800, "overlap": 120 } },
+  "budget": { "buildBudgetUsd": 2.0 },
+  "policies": { "egressAllowlist": ["api.github.com", "example.com"], "pii": "redact" },
+  "tests": [
+    { "name": "Summarize topic", "prompt": "Summarize the latest on WebAssembly", "mustInclude": ["sources"] }
+  ],
+  "deployment": { "envVars": ["TAVILY_API_KEY"], "secrets": ["OPENAI_API_KEY"] }
+}

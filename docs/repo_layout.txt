@@ -1,0 +1,18 @@
+metaagent/
+  apps/
+    web/            # Remix UI + API routes that call builder/runner
+    desktop/        # Electron shell for Mac
+  services/
+    builder/        # Mastra builder app (workflows)
+    runner/         # Mastra runner app (jobs + execution)
+  packages/
+    spec/           # AgentSpecV1 (types/validators)
+    ui/             # shared components; MagicPath exports live here
+    tools/          # http, web_search, code, vector
+    templates/      # Mastra project templates
+    toolkit/        # codegen utils, quality gates, packagers
+  infra/
+    db/             # migrations + RLS
+    docker/         # compose, Dockerfiles
+  turbo.json
+  pnpm-workspace.yaml

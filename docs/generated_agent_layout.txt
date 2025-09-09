@@ -1,0 +1,17 @@
+{agent}/
+  package.json
+  src/
+    mastra/
+      index.ts
+      agents/
+      tools/
+      workflows/
+    server/          # optional: Hono/Express routes calling Mastra app
+  tests/
+    unit/
+    evals/
+  .env.example
+  tsconfig.json
+  .eslintrc.cjs
+  Dockerfile (optional)
+  README.md
