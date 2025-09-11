@@ -1,0 +1,15 @@
+{
+  "name": "@metaagent/ui",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"[dev] @metaagent/ui – implement later\"",
+    "build": "echo \"[build] @metaagent/ui\" && tsc -p .",
+    "lint": "echo \"[lint] @metaagent/ui – implement later\"",
+    "test": "echo \"[test] @metaagent/ui – implement later\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "workspace:^"
+  }
+}
