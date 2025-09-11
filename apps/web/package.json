@@ -2,14 +2,23 @@
   "name": "@metaagent/web",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "echo \"[dev] @metaagent/web – implement later\"",
-    "build": "echo \"[build] @metaagent/web\" && tsc -p .",
+    "dev": "remix dev --port 3000",
+    "build": "remix build",
+    "start": "remix-serve build",
     "lint": "echo \"[lint] @metaagent/web – implement later\"",
     "test": "echo \"[test] @metaagent/web – implement later\""
   },
-  "dependencies": {},
+  "dependencies": {
+    "@remix-run/node": "^2.12.0",
+    "@remix-run/react": "^2.12.0",
+    "@remix-run/serve": "^2.12.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
   "devDependencies": {
-    "typescript": "workspace:^"
+    "@remix-run/dev": "^2.12.0",
+    "typescript": "^5.3.3"
   }
 }

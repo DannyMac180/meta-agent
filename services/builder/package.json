@@ -2,14 +2,21 @@
   "name": "@metaagent/builder",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "echo \"[dev] @metaagent/builder – implement later\"",
-    "build": "echo \"[build] @metaagent/builder\" && tsc -p .",
+    "dev": "ts-node --esm src/index.ts",
+    "build": "tsc -p .",
+    "start": "node --env-file ../../.env dist/index.js",
     "lint": "echo \"[lint] @metaagent/builder – implement later\"",
     "test": "echo \"[test] @metaagent/builder – implement later\""
   },
-  "dependencies": {},
+  "dependencies": {
+    "@metaagent/toolkit": "workspace:*",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1"
+  },
   "devDependencies": {
-    "typescript": "workspace:^"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
