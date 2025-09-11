@@ -1,0 +1,15 @@
+{
+  "name": "@metaagent/templates",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"[dev] @metaagent/templates – implement later\"",
+    "build": "echo \"[build] @metaagent/templates\" && tsc -p .",
+    "lint": "echo \"[lint] @metaagent/templates – implement later\"",
+    "test": "echo \"[test] @metaagent/templates – implement later\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "workspace:^"
+  }
+}

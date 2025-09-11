@@ -1,0 +1,15 @@
+{
+  "name": "@metaagent/spec",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"[dev] @metaagent/spec – implement later\"",
+    "build": "echo \"[build] @metaagent/spec\" && tsc -p .",
+    "lint": "echo \"[lint] @metaagent/spec – implement later\"",
+    "test": "echo \"[test] @metaagent/spec – implement later\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "workspace:^"
+  }
+}

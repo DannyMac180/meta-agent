@@ -1,0 +1,7 @@
+# node & pnpm
+node_modules
+.pnpm
+.turbo
+dist
+coverage
+.env*

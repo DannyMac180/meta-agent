@@ -1,0 +1,63 @@
+# Tools & Templates
+
+## Day‑1 Tools
+
+### HTTP
+- Enforced **egress allow‑list** (from spec).
+- Returns status, headers, truncated body; json/text hint.
+
+### Web Search
+- Provider: **Tavily** by default (configurable).
+- Returns concise results with source URLs.
+
+### Code Interpreter (JS)
+- **Always runs in Docker** (no `node:vm` for untrusted code).
+- Defaults: `timeoutMs=8000`, `memMb=256`, `network=false`.
+- Optional NPM packages allow‑list (from spec).
+
+### Vector Store (pgvector)
+- `indexTable` required.
+- Basic ops: upsert, similarity search (cosine).
+- Requires `embeddings` config (`dim` must match schema).
+
+## Templates (v1)
+- `chatbot` — REST + chat, optional RAG.
+- `web-automation` — HTTP + web search workflows.
+- `api-copilot` — agent that calls external APIs.
+- (Optional) `slack-bot`, `scheduled-job`.
+
+## Generated Agent Structure (Mastra)
+- src/mastra/{agents,tools,workflows}/
+- src/server/ (optional Hono/Express routes)
+- tests/{unit,evals}/
+
+
+## Example: HTTP tool skeleton
+```ts
+import { z } from "zod";
+
+export const httpTool = {
+  name: "http_fetch",
+  description: "HTTP requests to allowed hosts",
+  schema: z.object({
+    method: z.enum(["GET","POST","PUT","PATCH","DELETE"]),
+    url: z.string().url(),
+    headers: z.record(z.string()).optional(),
+    body: z.string().optional()
+  }),
+  run: async (args: any, ctx: { allow: string[] }) => {
+    const { method, url, headers, body } = args;
+    const host = new URL(url).host;
+    if (!ctx.allow?.some(h => host === h || host.endsWith(`.${h}`))) {
+      throw new Error("Egress to this host is not allowed");
+    }
+    const res = await fetch(url, { method, headers, body });
+    const text = await res.text();
+    return {
+      status: res.status,
+      headers: Object.fromEntries(res.headers),
+      body: text.slice(0, 20_000),
+      format: res.headers.get("content-type")?.includes("json") ? "json" : "text"
+    };
+  }
+};
