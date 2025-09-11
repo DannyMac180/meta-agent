@@ -20,3 +20,4 @@ AGENTS quickstart (v2-rewrite current, v1-lts maintained)
 - Tool rules present: none (.cursor, .cursorrules, .windsurfrules, .clinerules, CLAUDE.md, Copilot-specific not present).
 - Keep this file updated as v2 scaffolding lands; PRs are required on v1-lts (branch protection enabled).
 - Docs lookup (Mastra): When you need technical details about the Mastra framework, use the Mastra MCP Docs Server to retrieve them via the MCP (functions.mcp__mastra__mastraDocs). Prefer this over web search for Mastra-specific APIs and guides.
+- When making changes, follow the [feature PR checklist](docs/checklists.md#feature-pr-checklist) and make sure to check off each item.

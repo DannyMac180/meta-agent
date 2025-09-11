@@ -2,14 +2,24 @@
   "name": "@metaagent/toolkit",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "echo \"[dev] @metaagent/toolkit – implement later\"",
-    "build": "echo \"[build] @metaagent/toolkit\" && tsc -p .",
+    "build": "tsc -p .",
     "lint": "echo \"[lint] @metaagent/toolkit – implement later\"",
     "test": "echo \"[test] @metaagent/toolkit – implement later\""
   },
-  "dependencies": {},
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "pino": "^9.3.2"
+  },
   "devDependencies": {
-    "typescript": "workspace:^"
+    "pino-pretty": "^11.2.2",
+    "typescript": "^5.3.3"
   }
 }
