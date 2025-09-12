@@ -112,22 +112,36 @@ async function action({ request }) {
   return logout(request);
 }
 
+// app/routes/api.agents.ts
+var api_agents_exports = {};
+__export(api_agents_exports, {
+  loader: () => loader2
+});
+import { json as json2 } from "@remix-run/node";
+import { pool } from "@metaagent/db";
+var DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
+async function loader2({ request }) {
+  await pool.query("select set_config('app.current_user_id', $1, false)", [DEV_USER_ID]);
+  let result = await pool.query("select id, name, slug, owner_user_id from agents order by created_at desc limit 10");
+  return json2({ agents: result.rows });
+}
+
 // app/routes/auth.login.tsx
 var auth_login_exports = {};
 __export(auth_login_exports, {
   action: () => action2,
   default: () => Login,
-  loader: () => loader2
+  loader: () => loader3
 });
-import { json as json2, redirect as redirect2 } from "@remix-run/node";
+import { json as json3, redirect as redirect2 } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import { jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
-async function loader2({ request }) {
-  return await getUserId(request) ? redirect2("/") : json2({});
+async function loader3({ request }) {
+  return await getUserId(request) ? redirect2("/") : json3({});
 }
 async function action2({ request }) {
   let form = await request.formData(), username = String(form.get("username"));
-  return username ? createUserSession(username, "/") : json2({ error: "username required" }, { status: 400 });
+  return username ? createUserSession(username, "/") : json3({ error: "username required" }, { status: 400 });
 }
 function Login() {
   return /* @__PURE__ */ jsxs2(Form, { method: "post", style: { padding: 32 }, children: [
@@ -142,29 +156,29 @@ function Login() {
 // app/routes/api.hello.ts
 var api_hello_exports = {};
 __export(api_hello_exports, {
-  loader: () => loader3
+  loader: () => loader4
 });
-import { json as json3 } from "@remix-run/node";
-var loader3 = () => json3({ ok: !0, at: (/* @__PURE__ */ new Date()).toISOString() });
+import { json as json4 } from "@remix-run/node";
+var loader4 = () => json4({ ok: !0, at: (/* @__PURE__ */ new Date()).toISOString() });
 
 // app/routes/healthz.ts
 var healthz_exports = {};
 __export(healthz_exports, {
-  loader: () => loader4
+  loader: () => loader5
 });
-import { json as json4 } from "@remix-run/node";
-var loader4 = () => json4({ status: "ok" });
+import { json as json5 } from "@remix-run/node";
+var loader5 = () => json5({ status: "ok" });
 
 // app/routes/_index.tsx
 var index_exports = {};
 __export(index_exports, {
   default: () => Index,
-  loader: () => loader5
+  loader: () => loader6
 });
-import { json as json5 } from "@remix-run/node";
+import { json as json6 } from "@remix-run/node";
 import { useLoaderData as useLoaderData2, Link } from "@remix-run/react";
 import { jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
-var loader5 = async () => json5({ message: "Hello MetaAgent" });
+var loader6 = async () => json6({ message: "Hello MetaAgent" });
 function Index() {
   let { message } = useLoaderData2();
   return /* @__PURE__ */ jsxs3("main", { style: { padding: 32 }, children: [
@@ -176,13 +190,13 @@ function Index() {
 // app/routes/readyz.ts
 var readyz_exports = {};
 __export(readyz_exports, {
-  loader: () => loader6
+  loader: () => loader7
 });
-import { json as json6 } from "@remix-run/node";
-var loader6 = () => json6({ status: "ready" });
+import { json as json7 } from "@remix-run/node";
+var loader7 = () => json7({ status: "ready" });
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
-var assets_manifest_default = { entry: { module: "/build/entry.client-X7YHCF7F.js", imports: ["/build/_shared/chunk-HWQ7IXSS.js", "/build/_shared/chunk-Q3IECNXJ.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-CTD66XX2.js", imports: ["/build/_shared/chunk-PGOH7JLP.js"], hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-OZ6Z7A4S.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.hello": { id: "routes/api.hello", parentId: "root", path: "api/hello", index: void 0, caseSensitive: void 0, module: "/build/routes/api.hello-T6FN7MBG.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.login": { id: "routes/auth.login", parentId: "root", path: "auth/login", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.login-73UZSDJY.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.logout": { id: "routes/auth.logout", parentId: "root", path: "auth/logout", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.logout-626NX3Q4.js", imports: void 0, hasAction: !0, hasLoader: !1, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/healthz": { id: "routes/healthz", parentId: "root", path: "healthz", index: void 0, caseSensitive: void 0, module: "/build/routes/healthz-3XLKHQJA.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/readyz": { id: "routes/readyz", parentId: "root", path: "readyz", index: void 0, caseSensitive: void 0, module: "/build/routes/readyz-R5KZZXLX.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 } }, version: "e141a83e", hmr: void 0, url: "/build/manifest-E141A83E.js" };
+var assets_manifest_default = { entry: { module: "/build/entry.client-X7YHCF7F.js", imports: ["/build/_shared/chunk-HWQ7IXSS.js", "/build/_shared/chunk-Q3IECNXJ.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-CTD66XX2.js", imports: ["/build/_shared/chunk-PGOH7JLP.js"], hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-OZ6Z7A4S.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.agents": { id: "routes/api.agents", parentId: "root", path: "api/agents", index: void 0, caseSensitive: void 0, module: "/build/routes/api.agents-SPBG63TZ.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.hello": { id: "routes/api.hello", parentId: "root", path: "api/hello", index: void 0, caseSensitive: void 0, module: "/build/routes/api.hello-T6FN7MBG.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.login": { id: "routes/auth.login", parentId: "root", path: "auth/login", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.login-73UZSDJY.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.logout": { id: "routes/auth.logout", parentId: "root", path: "auth/logout", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.logout-626NX3Q4.js", imports: void 0, hasAction: !0, hasLoader: !1, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/healthz": { id: "routes/healthz", parentId: "root", path: "healthz", index: void 0, caseSensitive: void 0, module: "/build/routes/healthz-3XLKHQJA.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/readyz": { id: "routes/readyz", parentId: "root", path: "readyz", index: void 0, caseSensitive: void 0, module: "/build/routes/readyz-R5KZZXLX.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 } }, version: "67bf159e", hmr: void 0, url: "/build/manifest-67BF159E.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var mode = "production", assetsBuildDirectory = "public/build", future = { v3_fetcherPersist: !1, v3_relativeSplatPath: !1, v3_throwAbortReason: !1, v3_routeConfig: !1, v3_singleFetch: !1, v3_lazyRouteDiscovery: !1, unstable_optimizeDeps: !1 }, publicPath = "/build/", entry = { module: entry_server_exports }, routes = {
@@ -201,6 +215,14 @@ var mode = "production", assetsBuildDirectory = "public/build", future = { v3_fe
     index: void 0,
     caseSensitive: void 0,
     module: auth_logout_exports
+  },
+  "routes/api.agents": {
+    id: "routes/api.agents",
+    parentId: "root",
+    path: "api/agents",
+    index: void 0,
+    caseSensitive: void 0,
+    module: api_agents_exports
   },
   "routes/auth.login": {
     id: "routes/auth.login",

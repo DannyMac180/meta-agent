@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, v2-rewrite ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8.12.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Start databases (docker compose)
+        run: docker compose -f infra/docker-compose.yml up -d --wait
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Prepare env
+        run: |
+          cp .env.example .env || true
+          echo "DATABASE_URL=postgresql://postgres:devpassword@localhost:5432/metaagent" >> $GITHUB_ENV
+
+      - name: Run DB migrations
+        run: pnpm db:migrate
+
+      - name: Lint
+        run: pnpm -w lint
+
+      - name: Build
+        run: pnpm -w build
+
+      - name: Test
+        run: pnpm -w test
