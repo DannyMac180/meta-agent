@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "packageManager": "pnpm@8.12.1",
   "scripts": {
-    "dev": "turbo run dev --parallel",
+    "dev": "pnpm db:up && turbo run dev --parallel",
     "build": "turbo run build",
     "typecheck": "turbo run build",
     "lint": "turbo run lint",

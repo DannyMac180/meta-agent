@@ -1,0 +1,25 @@
+{
+  "name": "@metaagent/queue",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"[dev] @metaagent/queue – no dev server\"",
+    "build": "tsc -p .",
+    "lint": "echo \"[lint] @metaagent/queue – implement later\"",
+    "test": "pnpm run build && node tests/queue.integration.mjs"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "bullmq": "^5.41.0",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
