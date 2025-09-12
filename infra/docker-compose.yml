@@ -11,7 +11,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    command: ["postgres", "-c", "shared_preload_libraries=pgvector"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d metaagent"]
       interval: 5s

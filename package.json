@@ -11,7 +11,7 @@
     "test": "turbo run test",
     "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
     "db:down": "docker compose -f infra/docker-compose.yml down -v",
-    "db:migrate": "psql -h localhost -U danielmcateer -d metaagent -f packages/db/migrations/000_init.sql && psql -h localhost -U danielmcateer -d metaagent -f packages/db/migrations/001_rls_scaffold.sql",
+    "db:migrate": "PGPASSWORD=devpassword psql -h localhost -U postgres -d metaagent -f packages/db/migrations/000_init.sql && PGPASSWORD=devpassword psql -h localhost -U postgres -d metaagent -f packages/db/migrations/001_rls_scaffold.sql",
     "db:studio": "echo 'Use: psql -h localhost -U danielmcateer -d metaagent'"
   },
   "devDependencies": {
