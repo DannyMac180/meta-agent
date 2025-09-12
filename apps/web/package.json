@@ -15,7 +15,8 @@
     "@remix-run/react": "^2.12.0",
     "@remix-run/serve": "^2.12.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@metaagent/db": "workspace:*"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.0",

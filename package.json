@@ -8,7 +8,11 @@
     "build": "turbo run build",
     "typecheck": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "db:down": "docker compose -f infra/docker-compose.yml down -v",
+    "db:migrate": "psql -h localhost -U danielmcateer -d metaagent -f packages/db/migrations/000_init.sql && psql -h localhost -U danielmcateer -d metaagent -f packages/db/migrations/001_rls_scaffold.sql",
+    "db:studio": "echo 'Use: psql -h localhost -U danielmcateer -d metaagent'"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.0",
@@ -25,6 +29,7 @@
     "ts-node": "^10.9.2",
     "turbo": "^1.13.0",
     "typescript": "^5.3.3",
-    "zod": "^4.1.8"
+    "zod": "^4.1.8",
+    "drizzle-kit": "^0.23.0"
   }
 }
