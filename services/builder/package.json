@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",
+    "@metaagent/queue": "workspace:*",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1"
   },
