@@ -1,15 +1,27 @@
 {
   "name": "@metaagent/spec",
   "private": true,
-  "version": "0.0.0",
-  "scripts": {
-    "dev": "echo \"[dev] @metaagent/spec – implement later\"",
-    "build": "echo \"[build] @metaagent/spec\" && tsc -p .",
-    "lint": "echo \"[lint] @metaagent/spec – implement later\"",
-    "test": "echo \"[test] @metaagent/spec – implement later\""
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "dependencies": {},
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "echo \"[lint] @metaagent/spec – configure ESLint later\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.1.8"
+  },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "@types/node": "^20.14.10",
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.5"
   }
 }
