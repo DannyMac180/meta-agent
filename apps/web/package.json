@@ -18,6 +18,8 @@
     "react-dom": "^18.3.1",
     "@metaagent/db": "workspace:*",
     "@metaagent/spec": "workspace:*",
+    "@metaagent/interview": "workspace:*",
+    "@metaagent/templates": "workspace:*",
     "@monaco-editor/react": "^4.6.0",
     "monaco-editor": "^0.45.0",
     "zod-to-json-schema": "^3.22.0",

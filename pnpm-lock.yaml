@@ -68,9 +68,15 @@ importers:
       '@metaagent/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@metaagent/interview':
+        specifier: workspace:*
+        version: link:../../packages/interview
       '@metaagent/spec':
         specifier: workspace:*
         version: link:../../packages/spec
+      '@metaagent/templates':
+        specifier: workspace:*
+        version: link:../../packages/templates
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.7.0(monaco-editor@0.45.0)(react-dom@18.3.1)(react@18.3.1)

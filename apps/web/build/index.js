@@ -182,162 +182,115 @@ async function action({ request }) {
   return json2({ error: "Method not allowed" }, { status: 405 });
 }
 
-// app/routes/catalog.drafts.tsx
-var catalog_drafts_exports = {};
-__export(catalog_drafts_exports, {
-  default: () => DraftsCatalogRoute,
+// app/routes/builder.$draftId.tsx
+var builder_draftId_exports = {};
+__export(builder_draftId_exports, {
+  action: () => action2,
+  default: () => BuilderRoute,
   loader: () => loader3
 });
 import { json as json3 } from "@remix-run/node";
-import { useLoaderData as useLoaderData2, Link as Link2 } from "@remix-run/react";
+import { useLoaderData as useLoaderData2, useNavigate, useSearchParams } from "@remix-run/react";
+
+// app/utils/specDraft.server.ts
+import { eq as eq2, and, desc as desc2 } from "drizzle-orm";
+import { db as db2, specDrafts as specDrafts2, setAppUser as setAppUser2 } from "@metaagent/db";
+var SpecDraftService = class {
+  constructor(userId) {
+    this.userId = userId;
+  }
+  async saveDraft(input) {
+    if (await setAppUser2(this.userId), input.id && (await db2.select().from(specDrafts2).where(
+      and(
+        eq2(specDrafts2.id, input.id),
+        eq2(specDrafts2.ownerUserId, this.userId)
+      )
+    ).limit(1)).length > 0) {
+      let [updated] = await db2.update(specDrafts2).set({
+        title: input.title,
+        spec: input.payload,
+        templateId: input.templateId,
+        isDraft: input.isDraft ?? !0,
+        status: input.status ?? "DRAFT",
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq2(specDrafts2.id, input.id)).returning();
+      return this.recordToSpecDraft(updated);
+    }
+    let [created] = await db2.insert(specDrafts2).values({
+      ownerUserId: this.userId,
+      templateId: input.templateId,
+      title: input.title,
+      name: input.title,
+      // backwards compatibility
+      spec: input.payload,
+      isDraft: input.isDraft ?? !0,
+      status: input.status ?? "DRAFT",
+      tags: []
+    }).returning();
+    return this.recordToSpecDraft(created);
+  }
+  async getDraft(draftId) {
+    await setAppUser2(this.userId);
+    let [record] = await db2.select().from(specDrafts2).where(
+      and(
+        eq2(specDrafts2.id, draftId),
+        eq2(specDrafts2.ownerUserId, this.userId)
+      )
+    ).limit(1);
+    return record ? this.recordToSpecDraft(record) : null;
+  }
+  async listDrafts(options = {}) {
+    await setAppUser2(this.userId);
+    let { limit = 50, offset = 0, status } = options, query = db2.select().from(specDrafts2).where(eq2(specDrafts2.ownerUserId, this.userId)).orderBy(desc2(specDrafts2.updatedAt)).limit(limit).offset(offset);
+    return status && (query = query.where(
+      and(
+        eq2(specDrafts2.ownerUserId, this.userId),
+        eq2(specDrafts2.status, status)
+      )
+    )), (await query).map((record) => this.recordToSpecDraft(record));
+  }
+  async deleteDraft(draftId) {
+    return await setAppUser2(this.userId), (await db2.delete(specDrafts2).where(
+      and(
+        eq2(specDrafts2.id, draftId),
+        eq2(specDrafts2.ownerUserId, this.userId)
+      )
+    )).rowCount > 0;
+  }
+  recordToSpecDraft(record) {
+    return {
+      id: record.id,
+      title: record.title,
+      isDraft: record.isDraft ?? !0,
+      status: record.status ?? "DRAFT",
+      payload: record.spec || {},
+      createdAt: record.createdAt?.toISOString() ?? (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: record.updatedAt?.toISOString() ?? (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+};
+function createSpecDraftService(userId) {
+  return new SpecDraftService(userId);
+}
+
+// app/components/TemplatePicker.tsx
+import { templates } from "@metaagent/templates";
 import { jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
-async function loader3({ request }) {
-  let response = await fetch(`${request.url.replace(/\/catalog\/drafts.*/, "")}/api/specs/drafts`);
-  if (!response.ok)
-    throw new Response("Failed to load drafts", { status: response.status });
-  let drafts = await response.json();
-  return json3({ drafts });
-}
-function DraftsCatalogRoute() {
-  let { drafts } = useLoaderData2(), formatDate = (dateString) => new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-  return /* @__PURE__ */ jsxs2("div", { className: "drafts-catalog", children: [
-    /* @__PURE__ */ jsxs2("header", { className: "catalog-header", children: [
-      /* @__PURE__ */ jsx3("h1", { children: "My Drafts" }),
-      /* @__PURE__ */ jsxs2("div", { className: "catalog-actions", children: [
-        /* @__PURE__ */ jsx3(Link2, { to: "/specs/new", className: "new-draft-button", children: "+ New Draft" }),
-        /* @__PURE__ */ jsxs2("div", { className: "template-buttons", children: [
-          /* @__PURE__ */ jsx3(Link2, { to: "/specs/new?template=chatbot", className: "template-button", children: "Chatbot" }),
-          /* @__PURE__ */ jsx3(Link2, { to: "/specs/new?template=web-automation", className: "template-button", children: "Web Automation" }),
-          /* @__PURE__ */ jsx3(Link2, { to: "/specs/new?template=api-copilot", className: "template-button", children: "API Copilot" })
-        ] })
-      ] })
-    ] }),
-    drafts.length === 0 ? /* @__PURE__ */ jsxs2("div", { className: "empty-state", children: [
-      /* @__PURE__ */ jsx3("div", { className: "empty-icon", children: "\u{1F4DD}" }),
-      /* @__PURE__ */ jsx3("h2", { children: "No drafts yet" }),
-      /* @__PURE__ */ jsx3("p", { children: "Create your first agent spec to get started." }),
-      /* @__PURE__ */ jsx3(Link2, { to: "/specs/new", className: "cta-button", children: "Create First Draft" })
-    ] }) : /* @__PURE__ */ jsx3("div", { className: "drafts-grid", children: drafts.map((draft) => /* @__PURE__ */ jsxs2("div", { className: "draft-card", children: [
-      /* @__PURE__ */ jsxs2("div", { className: "draft-header", children: [
-        /* @__PURE__ */ jsx3("h3", { className: "draft-name", children: /* @__PURE__ */ jsx3(Link2, { to: `/specs/${draft.id}`, children: draft.name }) }),
-        /* @__PURE__ */ jsx3("div", { className: "draft-actions", children: /* @__PURE__ */ jsx3(Link2, { to: `/specs/${draft.id}`, className: "edit-link", children: "Edit" }) })
-      ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "draft-meta", children: [
-        /* @__PURE__ */ jsxs2("div", { className: "draft-dates", children: [
-          /* @__PURE__ */ jsxs2("span", { className: "created", children: [
-            "Created: ",
-            formatDate(draft.createdAt)
-          ] }),
-          /* @__PURE__ */ jsxs2("span", { className: "updated", children: [
-            "Updated: ",
-            formatDate(draft.updatedAt)
-          ] })
-        ] }),
-        draft.tags && draft.tags.length > 0 && /* @__PURE__ */ jsx3("div", { className: "draft-tags", children: draft.tags.map((tag) => /* @__PURE__ */ jsx3("span", { className: "tag", children: tag }, tag)) })
-      ] }),
-      draft.spec && /* @__PURE__ */ jsxs2("div", { className: "draft-preview", children: [
-        draft.spec.meta?.description && /* @__PURE__ */ jsx3("p", { className: "draft-description", children: draft.spec.meta.description }),
-        /* @__PURE__ */ jsxs2("div", { className: "spec-info", children: [
-          draft.spec.model && /* @__PURE__ */ jsxs2("span", { className: "model-info", children: [
-            draft.spec.model.provider,
-            "/",
-            draft.spec.model.model
-          ] }),
-          draft.spec.variables && /* @__PURE__ */ jsxs2("span", { className: "variables-count", children: [
-            draft.spec.variables.length,
-            " variables"
-          ] }),
-          draft.spec.tools && draft.spec.tools.length > 0 && /* @__PURE__ */ jsxs2("span", { className: "tools-count", children: [
-            draft.spec.tools.length,
-            " tools"
-          ] })
-        ] })
-      ] })
-    ] }, draft.id)) })
+function TemplatePicker({ onSelect }) {
+  return /* @__PURE__ */ jsxs2("div", { className: "template-picker", children: [
+    /* @__PURE__ */ jsx3("h3", { children: "Select a template" }),
+    /* @__PURE__ */ jsx3("div", { className: "template-grid", children: templates.map((t) => /* @__PURE__ */ jsxs2("button", { className: "template-card", onClick: () => onSelect(t.id), children: [
+      /* @__PURE__ */ jsx3("div", { className: "template-name", children: t.name }),
+      /* @__PURE__ */ jsx3("div", { className: "template-desc", children: t.description }),
+      t.tags && /* @__PURE__ */ jsx3("div", { className: "template-tags", children: t.tags.map((tag) => /* @__PURE__ */ jsx3("span", { className: "tag", children: tag }, tag)) })
+    ] }, t.id)) })
   ] });
 }
+var TemplatePicker_default = TemplatePicker;
 
-// app/routes/auth.logout.ts
-var auth_logout_exports = {};
-__export(auth_logout_exports, {
-  action: () => action2
-});
-async function action2({ request }) {
-  return logout(request);
-}
-
-// app/routes/api.agents.ts
-var api_agents_exports = {};
-__export(api_agents_exports, {
-  loader: () => loader4
-});
-import { json as json4 } from "@remix-run/node";
-import { pool } from "@metaagent/db";
-var DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
-async function loader4({ request }) {
-  await pool.query("select set_config('app.current_user_id', $1, false)", [DEV_USER_ID]);
-  let result = await pool.query("select id, name, slug, owner_user_id from agents order by created_at desc limit 10");
-  return json4({ agents: result.rows });
-}
-
-// app/routes/auth.login.tsx
-var auth_login_exports = {};
-__export(auth_login_exports, {
-  action: () => action3,
-  default: () => Login,
-  loader: () => loader5
-});
-import { json as json5, redirect as redirect2 } from "@remix-run/node";
-import { Form } from "@remix-run/react";
-import { jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
-async function loader5({ request }) {
-  return await getUserId(request) ? redirect2("/") : json5({});
-}
-async function action3({ request }) {
-  let form = await request.formData(), username = String(form.get("username"));
-  return username ? createUserSession(username, "/") : json5({ error: "username required" }, { status: 400 });
-}
-function Login() {
-  return /* @__PURE__ */ jsxs3(Form, { method: "post", style: { padding: 32 }, children: [
-    /* @__PURE__ */ jsxs3("label", { children: [
-      "Dev Username",
-      /* @__PURE__ */ jsx4("input", { name: "username", style: { border: "1px solid #ccc", marginLeft: 8 } })
-    ] }),
-    /* @__PURE__ */ jsx4("button", { type: "submit", style: { marginLeft: 8 }, children: "Login" })
-  ] });
-}
-
-// app/routes/api.hello.ts
-var api_hello_exports = {};
-__export(api_hello_exports, {
-  loader: () => loader6
-});
-import { json as json6 } from "@remix-run/node";
-var loader6 = () => json6({ ok: !0, at: (/* @__PURE__ */ new Date()).toISOString() });
-
-// app/routes/specs.$id.tsx
-var specs_id_exports = {};
-__export(specs_id_exports, {
-  action: () => action4,
-  default: () => EditSpecRoute,
-  loader: () => loader7
-});
-import { useState as useState2, useEffect as useEffect2, useRef as useRef2 } from "react";
-import { json as json7, redirect as redirect3 } from "@remix-run/node";
-import { useLoaderData as useLoaderData3, useSubmit, useNavigation } from "@remix-run/react";
-
-// app/components/SpecEditor.tsx
-import { useEffect, useRef, useState, useCallback } from "react";
-import Editor from "@monaco-editor/react";
-import { parseTree, findNodeAtLocation } from "jsonc-parser";
-import * as yaml from "js-yaml";
-import * as prettier from "prettier";
+// app/components/InterviewPanel.tsx
+import { useEffect, useMemo, useState } from "react";
+import { InterviewRunner } from "@metaagent/interview";
 
 // app/utils/schema.ts
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -350,17 +303,299 @@ function generateJsonSchema() {
   });
 }
 var AGENT_SPEC_JSON_SCHEMA = generateJsonSchema();
+function debounce(fn, wait = 300) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout), timeout = setTimeout(() => fn(...args), wait);
+  };
+}
+
+// app/components/InterviewPanel.tsx
+import { jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
+function InterviewPanel({ script, initialState, onStateChange, onAutosave }) {
+  let runner = useMemo(() => new InterviewRunner(script), [script]), [state, setState] = useState(initialState), [autosave] = useState(() => debounce((s) => onAutosave?.(s), 800));
+  useEffect(() => {
+    onStateChange?.(state), autosave(state);
+  }, [state]);
+  let currentNode = runner.getCurrentNode(state), handleAnswer = (answer) => {
+    let { updatedState } = runner.runNode(state, answer);
+    setState(updatedState);
+  }, renderQuestion = () => {
+    switch (currentNode.inputType) {
+      case "text":
+        return /* @__PURE__ */ jsx4(
+          "input",
+          {
+            type: "text",
+            defaultValue: state.answers[currentNode.id] || "",
+            onBlur: (e) => handleAnswer(e.target.value)
+          }
+        );
+      case "textarea":
+        return /* @__PURE__ */ jsx4(
+          "textarea",
+          {
+            defaultValue: state.answers[currentNode.id] || "",
+            onBlur: (e) => handleAnswer(e.target.value)
+          }
+        );
+      case "number":
+        return /* @__PURE__ */ jsx4(
+          "input",
+          {
+            type: "number",
+            defaultValue: state.answers[currentNode.id] || "",
+            onBlur: (e) => handleAnswer(Number(e.target.value))
+          }
+        );
+      case "select":
+        return /* @__PURE__ */ jsxs3(
+          "select",
+          {
+            defaultValue: state.answers[currentNode.id] || "",
+            onChange: (e) => handleAnswer(e.target.value),
+            children: [
+              /* @__PURE__ */ jsx4("option", { value: "", disabled: !0, children: "Select..." }),
+              currentNode.options?.map((opt) => /* @__PURE__ */ jsx4("option", { value: opt, children: opt }, opt))
+            ]
+          }
+        );
+      default:
+        return null;
+    }
+  };
+  return currentNode.type === "end" ? /* @__PURE__ */ jsx4("div", { className: "interview-complete", children: "Interview complete." }) : /* @__PURE__ */ jsx4("div", { className: "interview-panel", children: /* @__PURE__ */ jsxs3("div", { className: "question", children: [
+    /* @__PURE__ */ jsx4("label", { children: currentNode.prompt }),
+    /* @__PURE__ */ jsx4("div", { className: "control", children: renderQuestion() })
+  ] }) });
+}
+
+// app/routes/builder.$draftId.tsx
+import { templates as templates2 } from "@metaagent/templates";
+import { genericAgentInterview } from "@metaagent/interview";
+import { createDraftSpec } from "@metaagent/spec";
+import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
+function getUserId2() {
+  return "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+}
+async function loader3({ params, request }) {
+  let userId = getUserId2(), service = createSpecDraftService(userId), url = new URL(request.url), draftId = params.draftId, draft = draftId ? await service.getDraft(draftId) : null;
+  return draft || (draft = createDraftSpec({ title: "Untitled Agent" })), json3({ draft });
+}
+async function action2({ params, request }) {
+  let userId = getUserId2(), service = createSpecDraftService(userId), body = await request.json(), saved = await service.saveDraft(body);
+  return json3(saved);
+}
+function BuilderRoute() {
+  let { draft } = useLoaderData2(), [searchParams, setSearchParams] = useSearchParams(), navigate = useNavigate(), templateId = searchParams.get("template"), handleTemplateSelect = async (id) => {
+    let template = templates2.find((t) => t.id === id);
+    if (!template)
+      return;
+    (await fetch("/builder/" + draft.id, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: draft.id,
+        title: draft.title,
+        templateId: template.id,
+        payload: template.defaultSpec.payload,
+        isDraft: !0,
+        status: "DRAFT"
+      })
+    })).ok && setSearchParams((prev) => (prev.set("template", template.id), prev));
+  }, script = templateId ? templates2.find((t) => t.id === templateId)?.interview || genericAgentInterview : genericAgentInterview, initialState = {
+    answers: {},
+    currentNodeId: script.startNodeId || "agent-name",
+    specDraft: draft,
+    visitedNodes: []
+  };
+  return /* @__PURE__ */ jsxs4("div", { className: "builder-layout", children: [
+    /* @__PURE__ */ jsx5("div", { className: "builder-top", children: !templateId && /* @__PURE__ */ jsx5(TemplatePicker_default, { onSelect: handleTemplateSelect }) }),
+    /* @__PURE__ */ jsxs4("div", { className: "builder-content", children: [
+      /* @__PURE__ */ jsx5("div", { className: "builder-left", children: /* @__PURE__ */ jsx5(InterviewPanel, { script, initialState, onAutosave: async (state) => {
+        await fetch("/builder/" + draft.id, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: draft.id,
+            title: draft.title,
+            templateId: templateId ?? void 0,
+            payload: state.specDraft.payload,
+            isDraft: !0,
+            status: "DRAFT"
+          })
+        });
+      } }) }),
+      /* @__PURE__ */ jsx5("div", { className: "builder-right", children: /* @__PURE__ */ jsx5("pre", { style: { maxHeight: 500, overflow: "auto", background: "#0b0b0e", color: "#ddd", padding: 12 }, children: JSON.stringify(initialState.specDraft.payload, null, 2) }) })
+    ] })
+  ] });
+}
+
+// app/routes/catalog.drafts.tsx
+var catalog_drafts_exports = {};
+__export(catalog_drafts_exports, {
+  default: () => DraftsCatalogRoute,
+  loader: () => loader4
+});
+import { json as json4 } from "@remix-run/node";
+import { useLoaderData as useLoaderData3, Link as Link2 } from "@remix-run/react";
+import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
+async function loader4({ request }) {
+  let response = await fetch(`${request.url.replace(/\/catalog\/drafts.*/, "")}/api/specs/drafts`);
+  if (!response.ok)
+    throw new Response("Failed to load drafts", { status: response.status });
+  let drafts = await response.json();
+  return json4({ drafts });
+}
+function DraftsCatalogRoute() {
+  let { drafts } = useLoaderData3(), formatDate = (dateString) => new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  return /* @__PURE__ */ jsxs5("div", { className: "drafts-catalog", children: [
+    /* @__PURE__ */ jsxs5("header", { className: "catalog-header", children: [
+      /* @__PURE__ */ jsx6("h1", { children: "My Drafts" }),
+      /* @__PURE__ */ jsxs5("div", { className: "catalog-actions", children: [
+        /* @__PURE__ */ jsx6(Link2, { to: "/specs/new", className: "new-draft-button", children: "+ New Draft" }),
+        /* @__PURE__ */ jsxs5("div", { className: "template-buttons", children: [
+          /* @__PURE__ */ jsx6(Link2, { to: "/specs/new?template=chatbot", className: "template-button", children: "Chatbot" }),
+          /* @__PURE__ */ jsx6(Link2, { to: "/specs/new?template=web-automation", className: "template-button", children: "Web Automation" }),
+          /* @__PURE__ */ jsx6(Link2, { to: "/specs/new?template=api-copilot", className: "template-button", children: "API Copilot" })
+        ] })
+      ] })
+    ] }),
+    drafts.length === 0 ? /* @__PURE__ */ jsxs5("div", { className: "empty-state", children: [
+      /* @__PURE__ */ jsx6("div", { className: "empty-icon", children: "\u{1F4DD}" }),
+      /* @__PURE__ */ jsx6("h2", { children: "No drafts yet" }),
+      /* @__PURE__ */ jsx6("p", { children: "Create your first agent spec to get started." }),
+      /* @__PURE__ */ jsx6(Link2, { to: "/specs/new", className: "cta-button", children: "Create First Draft" })
+    ] }) : /* @__PURE__ */ jsx6("div", { className: "drafts-grid", children: drafts.map((draft) => /* @__PURE__ */ jsxs5("div", { className: "draft-card", children: [
+      /* @__PURE__ */ jsxs5("div", { className: "draft-header", children: [
+        /* @__PURE__ */ jsx6("h3", { className: "draft-name", children: /* @__PURE__ */ jsx6(Link2, { to: `/specs/${draft.id}`, children: draft.name }) }),
+        /* @__PURE__ */ jsx6("div", { className: "draft-actions", children: /* @__PURE__ */ jsx6(Link2, { to: `/specs/${draft.id}`, className: "edit-link", children: "Edit" }) })
+      ] }),
+      /* @__PURE__ */ jsxs5("div", { className: "draft-meta", children: [
+        /* @__PURE__ */ jsxs5("div", { className: "draft-dates", children: [
+          /* @__PURE__ */ jsxs5("span", { className: "created", children: [
+            "Created: ",
+            formatDate(draft.createdAt)
+          ] }),
+          /* @__PURE__ */ jsxs5("span", { className: "updated", children: [
+            "Updated: ",
+            formatDate(draft.updatedAt)
+          ] })
+        ] }),
+        draft.tags && draft.tags.length > 0 && /* @__PURE__ */ jsx6("div", { className: "draft-tags", children: draft.tags.map((tag) => /* @__PURE__ */ jsx6("span", { className: "tag", children: tag }, tag)) })
+      ] }),
+      draft.spec && /* @__PURE__ */ jsxs5("div", { className: "draft-preview", children: [
+        draft.spec.meta?.description && /* @__PURE__ */ jsx6("p", { className: "draft-description", children: draft.spec.meta.description }),
+        /* @__PURE__ */ jsxs5("div", { className: "spec-info", children: [
+          draft.spec.model && /* @__PURE__ */ jsxs5("span", { className: "model-info", children: [
+            draft.spec.model.provider,
+            "/",
+            draft.spec.model.model
+          ] }),
+          draft.spec.variables && /* @__PURE__ */ jsxs5("span", { className: "variables-count", children: [
+            draft.spec.variables.length,
+            " variables"
+          ] }),
+          draft.spec.tools && draft.spec.tools.length > 0 && /* @__PURE__ */ jsxs5("span", { className: "tools-count", children: [
+            draft.spec.tools.length,
+            " tools"
+          ] })
+        ] })
+      ] })
+    ] }, draft.id)) })
+  ] });
+}
+
+// app/routes/auth.logout.ts
+var auth_logout_exports = {};
+__export(auth_logout_exports, {
+  action: () => action3
+});
+async function action3({ request }) {
+  return logout(request);
+}
+
+// app/routes/api.agents.ts
+var api_agents_exports = {};
+__export(api_agents_exports, {
+  loader: () => loader5
+});
+import { json as json5 } from "@remix-run/node";
+import { pool } from "@metaagent/db";
+var DEV_USER_ID = "00000000-0000-0000-0000-000000000001";
+async function loader5({ request }) {
+  await pool.query("select set_config('app.current_user_id', $1, false)", [DEV_USER_ID]);
+  let result = await pool.query("select id, name, slug, owner_user_id from agents order by created_at desc limit 10");
+  return json5({ agents: result.rows });
+}
+
+// app/routes/auth.login.tsx
+var auth_login_exports = {};
+__export(auth_login_exports, {
+  action: () => action4,
+  default: () => Login,
+  loader: () => loader6
+});
+import { json as json6, redirect as redirect2 } from "@remix-run/node";
+import { Form } from "@remix-run/react";
+import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
+async function loader6({ request }) {
+  return await getUserId(request) ? redirect2("/") : json6({});
+}
+async function action4({ request }) {
+  let form = await request.formData(), username = String(form.get("username"));
+  return username ? createUserSession(username, "/") : json6({ error: "username required" }, { status: 400 });
+}
+function Login() {
+  return /* @__PURE__ */ jsxs6(Form, { method: "post", style: { padding: 32 }, children: [
+    /* @__PURE__ */ jsxs6("label", { children: [
+      "Dev Username",
+      /* @__PURE__ */ jsx7("input", { name: "username", style: { border: "1px solid #ccc", marginLeft: 8 } })
+    ] }),
+    /* @__PURE__ */ jsx7("button", { type: "submit", style: { marginLeft: 8 }, children: "Login" })
+  ] });
+}
+
+// app/routes/api.hello.ts
+var api_hello_exports = {};
+__export(api_hello_exports, {
+  loader: () => loader7
+});
+import { json as json7 } from "@remix-run/node";
+var loader7 = () => json7({ ok: !0, at: (/* @__PURE__ */ new Date()).toISOString() });
+
+// app/routes/specs.$id.tsx
+var specs_id_exports = {};
+__export(specs_id_exports, {
+  action: () => action5,
+  default: () => EditSpecRoute,
+  loader: () => loader8
+});
+import { useState as useState3, useEffect as useEffect3, useRef as useRef2 } from "react";
+import { json as json8, redirect as redirect3 } from "@remix-run/node";
+import { useLoaderData as useLoaderData4, useSubmit, useNavigation } from "@remix-run/react";
 
 // app/components/SpecEditor.tsx
-import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
+import { useEffect as useEffect2, useRef, useState as useState2, useCallback } from "react";
+import Editor from "@monaco-editor/react";
+import { parseTree, findNodeAtLocation } from "jsonc-parser";
+import * as yaml from "js-yaml";
+import * as prettier from "prettier";
+import { jsx as jsx8, jsxs as jsxs7 } from "react/jsx-runtime";
 function SpecEditor({
   value,
   onChange,
   onValidationChange,
   readOnly = !1
 }) {
-  let editorRef = useRef(null), workerRef = useRef(null), validationTimeoutRef = useRef(), [isYaml, setIsYaml] = useState(!1);
-  useEffect(() => {
+  let editorRef = useRef(null), workerRef = useRef(null), validationTimeoutRef = useRef(), [isYaml, setIsYaml] = useState2(!1);
+  useEffect2(() => {
     let workerCode = `
 import { AgentSpecSchema } from "@metaagent/spec";
 
@@ -549,9 +784,9 @@ self.addEventListener('message', (event) => {
       console.warn("Failed to convert format:", conversionError);
     }
   }, [isYaml]);
-  return /* @__PURE__ */ jsxs4("div", { className: "spec-editor", children: [
-    /* @__PURE__ */ jsxs4("div", { className: "editor-toolbar", children: [
-      /* @__PURE__ */ jsx5(
+  return /* @__PURE__ */ jsxs7("div", { className: "spec-editor", children: [
+    /* @__PURE__ */ jsxs7("div", { className: "editor-toolbar", children: [
+      /* @__PURE__ */ jsx8(
         "button",
         {
           onClick: toggleFormat,
@@ -560,7 +795,7 @@ self.addEventListener('message', (event) => {
           children: isYaml ? "JSON" : "YAML"
         }
       ),
-      /* @__PURE__ */ jsx5(
+      /* @__PURE__ */ jsx8(
         "button",
         {
           onClick: formatContent,
@@ -570,7 +805,7 @@ self.addEventListener('message', (event) => {
         }
       )
     ] }),
-    /* @__PURE__ */ jsx5(
+    /* @__PURE__ */ jsx8(
       Editor,
       {
         height: "500px",
@@ -596,24 +831,24 @@ self.addEventListener('message', (event) => {
 }
 
 // app/components/ValidationPanel.tsx
-import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
 function ValidationPanel({ errors, onErrorClick }) {
-  return !errors || errors.length === 0 ? /* @__PURE__ */ jsxs5("div", { className: "validation-panel validation-panel--success", children: [
-    /* @__PURE__ */ jsxs5("div", { className: "validation-header", children: [
-      /* @__PURE__ */ jsx6("span", { className: "validation-icon", children: "\u2705" }),
-      /* @__PURE__ */ jsx6("h3", { children: "Validation Passed" })
+  return !errors || errors.length === 0 ? /* @__PURE__ */ jsxs8("div", { className: "validation-panel validation-panel--success", children: [
+    /* @__PURE__ */ jsxs8("div", { className: "validation-header", children: [
+      /* @__PURE__ */ jsx9("span", { className: "validation-icon", children: "\u2705" }),
+      /* @__PURE__ */ jsx9("h3", { children: "Validation Passed" })
     ] }),
-    /* @__PURE__ */ jsx6("p", { children: "Your spec is valid and ready to save." })
-  ] }) : /* @__PURE__ */ jsxs5("div", { className: "validation-panel validation-panel--errors", children: [
-    /* @__PURE__ */ jsxs5("div", { className: "validation-header", children: [
-      /* @__PURE__ */ jsx6("span", { className: "validation-icon", children: "\u274C" }),
-      /* @__PURE__ */ jsxs5("h3", { children: [
+    /* @__PURE__ */ jsx9("p", { children: "Your spec is valid and ready to save." })
+  ] }) : /* @__PURE__ */ jsxs8("div", { className: "validation-panel validation-panel--errors", children: [
+    /* @__PURE__ */ jsxs8("div", { className: "validation-header", children: [
+      /* @__PURE__ */ jsx9("span", { className: "validation-icon", children: "\u274C" }),
+      /* @__PURE__ */ jsxs8("h3", { children: [
         "Validation Errors (",
         errors.length,
         ")"
       ] })
     ] }),
-    /* @__PURE__ */ jsx6("div", { className: "validation-errors", children: errors.map((error, index) => /* @__PURE__ */ jsxs5(
+    /* @__PURE__ */ jsx9("div", { className: "validation-errors", children: errors.map((error, index) => /* @__PURE__ */ jsxs8(
       "div",
       {
         className: "validation-error",
@@ -624,9 +859,9 @@ function ValidationPanel({ errors, onErrorClick }) {
           (e.key === "Enter" || e.key === " ") && onErrorClick?.(error);
         },
         children: [
-          /* @__PURE__ */ jsx6("div", { className: "error-path", children: error.path.length > 0 ? error.path.join(".") : "Root" }),
-          /* @__PURE__ */ jsx6("div", { className: "error-message", children: error.message }),
-          /* @__PURE__ */ jsx6("div", { className: "error-code", children: error.code })
+          /* @__PURE__ */ jsx9("div", { className: "error-path", children: error.path.length > 0 ? error.path.join(".") : "Root" }),
+          /* @__PURE__ */ jsx9("div", { className: "error-message", children: error.message }),
+          /* @__PURE__ */ jsx9("div", { className: "error-code", children: error.code })
         ]
       },
       index
@@ -635,8 +870,8 @@ function ValidationPanel({ errors, onErrorClick }) {
 }
 
 // app/routes/specs.$id.tsx
-import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
-async function loader7({ params, request }) {
+import { jsx as jsx10, jsxs as jsxs9 } from "react/jsx-runtime";
+async function loader8({ params, request }) {
   let { id } = params;
   if (!id)
     throw new Response("Draft ID required", { status: 400 });
@@ -644,9 +879,9 @@ async function loader7({ params, request }) {
   if (!response.ok)
     throw response.status === 404 ? new Response("Draft not found", { status: 404 }) : new Response("Failed to load draft", { status: response.status });
   let draft = await response.json();
-  return json7({ draft });
+  return json8({ draft });
 }
-async function action4({ params, request }) {
+async function action5({ params, request }) {
   let { id } = params, formData = await request.formData(), intent = formData.get("intent");
   if (intent === "save") {
     let name = formData.get("name"), spec = JSON.parse(formData.get("spec")), tags = JSON.parse(formData.get("tags") || "[]"), response = await fetch(`${request.url.replace(/\/specs\/.*/, "")}/api/specs/drafts`, {
@@ -656,10 +891,10 @@ async function action4({ params, request }) {
     });
     if (response.ok) {
       let draft = await response.json();
-      return json7({ draft, success: "Draft saved successfully" });
+      return json8({ draft, success: "Draft saved successfully" });
     } else {
       let error = await response.json();
-      return json7({ error: error.error }, { status: response.status });
+      return json8({ error: error.error }, { status: response.status });
     }
   }
   if (intent === "delete") {
@@ -670,19 +905,19 @@ async function action4({ params, request }) {
       return redirect3("/catalog/drafts");
     {
       let error = await response.json();
-      return json7({ error: error.error }, { status: response.status });
+      return json8({ error: error.error }, { status: response.status });
     }
   }
-  return json7({ error: "Invalid intent" }, { status: 400 });
+  return json8({ error: "Invalid intent" }, { status: 400 });
 }
 function EditSpecRoute() {
-  let { draft } = useLoaderData3(), submit = useSubmit(), navigation = useNavigation(), [spec, setSpec] = useState2(
+  let { draft } = useLoaderData4(), submit = useSubmit(), navigation = useNavigation(), [spec, setSpec] = useState3(
     () => JSON.stringify(draft.spec, null, 2)
-  ), [validationErrors, setValidationErrors] = useState2(), [metadata, setMetadata] = useState2({
+  ), [validationErrors, setValidationErrors] = useState3(), [metadata, setMetadata] = useState3({
     name: draft.name,
     tags: draft.tags || []
-  }), [isDirty, setIsDirty] = useState2(!1), [isImporting, setIsImporting] = useState2(!1), fileInputRef = useRef2(null);
-  useEffect2(() => {
+  }), [isDirty, setIsDirty] = useState3(!1), [isImporting, setIsImporting] = useState3(!1), fileInputRef = useRef2(null);
+  useEffect3(() => {
     let handleSave = (e) => {
       e.preventDefault(), handleSaveSpec();
     };
@@ -735,10 +970,10 @@ function EditSpecRoute() {
     let blob = new Blob([spec], { type: "application/json" }), url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url, a.download = `${metadata.name}.json`, document.body.appendChild(a), a.click(), document.body.removeChild(a), URL.revokeObjectURL(url);
   }, isValid = !validationErrors || validationErrors.length === 0, isSaving = navigation.state === "submitting";
-  return /* @__PURE__ */ jsxs6("div", { className: "spec-editor-page", children: [
-    /* @__PURE__ */ jsxs6("header", { className: "spec-editor-header", children: [
-      /* @__PURE__ */ jsxs6("div", { className: "spec-meta", children: [
-        /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsxs9("div", { className: "spec-editor-page", children: [
+    /* @__PURE__ */ jsxs9("header", { className: "spec-editor-header", children: [
+      /* @__PURE__ */ jsxs9("div", { className: "spec-meta", children: [
+        /* @__PURE__ */ jsx10(
           "input",
           {
             type: "text",
@@ -750,16 +985,16 @@ function EditSpecRoute() {
             placeholder: "Spec name"
           }
         ),
-        /* @__PURE__ */ jsxs6("span", { className: "draft-id", children: [
+        /* @__PURE__ */ jsxs9("span", { className: "draft-id", children: [
           "ID: ",
           draft.id
         ] }),
-        isDirty && /* @__PURE__ */ jsx7("span", { className: "dirty-indicator", children: "\u25CF" })
+        isDirty && /* @__PURE__ */ jsx10("span", { className: "dirty-indicator", children: "\u25CF" })
       ] }),
-      /* @__PURE__ */ jsxs6("div", { className: "spec-actions", children: [
-        /* @__PURE__ */ jsx7("button", { onClick: handleImport, disabled: isImporting, children: isImporting ? "Importing..." : "Import" }),
-        /* @__PURE__ */ jsx7("button", { onClick: handleExport, children: "Export" }),
-        /* @__PURE__ */ jsx7(
+      /* @__PURE__ */ jsxs9("div", { className: "spec-actions", children: [
+        /* @__PURE__ */ jsx10("button", { onClick: handleImport, disabled: isImporting, children: isImporting ? "Importing..." : "Import" }),
+        /* @__PURE__ */ jsx10("button", { onClick: handleExport, children: "Export" }),
+        /* @__PURE__ */ jsx10(
           "button",
           {
             onClick: handleDeleteDraft,
@@ -768,7 +1003,7 @@ function EditSpecRoute() {
             children: "Delete"
           }
         ),
-        /* @__PURE__ */ jsx7(
+        /* @__PURE__ */ jsx10(
           "button",
           {
             onClick: handleSaveSpec,
@@ -779,8 +1014,8 @@ function EditSpecRoute() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsxs6("div", { className: "spec-editor-content", children: [
-      /* @__PURE__ */ jsx7("div", { className: "spec-editor-main", children: /* @__PURE__ */ jsx7(
+    /* @__PURE__ */ jsxs9("div", { className: "spec-editor-content", children: [
+      /* @__PURE__ */ jsx10("div", { className: "spec-editor-main", children: /* @__PURE__ */ jsx10(
         SpecEditor,
         {
           value: spec,
@@ -788,7 +1023,7 @@ function EditSpecRoute() {
           onValidationChange: handleValidationChange
         }
       ) }),
-      /* @__PURE__ */ jsx7("div", { className: "spec-editor-sidebar", children: /* @__PURE__ */ jsx7(
+      /* @__PURE__ */ jsx10("div", { className: "spec-editor-sidebar", children: /* @__PURE__ */ jsx10(
         ValidationPanel,
         {
           errors: validationErrors,
@@ -798,7 +1033,7 @@ function EditSpecRoute() {
         }
       ) })
     ] }),
-    /* @__PURE__ */ jsx7(
+    /* @__PURE__ */ jsx10(
       "input",
       {
         ref: fileInputRef,
@@ -814,14 +1049,14 @@ function EditSpecRoute() {
 // app/routes/specs.new.tsx
 var specs_new_exports = {};
 __export(specs_new_exports, {
-  action: () => action5,
+  action: () => action6,
   default: () => NewSpecRoute,
-  loader: () => loader8
+  loader: () => loader9
 });
-import { useState as useState3, useEffect as useEffect3, useRef as useRef3 } from "react";
-import { json as json8, redirect as redirect4 } from "@remix-run/node";
-import { useLoaderData as useLoaderData4, useSubmit as useSubmit2, useNavigation as useNavigation2 } from "@remix-run/react";
-import { jsx as jsx8, jsxs as jsxs7 } from "react/jsx-runtime";
+import { useState as useState4, useEffect as useEffect4, useRef as useRef3 } from "react";
+import { json as json9, redirect as redirect4 } from "@remix-run/node";
+import { useLoaderData as useLoaderData5, useSubmit as useSubmit2, useNavigation as useNavigation2 } from "@remix-run/react";
+import { jsx as jsx11, jsxs as jsxs10 } from "react/jsx-runtime";
 var TEMPLATES = {
   chatbot: {
     specVersion: "0.1.0",
@@ -918,14 +1153,14 @@ var TEMPLATES = {
     }
   }
 };
-async function loader8({ request }) {
+async function loader9({ request }) {
   let template = new URL(request.url).searchParams.get("template");
-  return json8({
+  return json9({
     initialSpec: template && template in TEMPLATES ? TEMPLATES[template] : null,
     templateName: template
   });
 }
-async function action5({ request }) {
+async function action6({ request }) {
   let formData = await request.formData();
   if (formData.get("intent") === "save") {
     let name = formData.get("name"), spec = JSON.parse(formData.get("spec")), tags = JSON.parse(formData.get("tags") || "[]"), response = await fetch(`${request.url.replace(/\/specs\/new.*/, "")}/api/specs/drafts`, {
@@ -938,19 +1173,19 @@ async function action5({ request }) {
       return redirect4(`/specs/${draft.id}`);
     } else {
       let error = await response.json();
-      return json8({ error: error.error }, { status: response.status });
+      return json9({ error: error.error }, { status: response.status });
     }
   }
-  return json8({ error: "Invalid intent" }, { status: 400 });
+  return json9({ error: "Invalid intent" }, { status: 400 });
 }
 function NewSpecRoute() {
-  let { initialSpec, templateName } = useLoaderData4(), submit = useSubmit2(), navigation = useNavigation2(), [spec, setSpec] = useState3(
+  let { initialSpec, templateName } = useLoaderData5(), submit = useSubmit2(), navigation = useNavigation2(), [spec, setSpec] = useState4(
     () => initialSpec ? JSON.stringify(initialSpec, null, 2) : "{}"
-  ), [validationErrors, setValidationErrors] = useState3(), [metadata, setMetadata] = useState3({
+  ), [validationErrors, setValidationErrors] = useState4(), [metadata, setMetadata] = useState4({
     name: initialSpec?.meta?.name || "untitled-spec",
     tags: initialSpec?.meta?.tags || []
-  }), [isDirty, setIsDirty] = useState3(!1), [isImporting, setIsImporting] = useState3(!1), fileInputRef = useRef3(null);
-  useEffect3(() => {
+  }), [isDirty, setIsDirty] = useState4(!1), [isImporting, setIsImporting] = useState4(!1), fileInputRef = useRef3(null);
+  useEffect4(() => {
     let handleSave = (e) => {
       e.preventDefault(), handleSaveSpec();
     };
@@ -998,10 +1233,10 @@ function NewSpecRoute() {
     let blob = new Blob([spec], { type: "application/json" }), url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url, a.download = `${metadata.name}.json`, document.body.appendChild(a), a.click(), document.body.removeChild(a), URL.revokeObjectURL(url);
   }, isValid = !validationErrors || validationErrors.length === 0, isSaving = navigation.state === "submitting";
-  return /* @__PURE__ */ jsxs7("div", { className: "spec-editor-page", children: [
-    /* @__PURE__ */ jsxs7("header", { className: "spec-editor-header", children: [
-      /* @__PURE__ */ jsxs7("div", { className: "spec-meta", children: [
-        /* @__PURE__ */ jsx8(
+  return /* @__PURE__ */ jsxs10("div", { className: "spec-editor-page", children: [
+    /* @__PURE__ */ jsxs10("header", { className: "spec-editor-header", children: [
+      /* @__PURE__ */ jsxs10("div", { className: "spec-meta", children: [
+        /* @__PURE__ */ jsx11(
           "input",
           {
             type: "text",
@@ -1013,16 +1248,16 @@ function NewSpecRoute() {
             placeholder: "Spec name"
           }
         ),
-        templateName && /* @__PURE__ */ jsxs7("span", { className: "template-badge", children: [
+        templateName && /* @__PURE__ */ jsxs10("span", { className: "template-badge", children: [
           "Template: ",
           templateName
         ] }),
-        isDirty && /* @__PURE__ */ jsx8("span", { className: "dirty-indicator", children: "\u25CF" })
+        isDirty && /* @__PURE__ */ jsx11("span", { className: "dirty-indicator", children: "\u25CF" })
       ] }),
-      /* @__PURE__ */ jsxs7("div", { className: "spec-actions", children: [
-        /* @__PURE__ */ jsx8("button", { onClick: handleImport, disabled: isImporting, children: isImporting ? "Importing..." : "Import" }),
-        /* @__PURE__ */ jsx8("button", { onClick: handleExport, children: "Export" }),
-        /* @__PURE__ */ jsx8(
+      /* @__PURE__ */ jsxs10("div", { className: "spec-actions", children: [
+        /* @__PURE__ */ jsx11("button", { onClick: handleImport, disabled: isImporting, children: isImporting ? "Importing..." : "Import" }),
+        /* @__PURE__ */ jsx11("button", { onClick: handleExport, children: "Export" }),
+        /* @__PURE__ */ jsx11(
           "button",
           {
             onClick: handleSaveSpec,
@@ -1033,8 +1268,8 @@ function NewSpecRoute() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsxs7("div", { className: "spec-editor-content", children: [
-      /* @__PURE__ */ jsx8("div", { className: "spec-editor-main", children: /* @__PURE__ */ jsx8(
+    /* @__PURE__ */ jsxs10("div", { className: "spec-editor-content", children: [
+      /* @__PURE__ */ jsx11("div", { className: "spec-editor-main", children: /* @__PURE__ */ jsx11(
         SpecEditor,
         {
           value: spec,
@@ -1042,7 +1277,7 @@ function NewSpecRoute() {
           onValidationChange: handleValidationChange
         }
       ) }),
-      /* @__PURE__ */ jsx8("div", { className: "spec-editor-sidebar", children: /* @__PURE__ */ jsx8(
+      /* @__PURE__ */ jsx11("div", { className: "spec-editor-sidebar", children: /* @__PURE__ */ jsx11(
         ValidationPanel,
         {
           errors: validationErrors,
@@ -1052,7 +1287,7 @@ function NewSpecRoute() {
         }
       ) })
     ] }),
-    /* @__PURE__ */ jsx8(
+    /* @__PURE__ */ jsx11(
       "input",
       {
         ref: fileInputRef,
@@ -1068,39 +1303,39 @@ function NewSpecRoute() {
 // app/routes/healthz.ts
 var healthz_exports = {};
 __export(healthz_exports, {
-  loader: () => loader9
+  loader: () => loader10
 });
-import { json as json9 } from "@remix-run/node";
-var loader9 = () => json9({ status: "ok" });
+import { json as json10 } from "@remix-run/node";
+var loader10 = () => json10({ status: "ok" });
 
 // app/routes/_index.tsx
 var index_exports = {};
 __export(index_exports, {
   default: () => Index,
-  loader: () => loader10
+  loader: () => loader11
 });
-import { json as json10 } from "@remix-run/node";
-import { useLoaderData as useLoaderData5, Link as Link3 } from "@remix-run/react";
-import { jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
-var loader10 = async () => json10({ message: "Hello MetaAgent" });
+import { json as json11 } from "@remix-run/node";
+import { useLoaderData as useLoaderData6, Link as Link3 } from "@remix-run/react";
+import { jsx as jsx12, jsxs as jsxs11 } from "react/jsx-runtime";
+var loader11 = async () => json11({ message: "Hello MetaAgent" });
 function Index() {
-  let { message } = useLoaderData5();
-  return /* @__PURE__ */ jsxs8("main", { style: { padding: 32 }, children: [
-    /* @__PURE__ */ jsx9("h1", { style: { fontSize: "2rem", fontWeight: "bold" }, children: message }),
-    /* @__PURE__ */ jsx9("nav", { style: { marginTop: 16 }, children: /* @__PURE__ */ jsx9(Link3, { to: "/api/hello", style: { textDecoration: "underline", color: "blue" }, children: "Raw JSON" }) })
+  let { message } = useLoaderData6();
+  return /* @__PURE__ */ jsxs11("main", { style: { padding: 32 }, children: [
+    /* @__PURE__ */ jsx12("h1", { style: { fontSize: "2rem", fontWeight: "bold" }, children: message }),
+    /* @__PURE__ */ jsx12("nav", { style: { marginTop: 16 }, children: /* @__PURE__ */ jsx12(Link3, { to: "/api/hello", style: { textDecoration: "underline", color: "blue" }, children: "Raw JSON" }) })
   ] });
 }
 
 // app/routes/readyz.ts
 var readyz_exports = {};
 __export(readyz_exports, {
-  loader: () => loader11
+  loader: () => loader12
 });
-import { json as json11 } from "@remix-run/node";
-var loader11 = () => json11({ status: "ready" });
+import { json as json12 } from "@remix-run/node";
+var loader12 = () => json12({ status: "ready" });
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
-var assets_manifest_default = { entry: { module: "/build/entry.client-3YCMHW3F.js", imports: ["/build/_shared/chunk-KLJEBJ3A.js", "/build/_shared/chunk-T36URGAI.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-NZTKYULB.js", imports: ["/build/_shared/chunk-KPWQHS6G.js"], hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-M3VZ2XSF.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.agents": { id: "routes/api.agents", parentId: "root", path: "api/agents", index: void 0, caseSensitive: void 0, module: "/build/routes/api.agents-UWKFOYUA.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.hello": { id: "routes/api.hello", parentId: "root", path: "api/hello", index: void 0, caseSensitive: void 0, module: "/build/routes/api.hello-C4RLELRS.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.specs.drafts": { id: "routes/api.specs.drafts", parentId: "root", path: "api/specs/drafts", index: void 0, caseSensitive: void 0, module: "/build/routes/api.specs.drafts-T44EM4YB.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.login": { id: "routes/auth.login", parentId: "root", path: "auth/login", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.login-DZW2PKE6.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.logout": { id: "routes/auth.logout", parentId: "root", path: "auth/logout", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.logout-S7F2WOON.js", imports: void 0, hasAction: !0, hasLoader: !1, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/catalog.drafts": { id: "routes/catalog.drafts", parentId: "root", path: "catalog/drafts", index: void 0, caseSensitive: void 0, module: "/build/routes/catalog.drafts-OZEA7W45.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/healthz": { id: "routes/healthz", parentId: "root", path: "healthz", index: void 0, caseSensitive: void 0, module: "/build/routes/healthz-MBFLWMUV.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/readyz": { id: "routes/readyz", parentId: "root", path: "readyz", index: void 0, caseSensitive: void 0, module: "/build/routes/readyz-GKLWFVFH.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/specs.$id": { id: "routes/specs.$id", parentId: "root", path: "specs/:id", index: void 0, caseSensitive: void 0, module: "/build/routes/specs.$id-T54G24EQ.js", imports: ["/build/_shared/chunk-SIAUL2YD.js"], hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/specs.new": { id: "routes/specs.new", parentId: "root", path: "specs/new", index: void 0, caseSensitive: void 0, module: "/build/routes/specs.new-Z2UEPTRT.js", imports: ["/build/_shared/chunk-SIAUL2YD.js"], hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 } }, version: "5221d1cb", hmr: void 0, url: "/build/manifest-5221D1CB.js" };
+var assets_manifest_default = { entry: { module: "/build/entry.client-3ULY3N7E.js", imports: ["/build/_shared/chunk-2C25HZ32.js", "/build/_shared/chunk-T36URGAI.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-ITQMF5CR.js", imports: ["/build/_shared/chunk-KPWQHS6G.js"], hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-YGL7KRWN.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.agents": { id: "routes/api.agents", parentId: "root", path: "api/agents", index: void 0, caseSensitive: void 0, module: "/build/routes/api.agents-UWKFOYUA.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.hello": { id: "routes/api.hello", parentId: "root", path: "api/hello", index: void 0, caseSensitive: void 0, module: "/build/routes/api.hello-C4RLELRS.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/api.specs.drafts": { id: "routes/api.specs.drafts", parentId: "root", path: "api/specs/drafts", index: void 0, caseSensitive: void 0, module: "/build/routes/api.specs.drafts-T44EM4YB.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.login": { id: "routes/auth.login", parentId: "root", path: "auth/login", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.login-YHU6M7LG.js", imports: void 0, hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/auth.logout": { id: "routes/auth.logout", parentId: "root", path: "auth/logout", index: void 0, caseSensitive: void 0, module: "/build/routes/auth.logout-S7F2WOON.js", imports: void 0, hasAction: !0, hasLoader: !1, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/builder.$draftId": { id: "routes/builder.$draftId", parentId: "root", path: "builder/:draftId", index: void 0, caseSensitive: void 0, module: "/build/routes/builder.$draftId-U4UZRZ24.js", imports: ["/build/_shared/chunk-RRANPFQE.js"], hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/catalog.drafts": { id: "routes/catalog.drafts", parentId: "root", path: "catalog/drafts", index: void 0, caseSensitive: void 0, module: "/build/routes/catalog.drafts-DD76Q7KK.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/healthz": { id: "routes/healthz", parentId: "root", path: "healthz", index: void 0, caseSensitive: void 0, module: "/build/routes/healthz-MBFLWMUV.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/readyz": { id: "routes/readyz", parentId: "root", path: "readyz", index: void 0, caseSensitive: void 0, module: "/build/routes/readyz-GKLWFVFH.js", imports: void 0, hasAction: !1, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/specs.$id": { id: "routes/specs.$id", parentId: "root", path: "specs/:id", index: void 0, caseSensitive: void 0, module: "/build/routes/specs.$id-S2IV53FD.js", imports: ["/build/_shared/chunk-PW2XMSTX.js", "/build/_shared/chunk-RRANPFQE.js"], hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 }, "routes/specs.new": { id: "routes/specs.new", parentId: "root", path: "specs/new", index: void 0, caseSensitive: void 0, module: "/build/routes/specs.new-OPCUUFXR.js", imports: ["/build/_shared/chunk-PW2XMSTX.js", "/build/_shared/chunk-RRANPFQE.js"], hasAction: !0, hasLoader: !0, hasClientAction: !1, hasClientLoader: !1, hasErrorBoundary: !1 } }, version: "928a8f71", hmr: void 0, url: "/build/manifest-928A8F71.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var mode = "production", assetsBuildDirectory = "public/build", future = { v3_fetcherPersist: !1, v3_relativeSplatPath: !1, v3_throwAbortReason: !1, v3_routeConfig: !1, v3_singleFetch: !1, v3_lazyRouteDiscovery: !1, unstable_optimizeDeps: !1 }, publicPath = "/build/", entry = { module: entry_server_exports }, routes = {
@@ -1119,6 +1354,14 @@ var mode = "production", assetsBuildDirectory = "public/build", future = { v3_fe
     index: void 0,
     caseSensitive: void 0,
     module: api_specs_drafts_exports
+  },
+  "routes/builder.$draftId": {
+    id: "routes/builder.$draftId",
+    parentId: "root",
+    path: "builder/:draftId",
+    index: void 0,
+    caseSensitive: void 0,
+    module: builder_draftId_exports
   },
   "routes/catalog.drafts": {
     id: "routes/catalog.drafts",
