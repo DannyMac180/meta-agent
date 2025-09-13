@@ -8,9 +8,10 @@ type Props = {
   initialState: InterviewState;
   onStateChange?: (state: InterviewState) => void;
   onAutosave?: (state: InterviewState) => void;
+  focusFieldPath?: (string | number)[];
 };
 
-export default function InterviewPanel({ script, initialState, onStateChange, onAutosave }: Props) {
+export default function InterviewPanel({ script, initialState, onStateChange, onAutosave, focusFieldPath }: Props) {
   const runner = useMemo(() => new InterviewRunner(script), [script]);
   const [state, setState] = useState<InterviewState>(initialState);
 
@@ -20,6 +21,17 @@ export default function InterviewPanel({ script, initialState, onStateChange, on
     onStateChange?.(state);
     autosave(state);
   }, [state]);
+
+  // When a validation error path is provided, jump to the corresponding node if possible
+  useEffect(() => {
+    if (!focusFieldPath || !Array.isArray(focusFieldPath)) return;
+    const targetPath = focusFieldPath.join(".");
+    const nodes = Object.values(script.nodes);
+    const target = nodes.find((n: any) => n.type === "question" && (n.field === targetPath || targetPath.startsWith(n.field) || n.field.startsWith(targetPath)));
+    if (target && state.currentNodeId !== target.id) {
+      setState((prev) => ({ ...prev, currentNodeId: (target as any).id }));
+    }
+  }, [focusFieldPath, script.nodes]);
 
   const currentNode = runner.getCurrentNode(state);
 

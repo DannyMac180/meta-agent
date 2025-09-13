@@ -1,8 +1,10 @@
 import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
+import { useState } from "react";
 import { createSpecDraftService } from "../utils/specDraft.server";
 import TemplatePicker from "../components/TemplatePicker";
 import InterviewPanel from "../components/InterviewPanel";
+import SpecPanel from "../components/SpecPanel";
 import { templates } from "@metaagent/templates";
 import { genericAgentInterview } from "@metaagent/interview";
 import { createDraftSpec } from "@metaagent/spec";
@@ -73,6 +75,9 @@ export default function BuilderRoute() {
     visitedNodes: [],
   };
 
+  const [interviewState, setInterviewState] = useState<any>(initialState);
+  const [focusPath, setFocusPath] = useState<(string | number)[]>();
+
   const handleAutosave = async (state: any) => {
     await fetch("/builder/" + draft.id, {
       method: "POST",
@@ -95,13 +100,19 @@ export default function BuilderRoute() {
       </div>
       <div className="builder-content">
         <div className="builder-left">
-          <InterviewPanel script={script!} initialState={initialState as any} onAutosave={handleAutosave} />
+          <InterviewPanel 
+            script={script!} 
+            initialState={initialState as any} 
+            onAutosave={handleAutosave} 
+            onStateChange={setInterviewState}
+            focusFieldPath={focusPath}
+          />
         </div>
         <div className="builder-right">
-          {/* Spec panel JSON preview */}
-          <pre style={{ maxHeight: 500, overflow: "auto", background: "#0b0b0e", color: "#ddd", padding: 12 }}>
-            {JSON.stringify(initialState.specDraft.payload, null, 2)}
-          </pre>
+          <SpecPanel 
+            payload={interviewState?.specDraft?.payload}
+            onErrorPathClick={setFocusPath}
+          />
         </div>
       </div>
     </div>
