@@ -79,7 +79,7 @@ export default function BuilderRoute() {
   const [focusPath, setFocusPath] = useState<(string | number)[]>();
 
   const handleAutosave = async (state: any) => {
-    await fetch("/builder/" + draft.id, {
+    await fetch("/api/autosave", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
