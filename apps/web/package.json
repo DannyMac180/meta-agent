@@ -8,7 +8,7 @@
     "build": "remix build",
     "start": "remix-serve build",
     "lint": "echo \"[lint] @metaagent/web – implement later\"",
-    "test": "echo \"[test] @metaagent/web – implement later\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@remix-run/node": "^2.12.0",
@@ -16,10 +16,22 @@
     "@remix-run/serve": "^2.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@metaagent/db": "workspace:*"
+    "@metaagent/db": "workspace:*",
+    "@metaagent/spec": "workspace:*",
+    "@monaco-editor/react": "^4.6.0",
+    "monaco-editor": "^0.45.0",
+    "zod-to-json-schema": "^3.22.0",
+    "js-yaml": "^4.1.0",
+    "prettier": "^3.1.0",
+    "jsonc-parser": "^3.2.0",
+    "drizzle-orm": "^0.32.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@types/js-yaml": "^4.0.8",
+    "vitest": "^1.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "jsdom": "^23.0.0"
   }
 }

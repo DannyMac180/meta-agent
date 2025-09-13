@@ -1,1 +1,7 @@
-export const hello = () => "metaagent monorepo ready!";
+export * from "./types";
+export * from "./templates";
+
+import { templates } from "./templates";
+
+export { templates };
+export default templates;
