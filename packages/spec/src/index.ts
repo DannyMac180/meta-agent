@@ -7,6 +7,7 @@ export * from "./types/prompt";
 export * from "./types/model";
 export * from "./types/tool";
 export * from "./types/agent";
+export * from "./types/draft";
 
 // validators
 export * from "./validators/variable";
@@ -14,6 +15,7 @@ export * from "./validators/prompt";
 export * from "./validators/model";
 export * from "./validators/tool";
 export * from "./validators/agent";
+export * from "./validators/draft";
 
 // helpers
 import { AgentSpecSchema } from "./validators/agent";
@@ -27,4 +29,7 @@ export function isAgentSpec(obj: unknown): obj is AgentSpec {
   const res = AgentSpecSchema.safeParse(obj);
   return res.success;
 }
+
+// draft helpers
+export * from "./helpers/draft";
 

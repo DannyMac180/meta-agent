@@ -1,0 +1,1 @@
+Use the oracle to create a detailed plan with step by step implementation for

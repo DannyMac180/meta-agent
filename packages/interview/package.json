@@ -1,0 +1,28 @@
+{
+  "name": "@metaagent/interview",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "echo \"[lint] @metaagent/interview – configure ESLint later\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@metaagent/spec": "workspace:*",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.5"
+  }
+}
