@@ -1,4 +1,4 @@
-import { v4 as uuid } from "uuid";
+import { ulid } from "ulid";
 import { SpecDraftSchema, type SpecDraftOutput } from "../validators/draft";
 import { SpecStatus } from "../types/draft";
 
@@ -12,7 +12,7 @@ export function createDraftSpec(input: CreateDraftSpecInput = {}): SpecDraftOutp
   const now = new Date().toISOString();
   
   const draft = {
-    id: uuid(),
+    id: ulid(),
     title: input.title || "Untitled Agent",
     isDraft: true,
     status: "DRAFT" as const,

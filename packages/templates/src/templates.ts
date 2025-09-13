@@ -1,6 +1,7 @@
 import type { TemplateMeta } from "./types";
 import { createDraftSpec } from "@metaagent/spec";
 import { chatbotInterview, genericAgentInterview } from "@metaagent/interview";
+import { ulid } from "ulid";
 
 export const chatbotTemplate: TemplateMeta = {
   id: "chatbot",
@@ -14,7 +15,7 @@ export const chatbotTemplate: TemplateMeta = {
     payload: {
       specVersion: "0.1.0" as const,
       meta: {
-        id: "temp-id",
+        id: ulid(),
         name: "my-chatbot",
         description: "A friendly chatbot assistant",
         version: "1.0.0",
@@ -27,7 +28,7 @@ export const chatbotTemplate: TemplateMeta = {
       },
       model: {
         provider: "openai",
-        name: "gpt-4",
+        model: "gpt-4",
         config: {
           temperature: 0.7,
           maxTokens: 1000,
@@ -54,7 +55,7 @@ export const webAutomationTemplate: TemplateMeta = {
     payload: {
       specVersion: "0.1.0" as const,
       meta: {
-        id: "temp-id",
+        id: ulid(),
         name: "web-automation-agent",
         description: "Automate web-based tasks",
         version: "1.0.0",
@@ -75,7 +76,7 @@ export const webAutomationTemplate: TemplateMeta = {
       },
       model: {
         provider: "openai",
-        name: "gpt-4",
+        model: "gpt-4",
         config: {
           temperature: 0.3,
           maxTokens: 2000,
@@ -83,25 +84,8 @@ export const webAutomationTemplate: TemplateMeta = {
       },
       tools: [
         {
-          id: "web-browser",
-          name: "Web Browser",
-          description: "Navigate and interact with web pages",
-          type: "function",
-          config: {
-            function: {
-              name: "web_browser",
-              description: "Navigate to URLs, click elements, fill forms",
-              parameters: {
-                type: "object",
-                properties: {
-                  action: { type: "string", enum: ["navigate", "click", "fill", "extract"] },
-                  target: { type: "string" },
-                  value: { type: "string" },
-                },
-                required: ["action"],
-              },
-            },
-          },
+          kind: "http",
+          allowDomains: ["https://example.com"], // Example allowed domain
         },
       ],
       limits: {
@@ -124,7 +108,7 @@ export const apiCopilotTemplate: TemplateMeta = {
     payload: {
       specVersion: "0.1.0" as const,
       meta: {
-        id: "temp-id",
+        id: ulid(),
         name: "api-copilot",
         description: "Expert assistant for API development and integration",
         version: "1.0.0",
@@ -145,7 +129,7 @@ export const apiCopilotTemplate: TemplateMeta = {
       },
       model: {
         provider: "openai",
-        name: "gpt-4",
+        model: "gpt-4",
         config: {
           temperature: 0.2,
           maxTokens: 3000,
@@ -153,26 +137,12 @@ export const apiCopilotTemplate: TemplateMeta = {
       },
       tools: [
         {
-          id: "http-client",
-          name: "HTTP Client",
-          description: "Make HTTP requests to test APIs",
-          type: "function",
-          config: {
-            function: {
-              name: "http_request",
-              description: "Make HTTP requests with various methods",
-              parameters: {
-                type: "object",
-                properties: {
-                  method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE", "PATCH"] },
-                  url: { type: "string" },
-                  headers: { type: "object" },
-                  body: { type: "string" },
-                },
-                required: ["method", "url"],
-              },
-            },
-          },
+          kind: "http",
+          allowDomains: ["https://api.example.com"], // Example API domain
+        },
+        {
+          kind: "code-interpreter",
+          timeoutSec: 30,
         },
       ],
       limits: {

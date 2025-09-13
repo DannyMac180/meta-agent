@@ -111,7 +111,7 @@ export class InterviewRunner {
 
   private updateSpecFromAnswer(specDraft: any, field: string, value: any): any {
     const fieldPath = field.split(".");
-    const updated = JSON.parse(JSON.stringify(specDraft));
+    const updated = { ...specDraft };
     
     // Navigate to the nested field and set value
     let current = updated.payload;
@@ -129,7 +129,11 @@ export class InterviewRunner {
     
     current[fieldPath[fieldPath.length - 1]] = value;
     
-    return updateDraftSpec(specDraft, { payload: updated.payload });
+    // Update timestamp and return (don't validate partial spec)
+    return {
+      ...updated,
+      updatedAt: new Date().toISOString(),
+    };
   }
 
   getCurrentNode(state: InterviewState): InterviewNode {

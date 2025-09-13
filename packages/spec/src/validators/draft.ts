@@ -9,7 +9,7 @@ export const SpecDraftSchema = z.object({
   title: z.string().min(1, "Title is required"),
   isDraft: z.boolean().default(true),
   status: z.enum(SpecStatusEnum).default("DRAFT"),
-  payload: AgentSpecSchema.partial(),
+  payload: z.any(), // Allow any payload structure for drafts (validation happens later)
   createdAt: isoDateString(),
   updatedAt: isoDateString(),
 });

@@ -17,8 +17,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@metaagent/interview": "workspace:*",
     "@metaagent/spec": "workspace:*",
-    "@metaagent/interview": "workspace:*"
+    "ulid": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
