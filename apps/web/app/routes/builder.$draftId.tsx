@@ -1,6 +1,7 @@
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
+import { requireUserId } from "../utils/session.server";
 import { createSpecDraftService } from "../utils/specDraft.server";
 import TemplatePicker from "../components/TemplatePicker";
 import InterviewPanel from "../components/InterviewPanel";
@@ -8,10 +9,8 @@ import SpecPanel from "../components/SpecPanel";
 import { templates } from "@metaagent/templates";
 import { genericAgentInterview } from "@metaagent/interview";
 
-function getUserId() { return "01ARZ3NDEKTSV4RRFFQ69G5FAV"; }
-
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const userId = getUserId();
+  const userId = await requireUserId(request);
   const service = createSpecDraftService(userId);
   const draftId = params.draftId;
 
@@ -29,7 +28,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
-  const userId = getUserId();
+  const userId = await requireUserId(request);
   const service = createSpecDraftService(userId);
   const body = await request.json();
 

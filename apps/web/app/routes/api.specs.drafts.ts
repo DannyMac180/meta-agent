@@ -2,18 +2,13 @@ import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-r
 import { eq, desc } from "drizzle-orm";
 import { db, specDrafts, setAppUser, type SpecDraft, type NewSpecDraft } from "@metaagent/db";
 import { AgentSpecSchema } from "@metaagent/spec";
-
-// Mock auth - replace with real auth in Week 1
-function getCurrentUserId(): string {
-  // TODO: Extract from session/JWT
-  return "01ARZ3NDEKTSV4RRFFQ69G5FAV"; // placeholder ULID
-}
+import { requireUserId } from "../utils/session.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
   
-  const userId = getCurrentUserId();
+  const userId = await requireUserId(request);
   await setAppUser(userId);
 
   if (id) {
@@ -42,7 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const userId = getCurrentUserId();
+  const userId = await requireUserId(request);
   await setAppUser(userId);
 
   if (request.method === "POST") {
