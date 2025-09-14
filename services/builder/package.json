@@ -8,7 +8,7 @@
     "build": "tsc -p .",
     "start": "node --env-file ../../.env dist/index.js",
     "lint": "echo \"[lint] @metaagent/builder – implement later\"",
-    "test": "echo \"[test] @metaagent/builder – implement later\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",
@@ -20,6 +20,8 @@
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.5",
+    "@types/node": "^20.14.10"
   }
 }

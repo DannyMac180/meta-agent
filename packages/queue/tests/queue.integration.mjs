@@ -4,7 +4,7 @@ import Redis from 'ioredis';
 import { agentExecQueue, enqueueAgentExec, createAgentExecWorker, redisOptions } from '../dist/index.js';
 
 async function redisAvailable() {
-  const client = new Redis(redisOptions);
+  const client = new Redis({ ...redisOptions, connectTimeout: 500, retryStrategy: () => null });
   try {
     const res = await client.ping();
     return res === 'PONG';
