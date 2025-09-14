@@ -1,15 +1,28 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // Fetch drafts via API
-  const response = await fetch(`${request.url.replace(/\/catalog\/drafts.*/, "")}/api/specs/drafts`);
-  
-  if (!response.ok) {
-    throw new Response("Failed to load drafts", { status: response.status });
+  const url = new URL(request.url);
+  const response = await fetch(`${url.origin}/api/specs/drafts`, {
+    headers: { Cookie: request.headers.get("Cookie") ?? "" },
+    redirect: "manual",
+  } as RequestInit);
+
+  let contentType = "";
+  const hasHeaders = response && (response as any).headers && typeof (response as any).headers.get === "function";
+  if (hasHeaders) {
+    contentType = (response as any).headers.get("content-type") || "";
   }
 
-  const drafts = await response.json();
+  if ((response as any).status === 302 || (response as any).status === 401 || (hasHeaders && !contentType.includes("application/json"))) {
+    throw redirect("/auth/login");
+  }
+
+  if (!(response as any).ok) {
+    throw new Response("Failed to load drafts", { status: (response as any).status || 500 });
+  }
+
+  const drafts = await (response as any).json();
   return json({ drafts });
 }
 
@@ -29,7 +42,7 @@ export default function DraftsCatalogRoute() {
   return (
     <div className="drafts-catalog">
       <header className="catalog-header">
-        <h1>My Drafts</h1>
+        <h1>My Catalog</h1>
         <div className="catalog-actions">
           <Link to="/specs/new" className="new-draft-button">
             + New Draft
@@ -67,6 +80,9 @@ export default function DraftsCatalogRoute() {
                     {draft.name}
                   </Link>
                 </h3>
+                {(draft.status === 'DRAFT' || draft.isDraft) && (
+                  <span className="status-badge">Draft</span>
+                )}
                 <div className="draft-actions">
                   <Link to={`/specs/${draft.id}`} className="edit-link">
                     Edit
