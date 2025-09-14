@@ -22,6 +22,13 @@ The Spec Editor provides an in-browser Monaco-based editor for authoring Agent s
 - **Route**: `apps/web/app/routes/api.specs.drafts.ts`
 - **Operations**: CRUD for drafts (create, read, update, delete)
 - **Validation**: Server-side Zod validation before persistence
+- **Autosave API**: `apps/web/app/routes/api.autosave.ts` with rate limiting and validation
+
+### Queue System (BullMQ)
+- **Autosave Queue**: `packages/queue/src/queues.ts` handles draft persistence
+- **Worker**: `services/builder/src/handlers/draftAutosave.ts` processes autosave jobs
+- **Job Deduplication**: Uses `draft:${userId}:${draftId}` as job ID
+- **Rate Limiting**: 30 requests/minute per user
 
 ### UI Components
 - **SpecEditor**: Monaco-based editor with live validation worker
@@ -32,6 +39,8 @@ The Spec Editor provides an in-browser Monaco-based editor for authoring Agent s
 - `/specs/new` - Create new spec (with optional template)
 - `/specs/:id` - Edit existing draft
 - `/catalog/drafts` - List all user drafts
+- `/builder` - Create new interview-driven draft (redirects to `/builder/:id`)
+- `/builder/:id` - Interview panel + spec panel with autosave
 
 ## Features Implemented
 
@@ -66,6 +75,13 @@ The Spec Editor provides an in-browser Monaco-based editor for authoring Agent s
 - Dirty state tracking with visual indicator
 - Loading states and error handling
 
+### ✅ Autosave System
+- Debounced autosave (800ms) in interview panel
+- BullMQ queue processing with Redis backend
+- Rate limiting (30 requests/minute per user)
+- Payload validation and size limits (500KB)
+- Structured logging for debugging
+
 ## Testing
 
 ### Unit Tests
@@ -93,7 +109,8 @@ The Spec Editor provides an in-browser Monaco-based editor for authoring Agent s
 ### Access Control
 - Row-level security (RLS) on spec_drafts table
 - User isolation via PostgreSQL policies
-- Session-based authentication (mock for now)
+- Session-based authentication with `requireUserId()` middleware
+- Rate limiting on autosave API to prevent abuse
 
 ## Performance
 

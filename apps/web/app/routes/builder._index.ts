@@ -1,10 +1,9 @@
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { requireUserId } from "../utils/session.server";
 import { createSpecDraftService } from "../utils/specDraft.server";
 
-function getUserId() { return "01ARZ3NDEKTSV4RRFFQ69G5FAV"; }
-
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = getUserId();
+  const userId = await requireUserId(request);
   const service = createSpecDraftService(userId);
 
   const created = await service.saveDraft({

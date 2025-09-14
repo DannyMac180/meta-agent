@@ -6,6 +6,14 @@ Object.defineProperty(window, 'fetch', {
   value: vi.fn(),
 });
 
+// Mock session utilities
+vi.mock("../app/utils/session.server", () => ({
+  getUserId: vi.fn().mockReturnValue("test-user-123"),
+  requireUserId: vi.fn().mockReturnValue("test-user-123"),
+  createUserSession: vi.fn(),
+  logout: vi.fn(),
+}));
+
 // Mock Monaco editor
 Object.defineProperty(window, 'monaco', {
   writable: true,

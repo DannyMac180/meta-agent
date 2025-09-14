@@ -10,7 +10,7 @@ const TEMPLATES = {
   chatbot: {
     specVersion: "0.1.0" as const,
     meta: {
-      id: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      id: "template-chatbot",
       name: "chatbot-agent",
       description: "A conversational chatbot agent",
       version: "0.0.1",
@@ -40,7 +40,7 @@ const TEMPLATES = {
   "web-automation": {
     specVersion: "0.1.0" as const,
     meta: {
-      id: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      id: "template-web-automation",
       name: "web-automation-agent", 
       description: "Agent for automating web tasks",
       version: "0.0.1",
@@ -72,7 +72,7 @@ const TEMPLATES = {
   "api-copilot": {
     specVersion: "0.1.0" as const,
     meta: {
-      id: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      id: "template-api-copilot",
       name: "api-copilot-agent",
       description: "AI assistant for API development and testing", 
       version: "0.0.1",
