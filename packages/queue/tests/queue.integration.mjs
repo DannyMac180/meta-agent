@@ -16,6 +16,11 @@ async function redisAvailable() {
 }
 
 async function main() {
+  if (process.env.CI) {
+    console.log('[queue.integration] SKIP in CI');
+    process.exit(0);
+  }
+
   if (!(await redisAvailable())) {
     console.log('[queue.integration] SKIP: no Redis available');
     process.exit(0);

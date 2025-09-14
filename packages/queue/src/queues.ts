@@ -1,10 +1,15 @@
 import { Queue, Worker, type JobsOptions } from "bullmq";
 import { redisOptions } from "./redis.js";
-import type { AgentExecData, AgentExecResult } from "./types.js";
+import type { AgentExecData, AgentExecResult, DraftAutosaveData, DraftAutosaveResult } from "./types.js";
 
 export const AGENT_EXEC_QUEUE = "agent-exec";
+export const DRAFT_AUTOSAVE_QUEUE = "draft-autosave";
 
 export const agentExecQueue = new Queue<AgentExecData>(AGENT_EXEC_QUEUE, {
+  connection: redisOptions,
+});
+
+export const draftAutosaveQueue = new Queue<DraftAutosaveData>(DRAFT_AUTOSAVE_QUEUE, {
   connection: redisOptions,
 });
 
@@ -20,6 +25,20 @@ export function enqueueAgentExec(
   });
 }
 
+export function enqueueDraftAutosave(
+  data: DraftAutosaveData,
+  opts?: JobsOptions
+) {
+  const jobId = data.draft.id ? `draft:${data.userId}:${data.draft.id}` : undefined;
+  return draftAutosaveQueue.add("autosave", data, {
+    jobId,
+    removeOnComplete: 500,
+    attempts: 5,
+    backoff: { type: "exponential", delay: 2000 },
+    ...opts,
+  });
+}
+
 export function createAgentExecWorker(
   handler: (data: AgentExecData) => Promise<AgentExecResult>,
   opts?: { concurrency?: number }
@@ -28,6 +47,18 @@ export function createAgentExecWorker(
     AGENT_EXEC_QUEUE,
     async (job) => handler(job.data),
     { connection: redisOptions, concurrency: opts?.concurrency ?? 5 }
+  );
+  return worker;
+}
+
+export function createDraftAutosaveWorker(
+  handler: (data: DraftAutosaveData) => Promise<DraftAutosaveResult>,
+  opts?: { concurrency?: number }
+) {
+  const worker = new Worker<DraftAutosaveData>(
+    DRAFT_AUTOSAVE_QUEUE,
+    async (job) => handler(job.data),
+    { connection: redisOptions, concurrency: opts?.concurrency ?? 10 }
   );
   return worker;
 }

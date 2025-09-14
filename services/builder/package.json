@@ -13,6 +13,8 @@
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",
     "@metaagent/queue": "workspace:*",
+    "@metaagent/db": "workspace:*",
+    "drizzle-orm": "^0.32.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1"
   },

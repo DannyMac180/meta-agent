@@ -47,4 +47,4 @@ jobs:
         run: pnpm -w build
 
       - name: Test
-        run: pnpm -w test
+        run: timeout 10m pnpm -w test
