@@ -36,7 +36,7 @@ export default function App() {
         <header style={{ padding: 12, borderBottom: "1px solid #ddd", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <nav style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <Link to="/" style={{ fontWeight: "bold", textDecoration: "none", color: "#1976d2" }}>MetaAgent</Link>
-            <Link to="/catalog/drafts" style={{ textDecoration: "none", color: "#666" }}>My Drafts</Link>
+            <Link to="/catalog/drafts" style={{ textDecoration: "none", color: "#666" }}>My Catalog</Link>
             <Link to="/specs/new" style={{ textDecoration: "none", color: "#666" }}>New Spec</Link>
           </nav>
           {user ? (

@@ -7,7 +7,7 @@
 - BullMQ + Redis wired.
 **Acceptance:** `pnpm dev` runs web + builder + runner; DB tests green.
 
-## Week 2 — Spec & Interview
+## Week 2 — Spec & Interview ✅
 - `packages/spec`: types + zod validators.
 - UI Spec Panel (live validation).
 - Builder nodes: interview->spec (basic), template selection.
