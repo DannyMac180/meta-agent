@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
 import { createSpecDraftService } from "../utils/specDraft.server";
@@ -7,20 +7,22 @@ import InterviewPanel from "../components/InterviewPanel";
 import SpecPanel from "../components/SpecPanel";
 import { templates } from "@metaagent/templates";
 import { genericAgentInterview } from "@metaagent/interview";
-import { createDraftSpec } from "@metaagent/spec";
 
 function getUserId() { return "01ARZ3NDEKTSV4RRFFQ69G5FAV"; }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const userId = getUserId();
   const service = createSpecDraftService(userId);
-  const url = new URL(request.url);
   const draftId = params.draftId;
 
-  let draft = draftId ? await service.getDraft(draftId) : null;
+  if (!draftId) {
+    return redirect("/builder");
+  }
+
+  const draft = await service.getDraft(draftId);
   if (!draft) {
-    // create new draft
-    draft = createDraftSpec({ title: "Untitled Agent" });
+    // If invalid id, start a new draft
+    return redirect("/builder");
   }
 
   return json({ draft });
