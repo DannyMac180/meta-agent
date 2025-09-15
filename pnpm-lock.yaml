@@ -249,10 +249,68 @@ importers:
         version: 5.9.2
 
   packages/tools:
+    dependencies:
+      '@metaagent/spec':
+        specifier: workspace:*
+        version: link:../spec
     devDependencies:
       typescript:
         specifier: ^5.3.3
         version: 5.9.2
+
+  packages/tools/http:
+    dependencies:
+      undici:
+        specifier: ^6.0.0
+        version: 6.21.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.13
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@20.19.13)
+
+  packages/tools/vector:
+    dependencies:
+      '@metaagent/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@metaagent/tools-http':
+        specifier: workspace:*
+        version: link:../http
+      ulid:
+        specifier: ^2.3.0
+        version: 2.4.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.13
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@20.19.13)
+
+  packages/tools/websearch:
+    dependencies:
+      '@metaagent/tools-http':
+        specifier: workspace:*
+        version: link:../http
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.13
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@20.19.13)
 
   packages/ui:
     devDependencies:
@@ -317,12 +375,24 @@ importers:
 
   services/runner:
     dependencies:
+      '@metaagent/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@metaagent/queue':
         specifier: workspace:*
         version: link:../../packages/queue
       '@metaagent/toolkit':
         specifier: workspace:*
         version: link:../../packages/toolkit
+      '@metaagent/tools-http':
+        specifier: workspace:*
+        version: link:../../packages/tools/http
+      '@metaagent/tools-vector':
+        specifier: workspace:*
+        version: link:../../packages/tools/vector
+      '@metaagent/tools-websearch':
+        specifier: workspace:*
+        version: link:../../packages/tools/websearch
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -332,10 +402,13 @@ importers:
     devDependencies:
       ts-node:
         specifier: ^10.9.2
-        version: 10.9.2(@types/node@24.3.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@20.19.13)(typescript@5.9.2)
       typescript:
         specifier: ^5.3.3
         version: 5.9.2
+      vitest:
+        specifier: ^2.1.1
+        version: 2.1.9(@types/node@20.19.13)
 
 packages:
 
@@ -3643,7 +3716,7 @@ packages:
   /@types/docker-modem@3.0.6:
     resolution: {integrity: sha512-yKpAGEuKRSS8wwx0joknWxsmLha78wNMe9R2S3UNsVOkZded8UqOrV8KoeDXoXsjndxwyF3eIhyClGbO1SEhEg==}
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
       '@types/ssh2': 1.15.5
     dev: true
 
@@ -3651,7 +3724,7 @@ packages:
     resolution: {integrity: sha512-YCi0aKKpKeC9dhKTbuglvsWDnAyuIITd6CCJSTKiAdbDzPH4RWu0P9IK2XkJHdyplH6mzYtDYO+gB06JlzcPxg==}
     dependencies:
       '@types/docker-modem': 3.0.6
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
       '@types/ssh2': 1.15.5
     dev: true
 
@@ -3669,7 +3742,7 @@ packages:
     resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
     dev: true
 
   /@types/hast@2.3.10:
@@ -3685,7 +3758,7 @@ packages:
   /@types/jsonfile@6.1.4:
     resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
     dev: true
 
   /@types/mdast@3.0.15:
@@ -3729,13 +3802,13 @@ packages:
   /@types/ssh2-streams@0.1.12:
     resolution: {integrity: sha512-Sy8tpEmCce4Tq0oSOYdfqaBpA3hDM8SoxoFh5vzFsu2oL+znzGz8oVWW7xb4K920yYMUY+PIG31qZnFMfPWNCg==}
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
     dev: true
 
   /@types/ssh2@0.5.52:
     resolution: {integrity: sha512-lbLLlXxdCZOSJMCInKH2+9V/77ET2J6NPQHpFI0kda61Dd1KglJs+fPQBchizmzYSOJBgdTajhPqBO1xxLywvg==}
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
       '@types/ssh2-streams': 0.1.12
     dev: true
 
@@ -5319,7 +5392,7 @@ packages:
     resolution: {integrity: sha512-EzV94NYKoO09GLXGjXj9JIlXijVck4ONSr5wiCWDvhsvj5jxSrzTmRU/9C1DyB6uToszLs8aifA6NQ7lEQdvFw==}
     engines: {node: '>= 0.8'}
     dependencies:
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
       require-like: 0.1.2
     dev: true
 
@@ -7584,7 +7657,7 @@ packages:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 24.3.1
+      '@types/node': 20.19.13
       long: 5.3.2
     dev: true
 
@@ -8655,6 +8728,11 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
+
+  /ulid@2.4.0:
+    resolution: {integrity: sha512-fIRiVTJNcSRmXKPZtGzFQv9WRrZ3M9eoptl/teFJvjOzmpU+/K/JH6HZ8deBfb5vMEpicJcLn7JmvdknlMq7Zg==}
+    hasBin: true
+    dev: false
 
   /ulid@3.0.1:
     resolution: {integrity: sha512-dPJyqPzx8preQhqq24bBG1YNkvigm87K8kVEHCD+ruZg24t6IFEFv00xMWfxcC4djmFtiTLdFuADn4+DOz6R7Q==}
