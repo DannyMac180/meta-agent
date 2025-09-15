@@ -33,6 +33,6 @@ jobs:
           test -f services/builder/dist/ci-api.zip
       - name: Validate scaffolded projects
         run: |
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-chatbot.zip
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-web.zip
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-api.zip
+          pnpm --filter @metaagent/builder validate dist/ci-chatbot.zip
+          pnpm --filter @metaagent/builder validate dist/ci-web.zip
+          pnpm --filter @metaagent/builder validate dist/ci-api.zip
