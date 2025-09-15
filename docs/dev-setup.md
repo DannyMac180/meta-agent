@@ -7,7 +7,7 @@ Complete guide for setting up MetaAgent v2.0 for local development.
 ### Required Software
 
 - **Node.js 20+** with pnpm package manager
-- **Docker** and **Docker Compose** for infrastructure
+- **Docker** and **Docker Compose** (or **Podman** with `podman compose`) for infrastructure
 - **Git** for version control
 
 ### Optional Tools
@@ -20,15 +20,15 @@ Complete guide for setting up MetaAgent v2.0 for local development.
 
 ### 1. Start Core Services
 
-MetaAgent uses docker-compose for local infrastructure:
+MetaAgent uses docker-compose for local infrastructure (Podman users: use `podman compose`):
 
 ```bash
 # Start PostgreSQL, Redis, and MinIO
 cd infra
-docker-compose up -d
+docker-compose up -d   # or: podman compose up -d
 
 # Verify services are running
-docker-compose ps
+docker-compose ps   # or: podman compose ps
 ```
 
 Services started:
@@ -169,7 +169,7 @@ pnpm --filter @metaagent/builder test --watch
 ### Integration Tests  
 
 ```bash
-# Integration tests require Docker
+# Integration tests require Docker/Podman
 pnpm --filter @metaagent/builder test:integration
 
 # These tests:
@@ -210,8 +210,8 @@ Visit http://localhost:9001 and log in with `minioadmin/minioadmin` to browse st
 **Docker services not starting:**
 ```bash
 # Check for port conflicts
-docker-compose -f infra/docker-compose.yml down
-docker-compose -f infra/docker-compose.yml up -d
+docker-compose -f infra/docker-compose.yml down   # or: podman compose -f infra/docker-compose.yml down
+docker-compose -f infra/docker-compose.yml up -d   # or: podman compose -f infra/docker-compose.yml up -d
 
 # Check logs
 docker-compose -f infra/docker-compose.yml logs

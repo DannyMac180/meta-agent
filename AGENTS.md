@@ -10,6 +10,7 @@ AGENTS quickstart (v2-rewrite current, v1-lts maintained)
 - v2 single test (example): pnpm --filter <package> test -- -t "name" (Jest/Vitest)
 - Architecture: see docs/architecture.md (web app, builder, runner, packages, infra) and docs/workflow_and_gates.md
 - Datastores: Postgres+pgvector, Redis/BullMQ, Object storage, OpenTelemetry (traces/logs).
+- Local infra: Docker or Podman. Use `pnpm db:up`/`pnpm db:down` (Docker) or `pnpm db:up:podman`/`pnpm db:down:podman` (Podman).
 - Repo structure plan: docs/repo_layout.txt; current docs live in docs/ (specs, decisions, plans).
 - DB schema: docs/data_model.sql (app_users, agents, agent_versions, run_history, templates, user_settings + indices/RLS notes).
 - Internal APIs (planned): Remix routes call Builder/Runner; Runner executes jobs (BullMQ) and persists runs/artifacts; Builder pipelines scaffold/package/register.

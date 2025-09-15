@@ -1,3 +1,3 @@
 // HTTP tool for allow-listed outbound requests
-export * from './client';
-export * from './tool';
+export * from './client.js';
+export * from './tool.js';

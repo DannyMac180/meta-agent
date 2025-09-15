@@ -26,6 +26,11 @@ jobs:
       - name: Start databases (docker compose)
         run: docker compose -f infra/docker-compose.yml up -d --wait
 
+      - name: Export DB env
+        run: |
+          echo "PGPORT=55432" >> $GITHUB_ENV
+          echo "DATABASE_URL=postgresql://postgres:devpassword@localhost:55432/metaagent" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 

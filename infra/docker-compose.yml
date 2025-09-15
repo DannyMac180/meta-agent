@@ -1,14 +1,14 @@
 version: "3.9"
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: metaagent-postgres
     environment:
       POSTGRES_DB: metaagent
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: devpassword
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

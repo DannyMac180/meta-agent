@@ -39,7 +39,7 @@ describe('Vector Tool', () => {
       query: vi
         .fn()
         // first call: insert
-        .mockResolvedValueOnce({ rows: [] } as any)
+        .mockResolvedValueOnce({ rows: [ { id: 'doc1' } ] } as any)
         // second call: select similar
         .mockResolvedValueOnce({ rows: [ { id: 'doc1', text: 'hello doc', score: 0.99, meta: { s: 'x' } } ] } as any),
       release: vi.fn(),

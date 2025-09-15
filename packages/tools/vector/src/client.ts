@@ -30,32 +30,33 @@ export async function embedText(text: string): Promise<number[]> {
 }
 
 export async function upsertDocument(doc: VectorDoc): Promise<string> {
-  const id = doc.id ?? ulid();
   const embedding = await embedText(doc.text);
   const client = await pool.connect();
   try {
-    await client.query(
-      `insert into documents (id, text, meta, embedding)
-       values ($1::uuid, $2, $3::jsonb, $4)
-       on conflict (id) do update set text = excluded.text, meta = excluded.meta, embedding = excluded.embedding`,
-      [id, doc.text, doc.meta ?? null, embedding]
+    const vec = `[${embedding.join(',')}]`;
+    const res = await client.query(
+      `insert into documents (text, meta, embedding)
+       values ($1, $2::jsonb, $3::vector)
+       returning id::text`,
+      [doc.text, doc.meta ?? null, vec]
     );
+    return res.rows[0].id as string;
   } finally {
     client.release();
   }
-  return id;
 }
 
 export async function querySimilar(query: string, k: number = 5): Promise<Array<{ id: string; text: string; score: number; meta: any }>> {
-  const qvec = await embedText(query);
+  const q = await embedText(query);
+  const vec = `[${q.join(',')}]`;
   const client = await pool.connect();
   try {
     const res = await client.query(
-      `select id::text, text, meta, 1 - (embedding <=> $1) as score
+      `select id::text, text, meta, 1 - (embedding <=> $1::vector) as score
        from documents
-       order by embedding <=> $1 asc
+       order by embedding <=> $1::vector asc
        limit $2`,
-      [qvec, k]
+      [vec, k]
     );
     return res.rows.map(r => ({ id: r.id, text: r.text, score: Number(r.score), meta: r.meta }));
   } finally {
