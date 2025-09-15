@@ -1,4 +1,4 @@
-import { safeFetch, type SafeFetchResponse } from './client';
+import { safeFetch, type SafeFetchResponse } from './client.js';
 
 export interface HttpToolArgs {
   url: string;

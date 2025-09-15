@@ -1,4 +1,4 @@
-import { querySimilar } from './client';
+import { querySimilar } from './client.js';
 
 export interface VectorQueryArgs {
   query: string;

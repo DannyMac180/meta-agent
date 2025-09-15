@@ -8,6 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@metaagent/db':
+        specifier: workspace:*
+        version: link:packages/db
+      '@metaagent/tools-http':
+        specifier: workspace:*
+        version: link:packages/tools/http
+      '@metaagent/tools-vector':
+        specifier: workspace:*
+        version: link:packages/tools/vector
       '@remix-run/dev':
         specifier: ^2.12.0
         version: 2.17.0(@remix-run/react@2.17.0)(@remix-run/serve@2.17.0)(@types/node@24.3.1)(ts-node@10.9.2)(typescript@5.9.2)(vite@7.1.5)

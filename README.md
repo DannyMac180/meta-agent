@@ -7,7 +7,7 @@ MetaAgent is a Mastra-based platform for building, testing, and deploying AI age
 ### Prerequisites
 
 - Node.js 20+ and pnpm
-- Docker and Docker Compose  
+- Docker and Docker Compose (or Podman with `podman compose`)  
 - Git
 
 ### Development Setup
@@ -22,7 +22,7 @@ MetaAgent is a Mastra-based platform for building, testing, and deploying AI age
 2. **Start infrastructure**:
    ```bash
    # Start PostgreSQL, Redis, and MinIO
-   docker-compose -f infra/docker-compose.yml up -d
+   pnpm db:up   # or: pnpm db:up:podman
    
    # Initialize MinIO bucket (requires mc client)
    brew install minio/stable/mc  # macOS
