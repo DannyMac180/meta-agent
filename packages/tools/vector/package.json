@@ -1,0 +1,22 @@
+{
+  "name": "@metaagent/tools-vector",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "echo \"[lint] @metaagent/tools-vector – implement later\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@metaagent/db": "workspace:*",
+    "@metaagent/tools-http": "workspace:*",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.0.0",
+    "vitest": "^2.1.1"
+  }
+}

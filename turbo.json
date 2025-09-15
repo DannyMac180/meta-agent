@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "build:tools": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -12,7 +16,13 @@
     "lint": {
       "outputs": []
     },
+    "lint:tools": {
+      "outputs": []
+    },
     "test": {
+      "outputs": []
+    },
+    "test:tools": {
       "outputs": []
     }
   },

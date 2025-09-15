@@ -8,16 +8,21 @@
     "build": "tsc -p .",
     "start": "node --env-file ../../.env dist/index.js",
     "lint": "echo \"[lint] @metaagent/runner – implement later\"",
-    "test": "echo \"[test] @metaagent/runner – implement later\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",
     "@metaagent/queue": "workspace:*",
+    "@metaagent/tools-http": "workspace:*",
+    "@metaagent/tools-websearch": "workspace:*",
+    "@metaagent/tools-vector": "workspace:*",
+    "@metaagent/db": "workspace:*",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.1"
   }
 }

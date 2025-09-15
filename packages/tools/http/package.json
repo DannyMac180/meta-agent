@@ -1,0 +1,20 @@
+{
+  "name": "@metaagent/tools-http",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p .",
+    "lint": "echo \"[lint] @metaagent/tools-http – implement later\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "undici": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.0.0",
+    "vitest": "^2.1.1"
+  }
+}

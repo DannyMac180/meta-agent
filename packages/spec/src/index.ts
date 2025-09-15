@@ -17,6 +17,9 @@ export * from "./validators/tool.js";
 export * from "./validators/agent.js";
 export * from "./validators/draft.js";
 
+// tool definitions
+export * from "./tools/definitions.js";
+
 // helpers
 import { AgentSpecSchema } from "./validators/agent.js";
 import type { AgentSpec } from "./types/agent.js";
