@@ -1,15 +1,27 @@
 import { Queue, Worker, type JobsOptions } from "bullmq";
 import { redisOptions } from "./redis.js";
-import type { AgentExecData, AgentExecResult, DraftAutosaveData, DraftAutosaveResult } from "./types.js";
+import type {
+  AgentExecData,
+  AgentExecResult,
+  DraftAutosaveData,
+  DraftAutosaveResult,
+  BuilderScaffoldJob,
+  BuilderScaffoldResult,
+} from "./types.js";
 
 export const AGENT_EXEC_QUEUE = "agent-exec";
 export const DRAFT_AUTOSAVE_QUEUE = "draft-autosave";
+export const BUILDER_SCAFFOLD_QUEUE = "builder-scaffold";
 
 export const agentExecQueue = new Queue<AgentExecData>(AGENT_EXEC_QUEUE, {
   connection: redisOptions,
 });
 
 export const draftAutosaveQueue = new Queue<DraftAutosaveData>(DRAFT_AUTOSAVE_QUEUE, {
+  connection: redisOptions,
+});
+
+export const builderScaffoldQueue = new Queue<BuilderScaffoldJob>(BUILDER_SCAFFOLD_QUEUE, {
   connection: redisOptions,
 });
 
@@ -39,6 +51,20 @@ export function enqueueDraftAutosave(
   });
 }
 
+export function enqueueBuilderScaffold(
+  data: BuilderScaffoldJob,
+  opts?: JobsOptions
+) {
+  const jobId = `scaffold:${data.userId}:${data.draftId}`;
+  return builderScaffoldQueue.add("scaffold", data, {
+    jobId,
+    removeOnComplete: 100,
+    attempts: 5,
+    backoff: { type: "exponential", delay: 2000 },
+    ...opts,
+  });
+}
+
 export function createAgentExecWorker(
   handler: (data: AgentExecData) => Promise<AgentExecResult>,
   opts?: { concurrency?: number }
@@ -59,6 +85,18 @@ export function createDraftAutosaveWorker(
     DRAFT_AUTOSAVE_QUEUE,
     async (job) => handler(job.data),
     { connection: redisOptions, concurrency: opts?.concurrency ?? 10 }
+  );
+  return worker;
+}
+
+export function createBuilderScaffoldWorker(
+  handler: (data: BuilderScaffoldJob) => Promise<BuilderScaffoldResult>,
+  opts?: { concurrency?: number }
+) {
+  const worker = new Worker<BuilderScaffoldJob>(
+    BUILDER_SCAFFOLD_QUEUE,
+    async (job) => handler(job.data),
+    { connection: redisOptions, concurrency: opts?.concurrency ?? 3 }
   );
   return worker;
 }

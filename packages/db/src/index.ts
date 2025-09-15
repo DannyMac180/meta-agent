@@ -1,7 +1,7 @@
 import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, text, jsonb, timestamp, boolean, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, boolean, index, bigint } from 'drizzle-orm/pg-core';
 
 const { Pool } = pg;
 
@@ -36,6 +36,18 @@ export const specDrafts = pgTable('spec_drafts', {
   statusIdx: index('idx_spec_drafts_status').on(table.status, table.updatedAt.desc()),
 }));
 
+export const builderArtifacts = pgTable('builder_artifacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  draftId: uuid('draft_id').notNull().references(() => specDrafts.id, { onDelete: 'cascade' }),
+  buildId: text('build_id').notNull(),
+  step: text('step').notNull().default('scaffold'),
+  bucket: text('bucket').notNull(),
+  objectKey: text('object_key').notNull(),
+  sizeBytes: bigint('size_bytes', { mode: 'number' }),
+  etag: text('etag'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Helper function to set app user context for RLS
 export async function setAppUser(userId: string) {
   await db.execute(sql`SELECT set_app_user(${userId}::uuid)`);
@@ -44,3 +56,5 @@ export async function setAppUser(userId: string) {
 // Types
 export type SpecDraft = typeof specDrafts.$inferSelect;
 export type NewSpecDraft = typeof specDrafts.$inferInsert;
+export type BuilderArtifact = typeof builderArtifacts.$inferSelect;
+
