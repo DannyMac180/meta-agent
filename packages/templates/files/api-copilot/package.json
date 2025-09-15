@@ -1,0 +1,17 @@
+{
+  "name": "{{meta.name}}",
+  "version": "{{default meta.version "1.0.0"}}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/mastra/index.ts",
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "@mastra/core": "latest"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.3.3"
+  }
+}

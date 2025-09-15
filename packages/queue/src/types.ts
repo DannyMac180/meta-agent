@@ -26,3 +26,17 @@ export interface DraftAutosaveResult {
   id: string;
   updatedAt: string;
 }
+
+export interface BuilderScaffoldJob {
+  userId: string;
+  draftId: string;
+  buildId?: string;
+}
+
+export interface BuilderScaffoldResult {
+  artifactId: string;
+  bucket: string;
+  key: string;
+  sizeBytes?: number;
+  etag?: string;
+}
