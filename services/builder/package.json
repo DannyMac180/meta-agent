@@ -9,8 +9,8 @@
     "start": "node --env-file ../../.env dist/index.js",
     "lint": "echo \"[lint] @metaagent/builder – implement later\"",
     "test": "vitest run",
-    "scaffold": "ts-node --esm src/scripts/scaffold.ts",
-    "validate": "ts-node --esm src/scripts/validate.ts"
+    "scaffold": "node dist/scripts/scaffold.js",
+    "validate": "node dist/scripts/validate.js"
   },
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",

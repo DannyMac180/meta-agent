@@ -11,8 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 8
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -23,11 +21,11 @@ jobs:
       - name: Build
         run: pnpm -w build
       - name: Scaffold chatbot
-        run: pnpm --filter @metaagent/builder scaffold -- --template chatbot --out services/builder/dist/ci-chatbot
+        run: pnpm --filter @metaagent/builder scaffold -- --template chatbot --out dist/ci-chatbot
       - name: Scaffold web-automation
-        run: pnpm --filter @metaagent/builder scaffold -- --template web-automation --out services/builder/dist/ci-web
+        run: pnpm --filter @metaagent/builder scaffold -- --template web-automation --out dist/ci-web
       - name: Scaffold api-copilot
-        run: pnpm --filter @metaagent/builder scaffold -- --template api-copilot --out services/builder/dist/ci-api
+        run: pnpm --filter @metaagent/builder scaffold -- --template api-copilot --out dist/ci-api
       - name: Verify outputs
         run: |
           test -f services/builder/dist/ci-chatbot.zip
@@ -35,6 +33,6 @@ jobs:
           test -f services/builder/dist/ci-api.zip
       - name: Validate scaffolded projects
         run: |
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-chatbot.zip
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-web.zip
-          pnpm --filter @metaagent/builder validate services/builder/dist/ci-api.zip
+          pnpm --filter @metaagent/builder validate dist/ci-chatbot.zip
+          pnpm --filter @metaagent/builder validate dist/ci-web.zip
+          pnpm --filter @metaagent/builder validate dist/ci-api.zip
