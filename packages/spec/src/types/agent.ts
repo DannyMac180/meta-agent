@@ -1,4 +1,4 @@
-import type { SpecVersion } from "../enums";
+import type { SpecVersion } from "../enums.js";
 import type { Metadata } from "./common";
 import type { VariableSpec } from "./variable";
 import type { PromptTemplate } from "./prompt";

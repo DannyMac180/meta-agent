@@ -1,4 +1,4 @@
-import type { ToolKind } from "../enums";
+import type { ToolKind } from "../enums.js";
 
 export type ToolSpec =
   | { kind: "http"; allowDomains: string[] }

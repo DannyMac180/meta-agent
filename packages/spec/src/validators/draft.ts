@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ulid, isoDateString } from "../_utils/refinements";
+import { ulid, isoDateString } from "../_utils/refinements.js";
 import { AgentSpecSchema } from "./agent";
 
 export const SpecStatusEnum = ["DRAFT", "PUBLISHED"] as const;

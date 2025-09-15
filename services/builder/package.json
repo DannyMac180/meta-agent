@@ -8,20 +8,26 @@
     "build": "tsc -p .",
     "start": "node --env-file ../../.env dist/index.js",
     "lint": "echo \"[lint] @metaagent/builder – implement later\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "scaffold": "ts-node --esm src/scripts/scaffold.ts",
+    "validate": "ts-node --esm src/scripts/validate.ts"
   },
   "dependencies": {
     "@metaagent/toolkit": "workspace:*",
     "@metaagent/queue": "workspace:*",
     "@metaagent/db": "workspace:*",
+    "@metaagent/templates": "workspace:*",
     "drizzle-orm": "^0.32.0",
     "dotenv": "^16.4.5",
-    "fastify": "^4.28.1"
+    "fastify": "^4.28.1",
+    "fs-extra": "^11.2.0",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vitest": "^2.0.5",
-    "@types/node": "^20.14.10"
+    "@types/node": "^20.14.10",
+    "@types/fs-extra": "^11.0.4"
   }
 }

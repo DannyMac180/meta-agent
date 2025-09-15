@@ -1,6 +1,6 @@
 import { ulid } from "ulid";
-import { SpecDraftSchema, type SpecDraftOutput } from "../validators/draft";
-import { SpecStatus } from "../types/draft";
+import { SpecDraftSchema, type SpecDraftOutput } from "../validators/draft.js";
+import { SpecStatus } from "../types/draft.js";
 
 export interface CreateDraftSpecInput {
   title?: string;

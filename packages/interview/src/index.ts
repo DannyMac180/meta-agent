@@ -1,7 +1,7 @@
-export * from "./types";
-export * from "./runner";
-export * from "./scripts";
+export type * from "./types";
+export * from "./runner.js";
+export * from "./scripts.js";
 
 // Utility functions
-export { InterviewRunner } from "./runner";
-export { genericAgentInterview, chatbotInterview } from "./scripts";
+export { InterviewRunner } from "./runner.js";
+export { genericAgentInterview, chatbotInterview } from "./scripts.js";

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { SpecVersionEnum } from "../enums";
-import { isoDateString, kebabCase, ulid } from "../_utils/refinements";
-import { PromptTemplateSchema } from "./prompt";
-import { VariableSpecSchema } from "./variable";
-import { ModelConfigSchema } from "./model";
-import { ToolSpecSchema } from "./tool";
+import { SpecVersionEnum } from "../enums.js";
+import { isoDateString, kebabCase, ulid } from "../_utils/refinements.js";
+import { PromptTemplateSchema } from "./prompt.js";
+import { VariableSpecSchema } from "./variable.js";
+import { ModelConfigSchema } from "./model.js";
+import { ToolSpecSchema } from "./tool.js";
 
 export const MetadataSchema = z.object({
   id: ulid(),

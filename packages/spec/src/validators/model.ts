@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProviderEnum } from "../enums";
+import { ProviderEnum } from "../enums.js";
 
 export const ModelConfigSchema = z
   .object({

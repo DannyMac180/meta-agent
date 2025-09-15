@@ -1,0 +1,40 @@
+name: Scaffold Templates
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install
+        run: pnpm i
+      - name: Build
+        run: pnpm -w build
+      - name: Scaffold chatbot
+        run: pnpm --filter @metaagent/builder scaffold -- --template chatbot --out services/builder/dist/ci-chatbot
+      - name: Scaffold web-automation
+        run: pnpm --filter @metaagent/builder scaffold -- --template web-automation --out services/builder/dist/ci-web
+      - name: Scaffold api-copilot
+        run: pnpm --filter @metaagent/builder scaffold -- --template api-copilot --out services/builder/dist/ci-api
+      - name: Verify outputs
+        run: |
+          test -f services/builder/dist/ci-chatbot.zip
+          test -f services/builder/dist/ci-web.zip
+          test -f services/builder/dist/ci-api.zip
+      - name: Validate scaffolded projects
+        run: |
+          pnpm --filter @metaagent/builder validate services/builder/dist/ci-chatbot.zip
+          pnpm --filter @metaagent/builder validate services/builder/dist/ci-web.zip
+          pnpm --filter @metaagent/builder validate services/builder/dist/ci-api.zip

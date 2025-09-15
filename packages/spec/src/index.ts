@@ -1,25 +1,25 @@
-export * from "./enums";
+export * from "./enums.js";
 
 // types
-export * from "./types/common";
-export * from "./types/variable";
-export * from "./types/prompt";
-export * from "./types/model";
-export * from "./types/tool";
-export * from "./types/agent";
-export * from "./types/draft";
+export * from "./types/common.js";
+export * from "./types/variable.js";
+export * from "./types/prompt.js";
+export * from "./types/model.js";
+export * from "./types/tool.js";
+export * from "./types/agent.js";
+export * from "./types/draft.js";
 
 // validators
-export * from "./validators/variable";
-export * from "./validators/prompt";
-export * from "./validators/model";
-export * from "./validators/tool";
-export * from "./validators/agent";
-export * from "./validators/draft";
+export * from "./validators/variable.js";
+export * from "./validators/prompt.js";
+export * from "./validators/model.js";
+export * from "./validators/tool.js";
+export * from "./validators/agent.js";
+export * from "./validators/draft.js";
 
 // helpers
-import { AgentSpecSchema } from "./validators/agent";
-import type { AgentSpec } from "./types/agent";
+import { AgentSpecSchema } from "./validators/agent.js";
+import type { AgentSpec } from "./types/agent.js";
 
 export function parseAgentSpec(json: unknown): AgentSpec {
   return AgentSpecSchema.parse(json) as AgentSpec;
@@ -31,5 +31,5 @@ export function isAgentSpec(obj: unknown): obj is AgentSpec {
 }
 
 // draft helpers
-export * from "./helpers/draft";
+export * from "./helpers/draft.js";
 

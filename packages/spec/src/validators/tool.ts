@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ToolKindEnum } from "../enums";
+import { ToolKindEnum } from "../enums.js";
 
 export const ToolSpecSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("http"), allowDomains: z.array(z.string().url()) }),

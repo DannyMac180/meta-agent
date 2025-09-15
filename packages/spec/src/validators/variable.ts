@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { VariableTypeEnum } from "../enums";
-import { kebabCase } from "../_utils/refinements";
+import { VariableTypeEnum } from "../enums.js";
+import { kebabCase } from "../_utils/refinements.js";
 
 export const VariableSpecSchema = z
   .object({

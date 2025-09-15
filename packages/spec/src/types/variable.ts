@@ -1,4 +1,4 @@
-import type { VariableType } from "../enums";
+import type { VariableType } from "../enums.js";
 
 export type VariableSpec = {
   key: string; // kebab-case
