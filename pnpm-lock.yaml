@@ -267,6 +267,25 @@ importers:
         specifier: ^5.3.3
         version: 5.9.2
 
+  packages/tools/code:
+    dependencies:
+      '@metaagent/spec':
+        specifier: workspace:*
+        version: link:../../spec
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.19.13
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.2
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.13)
+
   packages/tools/http:
     dependencies:
       undici:
@@ -393,6 +412,9 @@ importers:
       '@metaagent/toolkit':
         specifier: workspace:*
         version: link:../../packages/toolkit
+      '@metaagent/tools-code':
+        specifier: workspace:*
+        version: link:../../packages/tools/code
       '@metaagent/tools-http':
         specifier: workspace:*
         version: link:../../packages/tools/http
