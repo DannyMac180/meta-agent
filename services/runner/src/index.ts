@@ -5,6 +5,7 @@ import { createAgentExecWorker } from "@metaagent/queue";
 import { httpTool } from "@metaagent/tools-http";
 import { webSearchTool } from "@metaagent/tools-websearch";
 import { vectorTool } from "@metaagent/tools-vector";
+import { codeTool } from "@metaagent/tools-code";
 import { validateAllowList } from "@metaagent/tools-http";
 
 dotenv.config();
@@ -38,6 +39,10 @@ export function createServer() {
       }
       if (name === 'vector') {
         const res = await vectorTool(args);
+        return res;
+      }
+      if (name === 'code') {
+        const res = await codeTool.execute(args);
         return res;
       }
       reply.code(404);
