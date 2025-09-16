@@ -83,6 +83,9 @@ S3_KEY=minioadmin
 S3_SECRET=minioadmin
 BUILDER_BUCKET=metaagent-artifacts
 
+# Security - Egress Allow-List
+ALLOW_HTTP_HOSTS=["api.openai.com","google.serper.dev"]
+
 # Services
 PORT=3000
 BUILDER_PORT=3101  
@@ -134,6 +137,7 @@ pnpm --filter @metaagent/builder dev
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
+- [Security](docs/security.md)
 - [Project Scaffolder](docs/scaffolder.md)
 - [Development Decisions](docs/decisions.md)
 - [Delivery Plan](docs/delivery_plan.md)

@@ -5,11 +5,20 @@ import { createAgentExecWorker } from "@metaagent/queue";
 import { httpTool } from "@metaagent/tools-http";
 import { webSearchTool } from "@metaagent/tools-websearch";
 import { vectorTool } from "@metaagent/tools-vector";
+import { validateAllowList } from "@metaagent/tools-http";
 
 dotenv.config();
 
 export function createServer() {
   const app = Fastify({ logger });
+
+  // Validate egress allow-list configuration on startup
+  const validation = validateAllowList();
+  if (!validation.isValid) {
+    app.log.warn(`[SECURITY] Allow-list validation: ${validation.error}`);
+  } else {
+    app.log.info('[SECURITY] Egress allow-list configured and validated');
+  }
 
   app.get("/healthz", async () => ({ status: "ok" }));
   app.get("/readyz", async () => ({ status: "ready" }));
