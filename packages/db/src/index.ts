@@ -1,7 +1,7 @@
 import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import { pgTable, uuid, text, jsonb, timestamp, boolean, index, bigint } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, boolean, index, bigint, serial, integer } from 'drizzle-orm/pg-core';
 
 const { Pool } = pg;
 
@@ -48,6 +48,35 @@ export const builderArtifacts = pgTable('builder_artifacts', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const gateResults = pgTable('gate_results', {
+  id: serial('id').primaryKey(),
+  draftId: uuid('draft_id').notNull().references(() => specDrafts.id, { onDelete: 'cascade' }),
+  buildId: text('build_id').notNull(),
+  gateName: text('gate_name').notNull(),
+  passed: boolean('passed').notNull(),
+  durationMs: integer('duration_ms').notNull(),
+  errors: jsonb('errors'),
+  warnings: jsonb('warnings'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  draftIdx: index('idx_gate_results_draft_id').on(table.draftId),
+  buildIdx: index('idx_gate_results_build_id').on(table.buildId),
+}));
+
+export const gateRuns = pgTable('gate_runs', {
+  id: serial('id').primaryKey(),
+  draftId: uuid('draft_id').notNull().references(() => specDrafts.id, { onDelete: 'cascade' }),
+  buildId: text('build_id').notNull(),
+  success: boolean('success').notNull(),
+  totalDurationMs: integer('total_duration_ms').notNull(),
+  failedGate: text('failed_gate'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  draftIdx: index('idx_gate_runs_draft_id').on(table.draftId),
+  buildIdx: index('idx_gate_runs_build_id').on(table.buildId),
+}));
+
 // Helper function to set app user context for RLS
 export async function setAppUser(userId: string) {
   await db.execute(sql`SELECT set_app_user(${userId}::uuid)`);
@@ -57,4 +86,8 @@ export async function setAppUser(userId: string) {
 export type SpecDraft = typeof specDrafts.$inferSelect;
 export type NewSpecDraft = typeof specDrafts.$inferInsert;
 export type BuilderArtifact = typeof builderArtifacts.$inferSelect;
+export type GateResult = typeof gateResults.$inferSelect;
+export type NewGateResult = typeof gateResults.$inferInsert;
+export type GateRun = typeof gateRuns.$inferSelect;
+export type NewGateRun = typeof gateRuns.$inferInsert;
 
