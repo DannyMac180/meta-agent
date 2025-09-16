@@ -4,6 +4,7 @@ import fs from "fs-extra";
 import path from "node:path";
 import { artifactKey, putObjectStream } from "@metaagent/object-storage";
 import { scaffoldProject } from "./scaffoldProject.js";
+import { runGatesOnZip } from "./runGates.js";
 import type { BuilderScaffoldJob, BuilderScaffoldResult } from "@metaagent/queue";
 
 export async function handleBuilderScaffold(job: BuilderScaffoldJob): Promise<BuilderScaffoldResult> {
@@ -43,6 +44,18 @@ export async function handleBuilderScaffold(job: BuilderScaffoldJob): Promise<Bu
     draft: { title: draft.title, payload: draft.spec },
     buildId,
   });
+
+  // Run quality gates on the scaffolded project
+  console.log(`Running quality gates on scaffolded project: ${zipPath}`);
+  const tempDir = path.dirname(zipPath);
+  const gateResults = await runGatesOnZip(zipPath, tempDir, job.draftId, buildId);
+
+  if (!gateResults.success) {
+    console.log(`Quality gates failed for draft ${job.draftId}:`, gateResults);
+    throw new Error(`Quality gates failed at ${gateResults.failedGate}: ${gateResults.results.find((r: any) => !r.passed)?.errors?.join(', ') || 'Unknown error'}`);
+  }
+
+  console.log(`Quality gates passed for draft ${job.draftId} in ${gateResults.totalDuration}ms`);
 
   const key = artifactKey({ userId: job.userId, draftId: job.draftId, buildId, filename: path.basename(zipPath) });
   const stat = await fs.stat(zipPath);
