@@ -150,6 +150,26 @@ pnpm --filter @metaagent/builder dev
 3. Build successfully: `pnpm -w build`
 4. Update documentation as needed
 
+## Amp Toolbox: codex-code-review
+
+A toolbox tool is provided to run OpenAI Codex CLI to review a GitHub PR.
+
+Setup:
+- Install Codex CLI: `npm i -g @openai/codex` (or `brew install codex`)
+- Export toolbox path: `export AMP_TOOLBOX="$(pwd)/toolboxes"`
+- Optional: set `GITHUB_TOKEN` for private repos and higher rate limits
+
+Usage in Amp:
+- Tool name: `codex-code-review`
+- Required param: `pr_url` (e.g., `https://github.com/owner/repo/pull/123`)
+- Optional params: `model` (default `GPT-5-Codex`), `github_token`, `max_diff_bytes`
+
+Example invocation:
+- pr_url: https://github.com/openai/codex/pull/1
+- model: GPT-5-Codex
+
+The tool fetches the PR diff via GitHub API and invokes `codex exec` with a structured review prompt.
+
 ## License
 
 [License TBD]
