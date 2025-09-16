@@ -30,6 +30,37 @@ function parseAllowList(): string[] {
   return [];
 }
 
+export function validateAllowList(): { isValid: boolean; error?: string } {
+  const raw = process.env.ALLOW_HTTP_HOSTS?.trim();
+  if (!raw) {
+    return { isValid: false, error: 'ALLOW_HTTP_HOSTS is empty - all external HTTP requests will be blocked' };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return { isValid: false, error: 'ALLOW_HTTP_HOSTS JSON must be an array' };
+    }
+    if (parsed.length === 0) {
+      return { isValid: false, error: 'ALLOW_HTTP_HOSTS array is empty - all external HTTP requests will be blocked' };
+    }
+    // Validate each host pattern
+    for (const host of parsed) {
+      if (typeof host !== 'string' || !host.trim()) {
+        return { isValid: false, error: `Invalid host pattern: ${JSON.stringify(host)}` };
+      }
+    }
+    return { isValid: true };
+  } catch (error) {
+    // Try comma-separated fallback
+    const hosts = raw.split(',').map(s => s.trim()).filter(Boolean);
+    if (hosts.length === 0) {
+      return { isValid: false, error: 'ALLOW_HTTP_HOSTS is empty - all external HTTP requests will be blocked' };
+    }
+    return { isValid: true };
+  }
+}
+
 function hostMatches(pattern: string, host: string): boolean {
   if (!pattern) return false;
   if (pattern === host) return true;
@@ -50,6 +81,8 @@ export async function safeFetch(opts: SafeFetchOptions): Promise<SafeFetchRespon
   const u = new URL(url);
   const allow = parseAllowList();
   if (!isHostAllowed(u.hostname, allow)) {
+    // Log blocked request for security monitoring
+    console.warn(`[SECURITY] Blocked HTTP request to disallowed host: ${u.hostname} (${method} ${url})`);
     throw new Error(`Blocked host: ${u.hostname}`);
   }
 
