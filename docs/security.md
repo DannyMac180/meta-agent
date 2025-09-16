@@ -1,5 +1,47 @@
 # Security
 
+## Code Interpreter Security
+
+The code interpreter tool provides secure JavaScript execution through containerized isolation:
+
+### Container Security
+- **Base Image**: Node.js 18 Alpine (minimal attack surface)
+- **Non-root Execution**: All code runs as UID 1001 (sandbox user)  
+- **Network Isolation**: `--network=none` by default, optional allow-list override
+- **Filesystem**: Read-only root filesystem with limited temp directories
+- **Capabilities**: All Linux capabilities dropped (`--cap-drop=ALL`)
+
+### Resource Limits
+- **Memory**: Configurable (64MB-1GB), default 256MB, no swap
+- **CPU**: Limited to 0.5 core
+- **Processes**: Max 32 processes per container  
+- **File Descriptors**: Max 256 open files
+- **Disk**: 100MB temp space, 50MB app directory
+- **Timeout**: Configurable (1-300 seconds), default 8 seconds
+
+### Package Security
+- **Allow-list Validation**: Only pre-approved packages can be installed
+- **Name Validation**: Strict regex validation prevents injection
+- **Dangerous Packages Blocked**: Core modules like `fs`, `child_process`, `net` blocked
+- **Installation Timeout**: Package installation limited to 30 seconds
+
+### Output Protection
+- **Size Limits**: stdout limited to 50KB, stderr to 25KB  
+- **Truncation Indicators**: Clear indication when output is truncated
+- **No Secrets**: Container has no access to host secrets or environment
+
+### Container Lifecycle
+- **Unique Containers**: Each execution gets fresh container with random ID
+- **Automatic Cleanup**: Containers removed after execution or timeout
+- **Process Isolation**: dumb-init prevents zombie processes
+- **Graceful Shutdown**: SIGTERM/SIGINT handled for clean exits
+
+### Runtime Monitoring
+- **Execution Tracking**: All running containers tracked and manageable
+- **Timeout Enforcement**: Hard container kill after timeout + 5s grace period
+- **Resource Monitoring**: Memory and CPU usage constrained by Docker
+- **Audit Logging**: All executions logged with security context
+
 ## Egress Allow-List
 
 The MetaAgent platform enforces strict network security through an egress allow-list that controls which external hosts can be accessed by tools and services.

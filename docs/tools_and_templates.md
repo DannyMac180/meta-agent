@@ -14,6 +14,13 @@
 - **Always runs in Docker** (no `node:vm` for untrusted code).
 - Defaults: `timeoutMs=8000`, `memMb=256`, `network=false`.
 - Optional NPM packages allow‑list (from spec).
+- **Security Features:**
+  - Network isolation by default (`--network=none`)
+  - Resource quotas (CPU: 0.5 core, Memory: configurable, Disk: 100MB temp)
+  - Non-root execution (UID 1001)
+  - Package validation and allow-lists
+  - Output size limits (50KB stdout, 25KB stderr)
+  - Container cleanup and timeout enforcement
 
 ### Vector Store (pgvector)
 - `indexTable` required.
@@ -31,6 +38,39 @@
 - src/server/ (optional Hono/Express routes)
 - tests/{unit,evals}/
 
+
+## Example: Code Interpreter tool usage
+```ts
+import { codeTool } from "@metaagent/tools-code";
+
+// Basic execution
+const result = await codeTool.execute({
+  code: "console.log('Hello World!'); Math.sqrt(16);",
+  timeoutMs: 5000,
+  memMb: 128
+});
+
+// With packages
+const resultWithPackages = await codeTool.execute({
+  code: "const _ = require('lodash'); console.log(_.isEmpty({}));",
+  packages: ["lodash"],
+  timeoutMs: 10000
+});
+
+// Result structure
+interface CodeExecutionResult {
+  success: boolean;
+  exitCode?: number;
+  stdout: string;      // Console output
+  stderr: string;      // Error output  
+  executionTimeMs: number;
+  error?: string;      // Execution error
+  truncated?: {        // If output was truncated
+    stdout?: boolean;
+    stderr?: boolean;
+  };
+}
+```
 
 ## Example: HTTP tool skeleton
 ```ts

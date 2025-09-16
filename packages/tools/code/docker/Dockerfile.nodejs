@@ -1,0 +1,30 @@
+# Secure Node.js 18 container for code execution
+FROM node:18-alpine
+
+# Install only essential packages, no network tools
+RUN apk add --no-cache \
+    dumb-init \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user for secure execution
+RUN addgroup -g 1001 -S sandbox && \
+    adduser -S -u 1001 -G sandbox sandbox
+
+# Create working directory with proper permissions
+WORKDIR /app
+RUN chown sandbox:sandbox /app
+
+# Set resource limits via ulimit
+RUN echo 'sandbox soft nproc 32' >> /etc/security/limits.conf && \
+    echo 'sandbox hard nproc 32' >> /etc/security/limits.conf && \
+    echo 'sandbox soft nofile 256' >> /etc/security/limits.conf && \
+    echo 'sandbox hard nofile 256' >> /etc/security/limits.conf
+
+# Switch to non-root user
+USER sandbox
+
+# Copy entrypoint script
+COPY --chown=sandbox:sandbox sandbox-entrypoint.js /app/
+
+# Set entrypoint
+ENTRYPOINT ["dumb-init", "--", "node", "/app/sandbox-entrypoint.js"]

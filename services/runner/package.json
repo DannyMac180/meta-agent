@@ -16,6 +16,7 @@
     "@metaagent/tools-http": "workspace:*",
     "@metaagent/tools-websearch": "workspace:*",
     "@metaagent/tools-vector": "workspace:*",
+    "@metaagent/tools-code": "workspace:*",
     "@metaagent/db": "workspace:*",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1"
