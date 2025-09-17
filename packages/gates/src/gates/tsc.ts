@@ -32,7 +32,9 @@ export class TypeScriptGate implements Gate {
       // Run TypeScript compiler in no-emit mode
       const { stdout, stderr } = await execAsync('npx tsc --noEmit', {
         cwd: context.projectPath,
-        timeout: 60000, // 60 second timeout
+        timeout: 60000,
+        maxBuffer: 20 * 1024 * 1024,
+        env: { ...process.env, CI: 'true' },
       });
 
       // TypeScript outputs errors to stdout, not stderr
@@ -60,8 +62,8 @@ export class TypeScriptGate implements Gate {
 
     } catch (error: any) {
       // Handle execution errors (e.g., tsc not found, timeout)
-      if (error.code === 'ETIMEDOUT') {
-        errors.push('TypeScript compilation timed out after 60 seconds');
+      if (error.killed && error.signal === 'SIGTERM') {
+        errors.push('TypeScript compilation timed out');
       } else if (error.code === 2) {
         // TypeScript compiler exit code 2 means compilation errors
         const output = error.stdout || '';
@@ -69,6 +71,8 @@ export class TypeScriptGate implements Gate {
           const lines = output.trim().split('\n');
           errors.push(...lines.filter((line: string) => line.includes('error TS')));
         }
+      } else if (error.code === 'ENOBUFS') {
+        errors.push('TypeScript compiler output too large (ENOBUFS)');
       } else {
         errors.push(`TypeScript compilation failed: ${error.message}`);
       }

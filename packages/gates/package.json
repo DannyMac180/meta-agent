@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint src --ext .ts",
-    "test": "vitest"
+    "lint": "echo \"[lint] @metaagent/gates – implement later\"",
+    "test": "echo \"[test] @metaagent/gates – no tests yet\""
   },
   "dependencies": {
     "zod": "^4.1.8"

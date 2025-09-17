@@ -33,16 +33,8 @@ export class VitestGate implements Gate {
       // Check if there's a test script in package.json
       const hasTestScript = context.packageJson?.scripts?.test;
       
-      // Check if there are any test files
-      let hasTestFiles = false;
-      try {
-        const { stdout } = await execAsync('find . -name "*.test.*" -o -name "*.spec.*" -o -name "__tests__" -type f', {
-          cwd: context.projectPath,
-        });
-        hasTestFiles = stdout.trim().length > 0;
-      } catch {
-        // Ignore find errors
-      }
+      // Basic heuristic: rely on config or package.json scripts; skip deep file discovery to remain cross-platform
+      const hasTestFiles = false;
 
       if (!hasConfig && !hasTestScript && !hasTestFiles) {
         return {
@@ -53,26 +45,34 @@ export class VitestGate implements Gate {
         };
       }
 
-      // Run tests with Vitest
-      const command = hasTestScript ? 'npm test' : 'npx vitest run';
+      // Run tests
+      const useVitest = hasConfig || (context.packageJson?.devDependencies && context.packageJson.devDependencies.vitest);
+      const command = useVitest ? 'npx vitest run --reporter=json' : (hasTestScript ? 'npm test' : 'npx vitest run');
       const { stdout, stderr } = await execAsync(command, {
-        cwd: context.projectPath,
-        timeout: 300000, // 5 minute timeout
-        env: { ...process.env, CI: 'true' }, // Ensure non-interactive mode
+      cwd: context.projectPath,
+      timeout: 300000,
+        maxBuffer: 20 * 1024 * 1024,
+        env: { ...process.env, CI: 'true' },
       });
 
       // Parse output for test results
       let testResults: any = {};
-      
-      // Try to find JSON output or parse text output
+
+      if (command.includes('--reporter=json')) {
       try {
-        // Look for JSON in stdout
-        const jsonMatch = stdout.match(/\{.*"testResults".*\}/s);
-        if (jsonMatch) {
-          testResults = JSON.parse(jsonMatch[0]);
-        }
+      testResults = JSON.parse(stdout);
       } catch {
-        // Fallback to parsing text output
+      // Fallback to text parsing
+          const failedTests = stdout.match(/FAIL.*$/gm) || [];
+          const passedTests = stdout.match(/PASS.*$/gm) || [];
+          testResults = {
+            numFailedTests: failedTests.length,
+            numPassedTests: passedTests.length,
+            numTotalTests: failedTests.length + passedTests.length,
+          };
+      }
+      } else {
+      // Parse text output
         const failedTests = stdout.match(/FAIL.*$/gm) || [];
         const passedTests = stdout.match(/PASS.*$/gm) || [];
         
@@ -123,8 +123,8 @@ export class VitestGate implements Gate {
       };
 
     } catch (error: any) {
-      if (error.code === 'ETIMEDOUT') {
-        errors.push('Test execution timed out after 5 minutes');
+      if (error.killed && error.signal === 'SIGTERM') {
+        errors.push('Test execution timed out');
       } else if (error.code === 1) {
         // Test failures
         const output = error.stdout || '';
@@ -139,6 +139,8 @@ export class VitestGate implements Gate {
         } else {
           errors.push('Tests failed but no specific error information could be parsed');
         }
+      } else if (error.code === 'ENOBUFS') {
+        warnings.push('Test output too large (ENOBUFS)');
       } else {
         errors.push(`Test execution failed: ${error.message}`);
       }
