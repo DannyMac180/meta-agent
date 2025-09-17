@@ -1,7 +1,7 @@
 -- Gate results table to store quality gate execution results
 CREATE TABLE gate_results (
     id SERIAL PRIMARY KEY,
-    draft_id INTEGER REFERENCES spec_drafts(id) ON DELETE CASCADE,
+    draft_id UUID REFERENCES spec_drafts(id) ON DELETE CASCADE,
     build_id TEXT NOT NULL,
     gate_name TEXT NOT NULL,
     passed BOOLEAN NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE gate_results (
 -- Gate runs table to store overall gate run results
 CREATE TABLE gate_runs (
     id SERIAL PRIMARY KEY,
-    draft_id INTEGER REFERENCES spec_drafts(id) ON DELETE CASCADE,
+    draft_id UUID REFERENCES spec_drafts(id) ON DELETE CASCADE,
     build_id TEXT NOT NULL,
     success BOOLEAN NOT NULL,
     total_duration_ms INTEGER NOT NULL,
@@ -40,7 +40,14 @@ CREATE POLICY gate_results_user_policy ON gate_results
     EXISTS (
       SELECT 1 FROM spec_drafts 
       WHERE spec_drafts.id = gate_results.draft_id 
-      AND spec_drafts.owner_user_id = current_setting('app.user_id')::INTEGER
+      AND spec_drafts.owner_user_id = current_setting('app.user_id')::uuid
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM spec_drafts 
+      WHERE spec_drafts.id = gate_results.draft_id 
+      AND spec_drafts.owner_user_id = current_setting('app.user_id')::uuid
     )
   );
 
@@ -50,6 +57,13 @@ CREATE POLICY gate_runs_user_policy ON gate_runs
     EXISTS (
       SELECT 1 FROM spec_drafts 
       WHERE spec_drafts.id = gate_runs.draft_id 
-      AND spec_drafts.owner_user_id = current_setting('app.user_id')::INTEGER
+      AND spec_drafts.owner_user_id = current_setting('app.user_id')::uuid
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM spec_drafts 
+      WHERE spec_drafts.id = gate_runs.draft_id 
+      AND spec_drafts.owner_user_id = current_setting('app.user_id')::uuid
     )
   );

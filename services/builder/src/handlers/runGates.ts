@@ -2,6 +2,10 @@ import { createDefaultGateRunner, GateContext, GateRunResult } from "@metaagent/
 import { db, gateResults, gateRuns } from "@metaagent/db";
 import fs from "fs-extra";
 import path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 export async function runGatesOnProject(projectPath: string): Promise<GateRunResult> {
   // Read package.json for context
@@ -40,10 +44,13 @@ export async function runGatesOnZip(zipPath: string, tempDir: string, draftId?: 
       if (!file.dir) {
         const fullPath = path.join(extractPath, relativePath);
         await fs.ensureDir(path.dirname(fullPath));
-        const content = await file.async('nodebuffer');
+        const content = await (file as any).async('nodebuffer');
         await fs.writeFile(fullPath, content);
       }
     }
+
+    // Install dependencies based on lockfile if present
+    await installDependencies(extractPath);
 
     // Run gates on extracted project
     const result = await runGatesOnProject(extractPath);
@@ -61,6 +68,30 @@ export async function runGatesOnZip(zipPath: string, tempDir: string, draftId?: 
     } catch (error) {
       console.warn(`Failed to clean up temp directory ${extractPath}:`, error);
     }
+  }
+}
+
+async function installDependencies(projectPath: string): Promise<void> {
+  try {
+    const hasPnpm = await fs.pathExists(path.join(projectPath, 'pnpm-lock.yaml'));
+    const hasYarn = await fs.pathExists(path.join(projectPath, 'yarn.lock'));
+    const hasNpm = await fs.pathExists(path.join(projectPath, 'package-lock.json'));
+
+    let cmd = '';
+    if (hasPnpm) cmd = 'pnpm i --frozen-lockfile';
+    else if (hasYarn) cmd = 'yarn install --frozen-lockfile';
+    else if (hasNpm) cmd = 'npm ci';
+    else cmd = 'npm i --no-audit --no-fund';
+
+    await execAsync(cmd, {
+      cwd: projectPath,
+      timeout: 5 * 60_000,
+      maxBuffer: 20 * 1024 * 1024,
+      env: { ...process.env, CI: 'true' },
+    });
+  } catch (error: any) {
+    // Proceed even if install fails; gates may still run for some projects
+    console.warn('Dependency install step failed or timed out:', error?.message || error);
   }
 }
 
