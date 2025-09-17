@@ -27,8 +27,10 @@
 - **Vector sanity**: verify embeddings dim matches `indexTable` schema
 
 ## Packaging
-- **zip**: always generated
-- **docker**: optional; base `node:20-alpine`; non-root; minimal perms
+- **zip**: always generated and uploaded as builder artifact step `package:zip`.
+- **docker**: optional; builds a `node:20-alpine` image, exports an OCI tarball, and records it as step `package:docker`.
+- Artifacts use `artifactKey` (`scaffolds/{userId}/{draftId}/{buildId}/...`) for storage and idempotency.
+- Set `MOCK_DOCKER_BUILD=1` to bypass Docker CLI during local tests.
 
 ## Runner Modes
 - **Node Worker**: fastest path; good for typical agents.

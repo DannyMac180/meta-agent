@@ -199,6 +199,11 @@ pnpm --filter @metaagent/builder scaffold:tpl chatbot
 # This creates a ZIP file in services/builder/dist/tmp-scaffold/
 ```
 
+### Packaging Outputs
+- Packaged zips are uploaded as builder artifact step `package:zip` and stored under `scaffolds/{user}/{draft}/{build}/project.zip` in object storage.
+- Docker packaging (when enabled) exports an OCI tarball to `services/builder/dist/tmp-scaffold/docker-packaging/` for temporary staging before upload.
+- Set `MOCK_DOCKER_BUILD=1` when running unit tests without Docker installed; packaging tests respect this flag.
+
 ### MinIO Browser
 
 Visit http://localhost:9001 and log in with `minioadmin/minioadmin` to browse stored artifacts.

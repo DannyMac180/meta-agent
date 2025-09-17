@@ -98,7 +98,7 @@ CREATE TABLE builder_artifacts (
 );
 ```
 
-Supports idempotency: if artifact exists for (draft_id, step='scaffold'), returns existing.
+Supports idempotency: `builder_artifacts.step` tracks pipeline phases (e.g., `scaffold`, `package:zip`, `package:docker`). Existing records for the same draft/build step are reused.
 
 ## API
 
@@ -110,9 +110,18 @@ Enqueues a scaffold job for the specified draft.
 ```json
 {
   "draftId": "draft-uuid-here",
-  "buildId": "optional-build-id"
+  "buildId": "optional-build-id",
+  "package": {
+    "includeZip": true,
+    "docker": {
+      "enabled": true,
+      "imageTag": "metaagent/demo:latest"
+    }
+  }
 }
 ```
+
+`package` is optional; zips are always produced by default. Set `docker.enabled` to `true` to export an OCI image tarball.
 
 **Response** (202 Accepted):
 ```json
@@ -129,13 +138,14 @@ Enqueues a scaffold job for the specified draft.
 2. **API validates** user owns draft, enqueues job
 3. **Worker processes**:
    - Load draft from database (with RLS context)
-   - Check for existing artifact (idempotency)
+   - Check for existing packaged artifacts (`package:zip`, `package:docker`) for the requested build
    - Load template files from filesystem
    - Apply Handlebars placeholders with draft payload
    - Validate result has required Mastra structure
-   - Create ZIP archive
-   - Upload to object storage
-   - Record artifact metadata in database
+   - Create scaffold directory + ZIP archive
+   - Run quality gates on the generated project
+   - Package artifacts (always ZIP, optional Docker image tarball)
+   - Upload each artifact to object storage and record metadata per step
 4. **Result** available via artifact record (future: download endpoint)
 
 ## Development
@@ -143,12 +153,14 @@ Enqueues a scaffold job for the specified draft.
 ### Running Tests
 
 ```bash
-# Unit tests (placeholders, object keys)
+# Unit tests (placeholders, packaging helpers, object keys)
 pnpm --filter @metaagent/builder test
 
 # Integration tests (requires Docker for MinIO)
 pnpm --filter @metaagent/builder test:integration
 ```
+
+> The packaging unit tests set `MOCK_DOCKER_BUILD=1` automatically to avoid invoking Docker during local runs.
 
 ### Manual Testing
 

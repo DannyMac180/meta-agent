@@ -27,16 +27,34 @@ export interface DraftAutosaveResult {
   updatedAt: string;
 }
 
+export interface BuilderPackageDockerOptions {
+  enabled: boolean;
+  imageTag?: string;
+}
+
+export interface BuilderPackageOptions {
+  includeZip?: boolean;
+  docker?: BuilderPackageDockerOptions;
+}
+
 export interface BuilderScaffoldJob {
   userId: string;
   draftId: string;
   buildId?: string;
+  package?: BuilderPackageOptions;
 }
 
-export interface BuilderScaffoldResult {
+export interface BuilderPackagedArtifact {
   artifactId: string;
   bucket: string;
   key: string;
   sizeBytes?: number;
   etag?: string;
+  step: "package:zip" | "package:docker" | (string & {});
+}
+
+export interface BuilderScaffoldResult {
+  zip?: BuilderPackagedArtifact;
+  docker?: BuilderPackagedArtifact;
+  artifacts: BuilderPackagedArtifact[];
 }
