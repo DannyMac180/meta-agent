@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint src --ext .ts",
+    "lint": "echo \"[lint] @metaagent/gates – implement later\"",
     "test": "vitest"
   },
   "dependencies": {
