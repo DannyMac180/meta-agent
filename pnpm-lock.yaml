@@ -385,6 +385,9 @@ importers:
       '@metaagent/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@metaagent/spec':
+        specifier: workspace:*
+        version: link:../../packages/spec
       '@metaagent/templates':
         specifier: workspace:*
         version: link:../../packages/templates

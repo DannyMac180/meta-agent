@@ -5,6 +5,7 @@ import { PromptTemplateSchema } from "./prompt.js";
 import { VariableSpecSchema } from "./variable.js";
 import { ModelConfigSchema } from "./model.js";
 import { ToolSpecSchema } from "./tool.js";
+import { AcceptanceEvalArraySchema } from "./eval.js";
 
 export const MetadataSchema = z.object({
   id: ulid(),
@@ -30,6 +31,7 @@ export const AgentSpecSchema = z
     model: ModelConfigSchema,
     tools: z.array(ToolSpecSchema).optional(),
     limits: RuntimeLimitsSchema.optional(),
+    acceptanceEvals: AcceptanceEvalArraySchema.optional(),
   })
   .superRefine((val, ctx) => {
     // Ensure prompt references only declared variables

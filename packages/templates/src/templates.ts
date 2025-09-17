@@ -2,6 +2,43 @@ import type { TemplateMeta } from "./types";
 import { createDraftSpec } from "@metaagent/spec";
 import { chatbotInterview, genericAgentInterview } from "@metaagent/interview";
 import { ulid } from "ulid";
+import type { AcceptanceEval } from "@metaagent/spec";
+
+const chatbotAcceptanceEvals = [
+  {
+    id: "prompt-configured",
+    title: "Chatbot prompt is configured",
+    description: "Ensures the chatbot prompt has content and a model provider is set.",
+    assertions: [
+      { kind: "string-not-empty", path: "prompt.template", message: "Prompt template must be provided." },
+      { kind: "string-not-empty", path: "model.provider", message: "Model provider must be specified." },
+    ],
+  },
+] satisfies AcceptanceEval[];
+
+const webAutomationAcceptanceEvals = [
+  {
+    id: "prompt-references-target-url",
+    title: "Prompt references target URL variable",
+    description: "Validates the automation prompt includes the target-url placeholder and an HTTP tool is configured.",
+    assertions: [
+      { kind: "string-contains", path: "prompt.template", value: "{{target-url}}", message: "Prompt must mention the target-url variable." },
+      { kind: "array-min-length", path: "tools", min: 1, message: "At least one tool must be configured." },
+    ],
+  },
+] satisfies AcceptanceEval[];
+
+const apiCopilotAcceptanceEvals = [
+  {
+    id: "prompt-references-api-docs",
+    title: "Prompt references API docs",
+    description: "Ensures the copilot prompt references the api-docs variable and provides tool coverage.",
+    assertions: [
+      { kind: "string-contains", path: "prompt.template", value: "{{api-docs}}", message: "Prompt must reference api-docs variable." },
+      { kind: "array-min-length", path: "tools", min: 2, message: "API Copilot must have at least two tools configured." },
+    ],
+  },
+] satisfies AcceptanceEval[];
 
 export const chatbotTemplate: TemplateMeta = {
   id: "chatbot",
@@ -10,6 +47,7 @@ export const chatbotTemplate: TemplateMeta = {
   category: "chatbot",
   tags: ["conversation", "support", "chat"],
   interview: chatbotInterview,
+  acceptanceEvals: chatbotAcceptanceEvals,
   defaultSpec: createDraftSpec({
     title: "My Chatbot",
     payload: {
@@ -39,6 +77,7 @@ export const chatbotTemplate: TemplateMeta = {
         timeoutSec: 30,
         budgetUsd: 10,
       },
+      acceptanceEvals: chatbotAcceptanceEvals,
     },
   }),
 };
@@ -50,6 +89,7 @@ export const webAutomationTemplate: TemplateMeta = {
   category: "web-automation",
   tags: ["automation", "web", "scraping", "forms"],
   interview: genericAgentInterview,
+  acceptanceEvals: webAutomationAcceptanceEvals,
   defaultSpec: createDraftSpec({
     title: "Web Automation Agent",
     payload: {
@@ -92,6 +132,7 @@ export const webAutomationTemplate: TemplateMeta = {
         timeoutSec: 120,
         budgetUsd: 20,
       },
+      acceptanceEvals: webAutomationAcceptanceEvals,
     },
   }),
 };
@@ -103,6 +144,7 @@ export const apiCopilotTemplate: TemplateMeta = {
   category: "api-copilot",
   tags: ["api", "development", "coding", "debugging"],
   interview: genericAgentInterview,
+  acceptanceEvals: apiCopilotAcceptanceEvals,
   defaultSpec: createDraftSpec({
     title: "API Copilot",
     payload: {
@@ -149,6 +191,7 @@ export const apiCopilotTemplate: TemplateMeta = {
         timeoutSec: 60,
         budgetUsd: 15,
       },
+      acceptanceEvals: apiCopilotAcceptanceEvals,
     },
   }),
 };
