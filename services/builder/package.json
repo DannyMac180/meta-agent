@@ -22,6 +22,7 @@
     "@metaagent/templates": "workspace:*",
     "@metaagent/object-storage": "workspace:*",
     "@metaagent/gates": "workspace:*",
+    "@metaagent/spec": "workspace:*",
     "drizzle-orm": "^0.32.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",

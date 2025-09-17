@@ -8,6 +8,7 @@ export * from "./types/model.js";
 export * from "./types/tool.js";
 export * from "./types/agent.js";
 export * from "./types/draft.js";
+export * from "./types/eval.js";
 
 // validators
 export * from "./validators/variable.js";
@@ -16,6 +17,7 @@ export * from "./validators/model.js";
 export * from "./validators/tool.js";
 export * from "./validators/agent.js";
 export * from "./validators/draft.js";
+export * from "./validators/eval.js";
 
 // tool definitions
 export * from "./tools/definitions.js";

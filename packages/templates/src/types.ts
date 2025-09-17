@@ -1,4 +1,4 @@
-import type { SpecDraftOutput } from "@metaagent/spec";
+import type { SpecDraftOutput, AcceptanceEval } from "@metaagent/spec";
 import type { InterviewScript } from "@metaagent/interview";
 
 export interface TemplateMeta {
@@ -9,4 +9,5 @@ export interface TemplateMeta {
   defaultSpec: SpecDraftOutput;
   interview?: InterviewScript;
   tags?: string[];
+  acceptanceEvals?: AcceptanceEval[];
 }

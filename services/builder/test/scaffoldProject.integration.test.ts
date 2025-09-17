@@ -57,6 +57,10 @@ describe('ScaffoldProject Integration', () => {
           provider: 'openai',
           model: 'gpt-4',
         },
+        limits: {
+          timeoutSec: 30,
+          budgetUsd: 5,
+        },
       },
     };
 
@@ -81,6 +85,12 @@ describe('ScaffoldProject Integration', () => {
     expect(zip.file('src/mastra/index.ts')).toBeTruthy();
     expect(zip.file('README.md')).toBeTruthy();
     expect(zip.file('.env.example')).toBeTruthy();
+    expect(zip.file('tests/evals/specSnapshot.ts')).toBeTruthy();
+    expect(zip.file('tests/evals/prompt-configured.test.ts')).toBeTruthy();
+    expect(zip.file('tests/evals/_helpers.ts')).toBeTruthy();
+
+    const acceptanceContent = await zip.file('tests/evals/prompt-configured.test.ts')!.async('string');
+    expect(acceptanceContent).toContain('Acceptance: Chatbot prompt is configured');
 
     // Check package.json has correct placeholders filled
     const pkgContent = await zip.file('package.json')!.async('string');
@@ -144,6 +154,23 @@ describe('ScaffoldProject Integration', () => {
             required: false,
           },
         ],
+        prompt: {
+          template: 'You are an expert API development assistant. Reference {{api-docs}} for additional context.',
+        },
+        model: {
+          provider: 'openai',
+          model: 'gpt-4',
+        },
+        tools: [
+          {
+            kind: 'http',
+            allowDomains: ['https://api.example.com'],
+          },
+          {
+            kind: 'code-interpreter',
+            timeoutSec: 30,
+          },
+        ],
       },
     };
 
@@ -179,6 +206,13 @@ describe('ScaffoldProject Integration', () => {
           name: 'minimal-agent',
           // description missing - should use default
           // version missing - should use default
+        },
+        prompt: {
+          template: 'Provide concise and helpful answers.',
+        },
+        model: {
+          provider: 'openai',
+          model: 'gpt-4',
         },
       },
     };

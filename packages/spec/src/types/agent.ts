@@ -4,6 +4,7 @@ import type { VariableSpec } from "./variable";
 import type { PromptTemplate } from "./prompt";
 import type { ModelConfig } from "./model";
 import type { ToolSpec } from "./tool";
+import type { AcceptanceEval } from "./eval";
 
 export type RuntimeLimits = {
   timeoutSec?: number; // 1-300
@@ -18,4 +19,5 @@ export type AgentSpec = {
   model: ModelConfig;
   tools?: ToolSpec[];
   limits?: RuntimeLimits;
+  acceptanceEvals?: AcceptanceEval[];
 };

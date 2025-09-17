@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import fs from "fs-extra";
 import JSZip from "jszip";
 import Handlebars from "handlebars";
+import { generateAcceptanceEvals } from "./generateAcceptanceEvals.js";
 
 export interface ScaffoldInput {
   templateId: "chatbot" | "web-automation" | "api-copilot" | string;
@@ -125,6 +126,11 @@ export async function scaffoldProject(input: ScaffoldInput): Promise<ScaffoldRes
   };
 
   await copyAndRenderDir(srcDir, tmpOut, context);
+  await generateAcceptanceEvals({
+    projectDir: tmpOut,
+    templateId: input.templateId,
+    draft: input.draft,
+  });
   await validateDirectory(tmpOut);
 
   const outZip = `${tmpOut}.zip`;
